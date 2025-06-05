@@ -1,5 +1,8 @@
 import axios from 'axios';
 
-axios.defaults.withCredentials = true;
+const instance = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  withCredentials: true,
+});
 
-export default axios;
+export default instance;
