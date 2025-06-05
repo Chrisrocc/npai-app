@@ -1,0 +1,187 @@
+/* src/components/car/CarTable.css */
+
+.car-table-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-sizing: border-box;
+}
+
+.car-table {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: clamp(12px, 1.5vw, 14px);
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  table-layout: auto;
+}
+
+.car-table thead tr {
+  height: 40px;
+  background-color: #e8ecef;
+}
+
+.car-table th {
+  border: 1px solid #dee2e6;
+  padding: clamp(2px, 0.5vw, 4px);
+  height: 40px;
+  font-weight: 600;
+  color: #495057;
+  text-align: left;
+  min-width: 30px;
+  position: relative;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.car-table th.sortable {
+  cursor: pointer;
+}
+
+.car-table tbody tr {
+  height: 30px;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.car-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.car-table td {
+  border: 1px solid #dee2e6;
+  padding: clamp(2px, 0.5vw, 4px);
+  height: 30px;
+  vertical-align: middle;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.car-table td img {
+  width: 100%;
+  max-width: 34px;
+  height: 30px;
+  object-fit: cover;
+  vertical-align: middle;
+  border-radius: 4px;
+}
+
+.car-table td span {
+  font-size: clamp(10px, 1.2vw, 12px);
+  color: #495057;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.car-table td input,
+.car-table td textarea {
+  width: 100%;
+  padding: clamp(2px, 0.5vw, 4px);
+  font-size: clamp(10px, 1.2vw, 12px);
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.car-table td input {
+  height: 20px;
+}
+
+.car-table td textarea {
+  height: 40px;
+  resize: none;
+}
+
+.car-table td .action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.car-table td .action-buttons button {
+  background: none;
+  border: none;
+  textarea: none;
+  cursor: pointer;
+  font-size: clamp(12px, 1.5vw, 14px);
+  transition: color 0.2s;
+}
+
+.car-table td .action-buttons button.profile-btn {
+  color: #007bff;
+}
+
+.car-table td .action-buttons button.profile-btn:hover {
+  color: #0056b3;
+}
+
+.car-table td .action-buttons button.delete-btn {
+  color: #dc3545;
+}
+
+.car-table td .action-buttons button.delete-btn:hover {
+  color: #b02a37;
+}
+
+/* Style for the badge column */
+.badge-column {
+  max-width: 7ch; /* Approximately 7 characters wide */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Style for the badge column span to ensure it follows the same truncation */
+.badge-column span {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 767px) {
+  .car-table {
+    font-size: clamp(10px, 1.2vw, 12px);
+  }
+
+  .car-table th,
+  .car-table td {
+    padding: clamp(1px, 0.3vw, 2px);
+  }
+
+  /* Hide non-essential columns on mobile */
+  .car-table th.description,
+  .car-table td.description,
+  .car-table th.checklist,
+  .car-table td.checklist,
+  .car-table th.location,
+  .car-table td.location,
+  .car-table th.status,
+  .car-table td.status,
+  .car-table th.next,
+  .car-table td.next {
+    display: none;
+  }
+
+  .car-table td img {
+    max-width: 24px;
+    height: 20px;
+  }
+
+  .car-table td .action-buttons {
+    gap: 4px;
+  }
+
+  .car-table td .action-buttons button {
+    font-size: clamp(10px, 1.2vw, 12px);
+  }
+}

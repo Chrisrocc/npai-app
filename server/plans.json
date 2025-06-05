@@ -1,0 +1,1794 @@
+[
+  {
+    "id": "1747828061568t2xa8ughl",
+    "sender": "Christian",
+    "carDescription": "m taking the",
+    "location": "Unique",
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "174782806157686cjnwb8s",
+    "sender": "Christian",
+    "carDescription": "coming back in",
+    "location": "With Christian",
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1747828551335qm9736kca",
+    "sender": "Christian",
+    "carDescription": "taking the hummer",
+    "location": "Haytham",
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1747830464500l0sjbiv2k",
+    "message": "Christian:Christian is taking the Hummer to Haytham",
+    "category": "Location Update",
+    "data": [
+      "Hummer",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Haytham",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eefa5",
+      "make": "Hummer",
+      "model": "H2",
+      "rego": "1TC6JJ",
+      "description": "Yellow"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1747950098418zkg9ship5",
+    "message": "Joseph:Joseph plans to pick up the black Kia Sportage from Imad and take it to Haytham",
+    "category": "Location Update",
+    "data": [
+      "Kia",
+      "Sportage",
+      "",
+      "black",
+      "",
+      "Imad",
+      "Haytham",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1747997213877s14nt5g2z",
+    "message": "Joseph:Joseph is taking the Toyota Prado to Capital",
+    "category": "Location Update",
+    "data": [
+      "Toyota",
+      "Prado",
+      "",
+      "",
+      "",
+      "",
+      "Capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748168998212st82rprp7",
+    "message": "Christian:Take the Hummer to Haytham",
+    "category": "Location Update",
+    "data": [
+      "Hummer",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Haytham",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eefa5",
+      "make": "Hummer",
+      "model": "H2",
+      "rego": "1TC6JJ",
+      "description": "Yellow"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748169143044nb3p28my9",
+    "message": "Christian: When the Toyota Hilux is ready at Unique, take it to Imad's",
+    "category": "Location Update",
+    "data": [
+      "Toyota",
+      "Hilux",
+      "",
+      "",
+      "",
+      "Unique",
+      "Imad's",
+      "When the Toyota Hilux is ready"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef97",
+      "make": "Toyota",
+      "model": "Hilux",
+      "rego": "1XX4MW",
+      "description": "White"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748169143080debq9s15a",
+    "message": "Christian: When the Volkswagen Caddy is ready at Unique, take it to Imad's",
+    "category": "Location Update",
+    "data": [
+      "Volkswagen",
+      "Caddy",
+      "",
+      "",
+      "",
+      "Unique",
+      "Imad's",
+      "When the Volkswagen Caddy is ready"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef38",
+      "make": "Volkswagen",
+      "model": "Caddy",
+      "rego": "1CE7QL",
+      "description": "White"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748169143108b2y4p02ng",
+    "message": "Christian: Come back in the Holden Commodore SV6 from Imad's",
+    "category": "Location Update",
+    "data": [
+      "Holden",
+      "Commodore",
+      "SV6",
+      "",
+      "",
+      "Imad's",
+      "Picked up",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef46",
+      "make": "Holden",
+      "model": "Commodore",
+      "rego": "1ME2NM",
+      "description": "White"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17482608682606t7y3lxni",
+    "message": "Christian:Take the Kia Carnival to Unique Automotive",
+    "category": "Location Update",
+    "data": [
+      "Kia",
+      "Carnival",
+      "",
+      "",
+      "",
+      "",
+      "Unique Automotive",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef74",
+      "make": "Kia",
+      "model": "Carnival",
+      "rego": "AKB126",
+      "description": "Silver"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748260909029g3b7klqqy",
+    "message": "Christian:Take Nissan Patrol to Sky",
+    "category": "Location Update",
+    "data": [
+      "Nissan",
+      "Patrol",
+      "",
+      "",
+      "",
+      "",
+      "Sky",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef7c",
+      "make": "Nissan",
+      "model": "Patrol",
+      "rego": "1CT6ZA",
+      "description": "Gold"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "174826185380720sv2qp99",
+    "message": "Christian: Take Nissan Patrol to Sky",
+    "category": "Location Update",
+    "data": [
+      "Nissan",
+      "Patrol",
+      "",
+      "",
+      "",
+      "",
+      "Sky",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748300531295kogwlkeey",
+    "message": "Joseph:Unique will have a car ready later today for a swap",
+    "category": "Location Update",
+    "data": [
+      "Car",
+      "",
+      "",
+      "",
+      "",
+      "Unique",
+      "later today",
+      "swap"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748300531330unslawuyr",
+    "message": "Joseph:Grey Volkswagen Amarok 1ON8TG is sold and needs to be taken to Unique",
+    "category": "Location Update",
+    "data": [
+      "Volkswagen",
+      "Amarok",
+      "",
+      "Grey",
+      "1ON8TG",
+      "",
+      "Unique",
+      "Is sold"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef26",
+      "make": "Volkswagen",
+      "model": "Amarok",
+      "rego": "1ON8TG",
+      "description": "Grey"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "17483036319003j3ffvy5n",
+    "message": "Joseph:Blue Kia Optima sold, to be picked up today at 4pm if payment is received",
+    "category": "Location Update",
+    "data": [
+      "Kia",
+      "Optima",
+      "",
+      "Blue",
+      "",
+      "",
+      "Picked up",
+      "Sold"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef52",
+      "make": "Kia",
+      "model": "Optima",
+      "rego": "YIF002",
+      "description": "Blue"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "17483036319774objeymo7",
+    "message": "Joseph:Ensure the Blue Kia Optima is clean later in the day",
+    "category": "Location Update",
+    "data": [
+      "Kia",
+      "Optima",
+      "",
+      "Blue",
+      "",
+      "Ensure is clean later in the day",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef52",
+      "make": "Kia",
+      "model": "Optima",
+      "rego": "YIF002",
+      "description": "Blue"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17483036324343mrq6dfk5",
+    "message": "Joseph:When Al finishes the yellow Hummer H2, get it to Sol for exhaust repair",
+    "category": "Location Update",
+    "data": [
+      "Hummer",
+      "H2",
+      "",
+      "Yellow",
+      "",
+      "Repair exhaust",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eefa5",
+      "make": "Hummer",
+      "model": "H2",
+      "rego": "1TC6JJ",
+      "description": "Yellow"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748303632452j1yempbbu",
+    "message": "Joseph:When Al finishes the yellow Hummer H2, get it to Sol for exhaust repair",
+    "category": "Location Update",
+    "data": [
+      "Hummer",
+      "H2",
+      "",
+      "yellow",
+      "",
+      "get it to Sol for exhaust repair",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eefa5",
+      "make": "Hummer",
+      "model": "H2",
+      "rego": "1TC6JJ",
+      "description": "Yellow"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17483036344651b203n60t",
+    "message": "Joseph:Joseph plans to pick up the white Suzuki Swift at BJM",
+    "category": "Location Update",
+    "data": [
+      "Suzuki",
+      "Swift",
+      "",
+      "white",
+      "",
+      "BJM",
+      "picked up",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748303634474td79tdyvs",
+    "message": "Joseph:Joseph plans to drop off the white Suzuki Swift at Haytham's when the silver Hyundai ix35 is ready today",
+    "category": "Location Update",
+    "data": [
+      "Suzuki",
+      "Swift",
+      "",
+      "white",
+      "",
+      "",
+      "Haytham's",
+      "When the silver Hyundai ix35 is ready"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748303634485t9mxje6mb",
+    "message": "Joseph:If the silver Hyundai ix35 is not ready, drop off the white Suzuki Swift at Haytham's anyway",
+    "category": "Location Update",
+    "data": [
+      "Suzuki",
+      "Swift",
+      "",
+      "white",
+      "",
+      "",
+      "Haytham's",
+      "Drop off anyway if Hyundai ix35 not ready"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17483107108849l6mti098",
+    "message": "James:James is taking Ford Ranger XLT to Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "",
+      "",
+      "",
+      "",
+      "Capital"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17483107109158vbc32k53",
+    "message": "James:Take pictures of the interior of the Ford Ranger XLT, noting the tonneau cover is too small and the back seats need cleaning as Louie did not do a good job",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "tonneau cover too small",
+      "back seats need cleaning",
+      "Take pictures of the interior",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17483287901683ic2quwt9",
+    "message": "Joseph:Take Isuzu D-Max to Unique",
+    "category": "Location Update",
+    "data": [
+      "Isuzu",
+      "D-Max",
+      "",
+      "",
+      "",
+      "",
+      "Unique",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17483996608475kfli96t4",
+    "message": "Joseph:Swap Toyota Hilux at Al's with black Mazda BT-50 as it is sold and needs a RWC",
+    "category": "Location Update",
+    "data": [
+      "Toyota",
+      "Hilux",
+      "",
+      "",
+      "",
+      "Al's",
+      "Picked up",
+      "Swap for black Mazda BT-50"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748399660873m4qnau6aj",
+    "message": "Joseph:Swap Toyota Hilux at Al's with black Mazda BT-50 as it is sold and needs a RWC",
+    "category": "Location Update",
+    "data": [
+      "Mazda",
+      "BT-50",
+      "",
+      "black",
+      "",
+      "",
+      "Picked up",
+      "Sold"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "174839966089665z16ehwv",
+    "message": "Joseph:Swap Toyota Hilux at Al's with black Mazda BT-50 as it is sold and needs a RWC",
+    "category": "Location Update",
+    "data": [
+      "Toyota",
+      "Hilux",
+      "",
+      "",
+      "",
+      "Swap at Al's with black Mazda BT-50 as it is sold and needs a RWC",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "174839982194915umq227z",
+    "message": "Joseph:Swap Mazda BT-50 canopy with the blue Ford Territory at Ash's house",
+    "category": "Location Update",
+    "data": [
+      "Mazda",
+      "BT-50",
+      "",
+      "canopy",
+      "",
+      "",
+      "Picked up",
+      "Swap for blue Ford Territory"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748426038194zaefqqicy",
+    "message": "Joseph: Joseph has a 9am appointment at Broadmeadows VicRoads for the Toyota Landcruiser Prado Kakadu. Bring trade plate, licence, and paperwork.",
+    "category": "Location Update",
+    "data": [
+      "Toyota",
+      "Landcruiser Prado",
+      "Kakadu",
+      "",
+      "",
+      "",
+      "",
+      "9am"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef84",
+      "make": "Toyota",
+      "model": "Landcruiser",
+      "rego": "1ZS7MF",
+      "description": "Silver"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748492042614dqczf6vkz",
+    "message": "Sam: Sam is picking up Ford Ranger XLT Black",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "with Sam",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17484920478305bpy6kyq4",
+    "message": "Joseph: Sarah is bringing the black Mazda BT-50 back to Northpoint",
+    "category": "Location Update",
+    "data": [
+      "Mazda",
+      "BT-50",
+      "",
+      "black",
+      "",
+      "",
+      "",
+      "Northpoint",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748500165476gdkbbhd6j",
+    "message": "Joseph: Joseph will come back to Northpoint in Holden Commodore VF Evoke from Ralph Dsilva",
+    "category": "Location Update",
+    "data": [
+      "Holden",
+      "Commodore",
+      "VF Evoke",
+      "",
+      "",
+      "Ralph Dsilva",
+      "Northpoint",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef46",
+      "make": "Holden",
+      "model": "Commodore",
+      "rego": "1ME2NM",
+      "description": "White"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748515037833cm6wjfq94",
+    "message": "Christian: Come back in the Gold Nissan Patrol from Al's",
+    "category": "Location Update",
+    "data": [
+      "Nissan",
+      "Patrol",
+      "",
+      "Gold",
+      "",
+      "Al's",
+      "Northpoint",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef7c",
+      "make": "Nissan",
+      "model": "Patrol",
+      "rego": "1CT6ZA",
+      "description": "Gold"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17485177289850gl3xuyg6",
+    "message": "Christian: Take the Mitsubishi Pajero to Al's for RWC and service",
+    "category": "Location Update",
+    "data": [
+      "Mitsubishi",
+      "Pajero",
+      "",
+      "",
+      "",
+      "",
+      "Al's",
+      "For RWC and service"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef36",
+      "make": "Mitsubishi",
+      "model": "Pajero",
+      "rego": "1TV1XG",
+      "description": "Brown"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17485177290448azk107ip",
+    "message": "Christian: Take the Mitsubishi Pajero to Al's for RWC and service",
+    "category": "Car Repairs",
+    "data": [
+      "Mitsubishi",
+      "Pajero",
+      "",
+      "",
+      "",
+      "RWC and service",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef36",
+      "make": "Mitsubishi",
+      "model": "Pajero",
+      "rego": "1TV1XG",
+      "description": "Brown"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748517729059d9djo9qca",
+    "message": "Christian: Come back in the Gold Nissan Patrol from Al's",
+    "category": "Location Update",
+    "data": [
+      "Nissan",
+      "Patrol",
+      "",
+      "Gold",
+      "",
+      "Al's",
+      "Northpoint",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef7c",
+      "make": "Nissan",
+      "model": "Patrol",
+      "rego": "1CT6ZA",
+      "description": "Gold"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748517866528xqix7qk65",
+    "message": "Christian: Take the Mitsubishi Pajero to Al's for RWC and service",
+    "category": "Location Update",
+    "data": [
+      "Mitsubishi",
+      "Pajero",
+      "",
+      "",
+      "",
+      "",
+      "Al's",
+      "For RWC and service"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef36",
+      "make": "Mitsubishi",
+      "model": "Pajero",
+      "rego": "1TV1XG",
+      "description": "Brown"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748517866562sc1wc1grt",
+    "message": "Christian: Take the Mitsubishi Pajero to Al's for RWC and service",
+    "category": "Car Repairs",
+    "data": [
+      "Mitsubishi",
+      "Pajero",
+      "",
+      "",
+      "",
+      "RWC and service",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef36",
+      "make": "Mitsubishi",
+      "model": "Pajero",
+      "rego": "1TV1XG",
+      "description": "Brown"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748517866577jfs07xe04",
+    "message": "Christian: Come back in the Gold Nissan Patrol from Al's",
+    "category": "Location Update",
+    "data": [
+      "Nissan",
+      "Patrol",
+      "",
+      "Gold",
+      "",
+      "Al's",
+      "Northpoint",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef7c",
+      "make": "Nissan",
+      "model": "Patrol",
+      "rego": "1CT6ZA",
+      "description": "Gold"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748518475605pcktxnwo3",
+    "message": "Christian: Take the Mitsubishi Pajero to Al's for RWC and service",
+    "category": "Location Update",
+    "data": [
+      "Mitsubishi",
+      "Pajero",
+      "",
+      "",
+      "",
+      "",
+      "Al's",
+      "For RWC and service"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef36",
+      "make": "Mitsubishi",
+      "model": "Pajero",
+      "rego": "1TV1XG",
+      "description": "Brown"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748518475639sxl6iclx6",
+    "message": "Christian: Take the Mitsubishi Pajero to Al's for RWC and service",
+    "category": "Car Repairs",
+    "data": [
+      "Mitsubishi",
+      "Pajero",
+      "",
+      "",
+      "",
+      "RWC and service",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef36",
+      "make": "Mitsubishi",
+      "model": "Pajero",
+      "rego": "1TV1XG",
+      "description": "Brown"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748518475656n2mnizzjc",
+    "message": "Christian: Come back in the Gold Nissan Patrol from Al's",
+    "category": "Location Update",
+    "data": [
+      "Nissan",
+      "Patrol",
+      "",
+      "Gold",
+      "",
+      "Al's",
+      "Northpoint",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef7c",
+      "make": "Nissan",
+      "model": "Patrol",
+      "rego": "1CT6ZA",
+      "description": "Gold"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748520387248nyzwauzc0",
+    "message": "Christian: Take the Mitsubishi Pajero to Al's for RWC and service",
+    "category": "Location Update",
+    "data": [
+      "Mitsubishi",
+      "Pajero",
+      "",
+      "",
+      "",
+      "",
+      "Al's",
+      "For RWC and service"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef36",
+      "make": "Mitsubishi",
+      "model": "Pajero",
+      "rego": "1TV1XG",
+      "description": "Brown"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748520387266g5e212sua",
+    "message": "Christian: Take the Toyota Hilux to Haytham after returning from Al's",
+    "category": "Location Update",
+    "data": [
+      "Toyota",
+      "Hilux",
+      "",
+      "",
+      "",
+      "Al's",
+      "Haytham",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748520387281m1szkx43w",
+    "message": "Christian: Take the Mitsubishi Pajero to Al's for RWC and service",
+    "category": "Car Repairs",
+    "data": [
+      "Mitsubishi",
+      "Pajero",
+      "",
+      "",
+      "",
+      "RWC and service",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef36",
+      "make": "Mitsubishi",
+      "model": "Pajero",
+      "rego": "1TV1XG",
+      "description": "Brown"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17485203872960h4q0yklt",
+    "message": "Christian: Come back in the Gold Nissan Patrol from Al's",
+    "category": "Location Update",
+    "data": [
+      "Nissan",
+      "Patrol",
+      "",
+      "Gold",
+      "",
+      "Al's",
+      "Northpoint",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef7c",
+      "make": "Nissan",
+      "model": "Patrol",
+      "rego": "1CT6ZA",
+      "description": "Gold"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748520387309lq3k0qmhf",
+    "message": "Christian: Come back in the Toyota Hilux from Al's",
+    "category": "Location Update",
+    "data": [
+      "Toyota",
+      "Hilux",
+      "",
+      "",
+      "",
+      "Al's",
+      "Northpoint",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748558450747y6qlmsxa5",
+    "message": "Sam: Bring the Nissan Pulsar off the street, chamois it, and leave it in our car park",
+    "category": "To Do",
+    "data": [
+      "Nissan",
+      "Pulsar",
+      "",
+      "",
+      "",
+      "Bring off street",
+      "chamois",
+      "and park",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748760338682xy25tgfpf",
+    "message": "Christian: Black Ford Ranger XLT is planned to be taken to Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "Capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef76",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "1EA9FI",
+      "description": "Black"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748760338694cufjxbx9e",
+    "message": "Christian: Christian is taking pictures of the interior of the Black Ford Ranger XLT; the tonneau cover is too small and the back seats need a thorough cleaning as Louie did not do a good job",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "tonneau cover too small",
+      "back seats need cleaning",
+      "Take pictures of interior",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "683bf71210ba1bf1b44b30ba",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "tonneau cover too small",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748760589576jqwy70oq1",
+    "message": "Christian: Black Ford Ranger XLT at Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "Capital",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef76",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "1EA9FI",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748760589593i28g4uioy",
+    "message": "Christian: Christian is taking the Black Ford Ranger XLT to Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "Capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef76",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "1EA9FI",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748760589603krd969mrz",
+    "message": "Christian: Take pictures of the interior of the Black Ford Ranger XLT, tonneau cover is too small and back seats need cleaning",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "tonneau cover too small",
+      "back seats need cleaning",
+      "Take pictures of the interior",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "683bf80d10ba1bf1b44b338b",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "tonneau cover too small",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17487608504609rq0e2364",
+    "message": "Christian: Christian is taking the Black Ford Ranger XLT to Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "Capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748760850468757wka3cl",
+    "message": "Christian: Take pictures of the interior of the Black Ford Ranger XLT, the tonneau cover is too small and the back seats need a good clean as Louie did not do a good job",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "tonneau cover too small",
+      "back seats need cleaning",
+      "Take pictures of the interior",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "683bf80d10ba1bf1b44b338b",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "tonneau cover too small",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748760850487b26lhaii5",
+    "message": "Christian: Black Ford Ranger XLT is the car in the photo",
+    "category": "Notes",
+    "data": [
+      "ford",
+      "",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "683bf80d10ba1bf1b44b338b",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "tonneau cover too small",
+      "description": "Black"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748760914680c0i2tza2w",
+    "message": "Christian: Black Ford Ranger XLT is planned to be taken to Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "Capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748760914689vmcmcsr40",
+    "message": "Christian: Christian is taking pictures of the interior of the Black Ford Ranger XLT; the tonneau cover is too small and the back seats need a thorough cleaning as Louie did not do a good job",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "tonneau cover too small",
+      "back seats need cleaning",
+      "Take pictures of interior",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "683bf80d10ba1bf1b44b338b",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "tonneau cover too small",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748761012031t6ygb4p8a",
+    "message": "Christian: Black Ford Ranger XLT at Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "Capital",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef76",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "1EA9FI",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748761012047n2fs6mriz",
+    "message": "Christian: Christian is taking the Black Ford Ranger XLT to Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "Capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef76",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "1EA9FI",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748761012058eqtwxliia",
+    "message": "Christian: Take pictures of the interior of the Black Ford Ranger XLT, noting the tonneau cover is too small and the back seats need cleaning",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "tonneau cover too small",
+      "back seats need cleaning",
+      "Take pictures of the interior",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "683bf9b410ba1bf1b44b376d",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "tonneau cover too small",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17487615520624ha7ip5jd",
+    "message": "Christian: Christian is taking the Black Ford Ranger XLT to Capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "Capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748761552080f2qqggsdd",
+    "message": "Christian: Take pictures of the interior of the Black Ford Ranger XLT, the tonneau cover is too small and the back seats need a good clean as Louie did not do a good job",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "tonneau cover too small and back seats need a good clean",
+      "Take pictures of the interior",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "683bfbd0fcda954e34e7a62f",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "tonneau cover too small and back seats need a good clean",
+      "description": "Black"
+    },
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748761552097qtgn79k3h",
+    "message": "Christian: Black Ford Ranger XLT is the car in the photo",
+    "category": "Notes",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748761836166jlvuedpcj",
+    "message": "Christian: Plan - taking Black Ford Ranger XLT to capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748761836183aprfjpudq",
+    "message": "Christian: Black Ford Ranger XLT tonneau cover is too small",
+    "category": "Car Repairs",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "tonneau cover too small",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748761836199lz82tqxqb",
+    "message": "Christian: Black Ford Ranger XLT back seats need a clean",
+    "category": "Car Repairs",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "back seats need a clean",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17487618362126o5hmxin3",
+    "message": "Christian: Taking photos of Black Ford Ranger XLT interiors",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "Taking photos of interiors",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762061258ueonnr2rf",
+    "message": "Christian: Plan - taking Black Ford Ranger XLT to capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762061277ai9m7cqud",
+    "message": "Christian: Black Ford Ranger XLT tonneau cover is too small",
+    "category": "Car Repairs",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "tonneau cover too small",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17487620612995f4sde8vp",
+    "message": "Christian: Black Ford Ranger XLT back seats need a clean",
+    "category": "Car Repairs",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "back seats need a clean",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "17487620613178956t7uxq",
+    "message": "Christian: Taking photos of Black Ford Ranger XLT interiors",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "Taking photos of interiors",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762174862oha62xfhk",
+    "message": "Christian: Plan - taking Black Ford Ranger XLT to capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762174883xxxzmrjlf",
+    "message": "Christian: Black Ford Ranger XLT tonneau cover is too small",
+    "category": "Car Repairs",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "",
+      "tonneau cover too small",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762174897wf1m1prrw",
+    "message": "Christian: Taking photos of Black Ford Ranger XLT interiors",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "Taking photos of interiors",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762174913din8fqiiq",
+    "message": "Christian: Black Ford Ranger XLT back seats need a clean",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black back seats need a clean",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762439642degn45uzo",
+    "message": "Christian: Plan - taking Black Ford Ranger XLT to capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762439660s67uy4qz0",
+    "message": "Christian: Black Ford Ranger XLT tonneau cover is too small",
+    "category": "Car Repairs",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "Tonneau cover too small",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762439675j9oz7rar8",
+    "message": "Christian: Taking photos of Black Ford Ranger XLT interiors",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "Taking photos of interiors",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748762439694rexnxmegv",
+    "message": "Christian: Black Ford Ranger XLT back seats need a clean",
+    "category": "To Do",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "Back seats need a clean",
+      "",
+      "",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748767417848jz5kswxtu",
+    "message": "Christian: Plan - taking Black Ford Ranger XLT to capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": null,
+    "status": "didnt_happen"
+  },
+  {
+    "id": "1748767502822v4ilvsotj",
+    "message": "Christian: Plan - taking Black Ford Ranger XLT to capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef76",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "1EA9FI",
+      "description": "Black"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748767597305nctr9294z",
+    "message": "Christian: Plan - taking Black Ford Ranger XLT to capital",
+    "category": "Location Update",
+    "data": [
+      "Ford",
+      "Ranger",
+      "XLT",
+      "Black",
+      "",
+      "",
+      "capital",
+      ""
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "682c6272c027b7a6c37eef76",
+      "make": "Ford",
+      "model": "Ranger",
+      "rego": "1EA9FI",
+      "description": "Black"
+    },
+    "status": "happened"
+  },
+  {
+    "id": "1748932545717ygyakpqrm",
+    "message": "Joseph: Plan - taking Isuzu D-Max to Al tomorrow",
+    "category": "Location Update",
+    "data": [
+      "Isuzu",
+      "D-Max",
+      "",
+      "",
+      "",
+      "",
+      "Al",
+      "tomorrow"
+    ],
+    "fromPhoto": false,
+    "identifiedCar": {
+      "id": "683d31401ddb15f82a7c9f67",
+      "make": "Isuzu",
+      "model": "D-Max",
+      "rego": "1QY6SW",
+      "description": "White"
+    },
+    "status": "pending"
+  }
+]

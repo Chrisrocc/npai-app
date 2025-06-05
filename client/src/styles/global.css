@@ -1,0 +1,14 @@
+/* Default: toolbar + tabs side-by-side */
+.toolbar-tabs-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;             /* adjust spacing as you like */
+  }
+  
+  /* At and below 600px, stack them */
+  @media (max-width: 600px) {
+    .toolbar-tabs-container {
+      flex-direction: column;
+    }
+  }
+  

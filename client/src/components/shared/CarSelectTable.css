@@ -1,0 +1,10 @@
+/* src/components/shared/CarSelectTable.css */
+@media (max-width: 767px) {
+    .car-select-search-input {
+      width: 100% !important;
+    }
+  
+    .car-select-stage-button {
+      flex: 1 1 calc(50% - 8px) !important;
+    }
+  }
