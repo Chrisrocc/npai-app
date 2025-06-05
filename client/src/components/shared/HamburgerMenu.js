@@ -18,7 +18,7 @@ const HamburgerMenu = () => {
   // Handle logout
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5000/api/auth/logout');
+      await axios.post('/api/auth/logout');
     } catch (err) {
       console.error('Error logging out:', err);
     }

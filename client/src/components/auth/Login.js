@@ -22,7 +22,7 @@ const Login = () => {
       const verifyEmailToken = async () => {
         try {
           setLoading(true);
-          const response = await axios.get(`http://localhost:5000/api/auth/verify/${token}`);
+          const response = await axios.get(`/api/auth/verify/${token}`);
           setMessage(response.data.message);
           setLoading(false);
           setTimeout(() => {
@@ -48,7 +48,7 @@ const Login = () => {
     setLoading(true);
     setError(null);
     try {
-      await axios.post('http://localhost:5000/api/auth/login', {
+      await axios.post('/api/auth/login', {
         email,
         password,
       });
@@ -67,7 +67,7 @@ const Login = () => {
     setError(null);
     setMessage(null);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
+      const response = await axios.post('/api/auth/forgot-password', {
         email,
       });
       setLoading(false);
@@ -86,7 +86,7 @@ const Login = () => {
     setMessage(null);
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/auth/reset-password/${token}`,
+        `/api/auth/reset-password/${token}`,
         {
           password: newPassword,
         }

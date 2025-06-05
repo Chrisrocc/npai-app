@@ -27,8 +27,8 @@ const CustomerAppointments = () => {
 
   const fetchCustomerAppointments = useCallback(async () => {
     try {
-      console.log('Fetching customer appointments from http://localhost:5000/api/customerappointments...');
-      const response = await axios.get('http://localhost:5000/api/customerappointments');
+      console.log('Fetching customer appointments...');
+      const response = await axios.get('/api/customerappointments');
       console.log('Customer appointments response:', response.data);
       if (!Array.isArray(response.data)) {
         throw new Error('Expected an array of appointments, but received: ' + JSON.stringify(response.data));
@@ -59,7 +59,7 @@ const CustomerAppointments = () => {
     e.preventDefault();
     try {
       console.log('Adding new appointment:', newAppointment);
-      const response = await axios.post('http://localhost:5000/api/customerappointments', newAppointment);
+      const response = await axios.post('/api/customerappointments', newAppointment);
       console.log('Add appointment response:', response.data);
       setNewAppointment({ name: '', dayTime: '', car: null, comments: '' });
       setShowAddModal(false);
@@ -108,7 +108,7 @@ const CustomerAppointments = () => {
         updateData.car = updatedAppointment.car ? updatedAppointment.car._id : null;
       }
 
-      const response = await axios.put(`http://localhost:5000/api/customerappointments/${editAppointmentId}`, updateData);
+      const response = await axios.put(`/api/customerappointments/${editAppointmentId}`, updateData);
       console.log('Update appointment response:', response.data);
       setEditingField(null);
       setEditAppointmentId(null);
@@ -134,7 +134,7 @@ const CustomerAppointments = () => {
     if (window.confirm('Are you sure you want to delete this customer appointment?')) {
       try {
         console.log('Deleting appointment:', id);
-        const response = await axios.delete(`http://localhost:5000/api/customerappointments/${id}`);
+        const response = await axios.delete(`/api/customerappointments/${id}`);
         console.log('Delete appointment response:', response.data);
         fetchCustomerAppointments();
       } catch (err) {
@@ -156,7 +156,7 @@ const CustomerAppointments = () => {
           comments: updatedAppointment.comments
         };
 
-        const response = await axios.put(`http://localhost:5000/api/customerappointments/${editAppointmentId}`, updateData);
+        const response = await axios.put(`/api/customerappointments/${editAppointmentId}`, updateData);
         console.log('Update appointment with new car response:', response.data);
 
         await fetchCustomerAppointments();
@@ -516,7 +516,7 @@ const CustomerAppointments = () => {
                       <div style={{ flexShrink: 0 }}>
                         {appointment.car.photos && appointment.car.photos.length > 0 ? (
                           <img
-                            src={`http://localhost:5000/${appointment.car.photos[0]}`}
+                            src={`${process.env.REACT_APP_API_URL}/${appointment.car.photos[0]}`}
                             alt={`Car ${appointment.car.rego}`}
                             style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                           />
