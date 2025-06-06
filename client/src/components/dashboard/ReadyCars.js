@@ -9,7 +9,7 @@ const ReadyCars = () => {
 
   const fetchHighlightedCars = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/cars');
+      const response = await axios.get('/api/cars'); // Updated to relative path
       const cars = response.data;
 
       // Filter cars that would be highlighted

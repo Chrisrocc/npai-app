@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../utils/axiosConfig'; // Updated path
+import axios from '../../utils/axiosConfig';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const Login = () => {
@@ -48,10 +48,14 @@ const Login = () => {
     setLoading(true);
     setError(null);
     try {
-      await axios.post('/api/auth/login', {
+      const response = await axios.post('/api/auth/login', {
         email,
         password,
       });
+      // Assuming the backend returns a token in the response
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token); // Store token
+      }
       setLoading(false);
       navigate('/dashboard');
     } catch (err) {

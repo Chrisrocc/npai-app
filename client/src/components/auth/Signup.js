@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import axios from '../../utils/axiosConfig'; // Updated path
+import axios from '../../utils/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
-  const [name, setName] = useState(''); // Add name state
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -17,14 +17,13 @@ const Signup = () => {
     setError(null);
     setMessage(null);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/signup', {
-        name, // Include name in the request
+      const response = await axios.post('/api/auth/signup', { // Updated to relative path
+        name,
         email,
         password,
       });
       setLoading(false);
       setMessage(response.data.message);
-      // Redirect to login page after 2 seconds
       setTimeout(() => {
         navigate('/login');
       }, 2000);

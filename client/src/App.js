@@ -11,11 +11,12 @@ import Dashboard from './components/dashboard/Dashboard';
 import Notes from './components/notes/Notes';
 import Admin from './components/admin/Admin';
 import CarProfileModal from './components/car/CarProfileModal';
-import CarArchive from './components/car/CarArchive'; // Fixed path: changed 'cars' to 'car'
+import CarArchive from './components/car/CarArchive';
 
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
-  return children;
+  const isAuthenticated = localStorage.getItem('token'); // Check if token exists
+  return isAuthenticated ? children : <Navigate to="/login" state={{ from: location }} />;
 };
 
 function App() {
