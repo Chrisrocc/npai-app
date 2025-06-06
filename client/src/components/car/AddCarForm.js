@@ -53,7 +53,7 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
         formDataToSend.append('photos', photo);
       });
 
-      await axios.post('http://localhost:5000/api/cars', formDataToSend, {
+      await axios.post('/api/cars', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -75,7 +75,7 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
       onClose();
     } catch (err) {
       console.error('Error adding car:', err);
-      alert('Failed to add car');
+      alert('Failed to add car: ' + (err.response?.data?.message || err.message));
     }
   };
 
