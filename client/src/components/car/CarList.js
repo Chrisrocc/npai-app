@@ -20,7 +20,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
   const [editingField, setEditingField] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [editingNextCarId, setEditingNextCarId] = useState(null);
-  const [selectedStages, setSelectedStages] = useState(['In Works', 'In Works/Online', 'Online', 'Sold']); // Re-enabled stage filtering
+  const [selectedStages, setSelectedStages] = useState(['In Works', 'In Works/Online', 'Online', 'Sold']);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddCarModal, setShowAddCarModal] = useState(false);
@@ -41,15 +41,14 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const fetchCars = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/cars');
+      const response = await axios.get('/api/cars');
       const fetchedCars = response.data;
-      // Process pendingLocationUpdate to apply the location and status from Telegram messages
       const updatedCars = await Promise.all(fetchedCars.map(async car => {
         if (car.pendingLocationUpdate && car.pendingLocationUpdate.message) {
           const message = car.pendingLocationUpdate.message;
           const statusMatch = message.match(/will be ready at \S+ (?:at )?(.+)$/i);
           const telegramStatus = statusMatch ? statusMatch[1] : car.status;
-          await axios.put(`http://localhost:5000/api/cars/${car._id}`, {
+          await axios.put(`/api/cars/${car._id}`, {
             ...car,
             location: car.pendingLocationUpdate.location || car.location,
             status: telegramStatus,
@@ -79,7 +78,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const fetchVerificationCount = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/manualverifications');
+      const response = await axios.get('/api/manualverifications');
       const count = response.data.length;
       setVerificationCount(count);
       console.log(`Fetched verification count: ${count}`);
@@ -94,7 +93,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const fetchPlans = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/plans');
+      const response = await axios.get('/api/plans');
       setPlans(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('Error fetching plans:', err);
@@ -126,7 +125,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
     formData.append('file', file);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/cars/upload-csv', formData, {
+      const response = await axios.post('/api/cars/upload-csv', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -148,11 +147,11 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
     if (plan.identifiedCar) {
       try {
         const [, , , , , , newLocation] = plan.data;
-        await axios.put(`http://localhost:5000/api/cars/${plan.identifiedCar.id}`, {
+        await axios.put(`/api/cars/${plan.identifiedCar.id}`, {
           location: newLocation,
           status: '',
         });
-        await axios.put(`http://localhost:5000/api/plans/${plan.id}`, { status: 'happened' });
+        await axios.put(`/api/plans/${plan.id}`, { status: 'happened' });
         fetchCars();
         fetchPlans();
         alert('Plan executed successfully');
@@ -164,7 +163,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const handlePlanDidntHappen = async (plan) => {
     try {
-      await axios.put(`http://localhost:5000/api/plans/${plan.id}`, { status: 'didnt_happen' });
+      await axios.put(`/api/plans/${plan.id}`, { status: 'didnt_happen' });
       fetchPlans();
     } catch (err) {
       alert('Failed to dismiss plan: ' + (err.response?.data?.message || err.message));
@@ -184,9 +183,9 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
   const handleSelectCar = async (selectedCarIds) => {
     try {
       const carId = selectedCarIds[0];
-      const response = await axios.get(`http://localhost:5000/api/cars/${carId}`);
+      const response = await axios.get(`/api/cars/${carId}`);
       const car = response.data;
-      await axios.put(`http://localhost:5000/api/plans/${planToIdentify.id}`, {
+      await axios.put(`/api/plans/${planToIdentify.id}`, {
         identifiedCar: {
           id: car._id,
           make: car.make,
@@ -205,9 +204,9 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const handleAddCarSubmit = async (newCar) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/cars', newCar);
+      const response = await axios.post('/api/cars', newCar);
       const car = response.data;
-      await axios.put(`http://localhost:5000/api/plans/${planToIdentify.id}`, {
+      await axios.put(`/api/plans/${planToIdentify.id}`, {
         identifiedCar: {
           id: car._id,
           make: car.make,
@@ -227,7 +226,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/cars/${id}`);
+      await axios.delete(`/api/cars/${id}`);
       fetchCars();
     } catch (err) {
       console.error('Error deleting car:', err);
@@ -297,7 +296,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
         updateData[editingField.field] = editValue;
       }
 
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, updateData);
+      await axios.put(`/api/cars/${carId}`, updateData);
       fetchCars();
       setEditingField(null);
       setEditValue('');
@@ -340,7 +339,6 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
     setShowPhotos(!showPhotos);
   };
 
-  // Modified filter logic to show all cars if no stages are selected
   const filteredCars = searchTerm
     ? cars.filter(car =>
         Object.values(car).some(value =>
@@ -348,7 +346,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
         )
       )
     : selectedStages.length === 0
-    ? cars // Show all cars if no stages are selected
+    ? cars
     : cars.filter(car => selectedStages.includes(car.stage || 'In Works'));
 
   const soldCars = filteredCars.filter((car) => (car.stage || 'In Works') === 'Sold');
@@ -407,7 +405,6 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
         <HamburgerMenu />
         <h1 className="car-list-title">Northpoint Auto Group Inventory</h1>
 
-        {/* Tabs */}
         <div className="tabs" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
           <button
             className={activeTab === 'inventory' ? 'active' : ''}

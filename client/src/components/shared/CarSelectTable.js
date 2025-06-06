@@ -1,7 +1,6 @@
-// src/components/shared/CarSelectTable.js
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from '../../utils/axiosConfig';
-import { filterCars, sortCars, getRowBackgroundColor } from '../../utils/carListUtils'; // Import functions from carListUtils
+import { filterCars, sortCars, getRowBackgroundColor } from '../../utils/carListUtils';
 
 const CarSelectTable = ({ onSelectCar, onClose, multiSelect = false, selectedCarIds = [], prePopulateSearch = '' }) => {
   const [cars, setCars] = useState([]);
@@ -42,8 +41,8 @@ const CarSelectTable = ({ onSelectCar, onClose, multiSelect = false, selectedCar
     try {
       setCarLoading(true);
       setCarError(null);
-      console.log('Fetching cars from http://localhost:5000/api/cars...');
-      const response = await axios.get('http://localhost:5000/api/cars');
+      console.log('Fetching cars...');
+      const response = await axios.get('/api/cars');
       console.log('Cars response:', response.data);
       if (!Array.isArray(response.data)) {
         throw new Error('Expected an array of cars, but received: ' + JSON.stringify(response.data));
@@ -122,7 +121,6 @@ const CarSelectTable = ({ onSelectCar, onClose, multiSelect = false, selectedCar
 
   const handleCarClick = (carId) => {
     if (multiSelect) {
-      // Toggle selection for multi-select
       setSelectedCars((prev) => {
         const newSelected = new Set(prev);
         if (newSelected.has(carId)) {
@@ -133,7 +131,6 @@ const CarSelectTable = ({ onSelectCar, onClose, multiSelect = false, selectedCar
         return newSelected;
       });
     } else {
-      // Single select for editing
       console.log('Car clicked with ID:', carId);
       onSelectCar([carId]);
     }
@@ -148,7 +145,7 @@ const CarSelectTable = ({ onSelectCar, onClose, multiSelect = false, selectedCar
   };
 
   const handleSearchChange = (e) => {
-    console.log('CarSelectTable search term updating:', e.target.value); // Debug log
+    console.log('CarSelectTable search term updating:', e.target.value);
     setSearchTerm(e.target.value);
   };
 
@@ -340,7 +337,7 @@ const CarSelectTable = ({ onSelectCar, onClose, multiSelect = false, selectedCar
                   >
                     {car.photos && car.photos.length > 0 ? (
                       <img
-                        src={`http://localhost:5000/${car.photos[0]}`}
+                        src={`${process.env.REACT_APP_API_URL}/${car.photos[0]}`}
                         alt={`Car ${car.rego}`}
                         style={{
                           width: '100%',

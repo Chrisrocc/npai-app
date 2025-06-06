@@ -301,7 +301,7 @@ const CustomerAppointments = () => {
           >
             <div
               style={{
-                backgroundColor: '#fff',
+                backgroundColor: 'white',
                 padding: '20px',
                 borderRadius: '8px',
                 width: '400px',
