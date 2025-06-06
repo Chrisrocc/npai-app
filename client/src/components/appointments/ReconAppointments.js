@@ -37,8 +37,8 @@ const ReconAppointments = () => {
   // Fetch appointments
   const fetchAppointments = useCallback(async () => {
     try {
-      console.log('Fetching appointments from http://localhost:5000/api/reconappointments...');
-      const response = await axios.get('http://localhost:5000/api/reconappointments');
+      console.log('Fetching appointments...');
+      const response = await axios.get('/api/reconappointments');
       console.log('Appointments response:', response.data);
       if (!Array.isArray(response.data)) {
         throw new Error('Expected an array of appointments, but received: ' + JSON.stringify(response.data));
@@ -80,7 +80,7 @@ const ReconAppointments = () => {
           category: modalCategory || 'other',
         };
         console.log('Sending appointment data for car:', appointmentData);
-        const response = await axios.post('http://localhost:5000/api/reconappointments', appointmentData);
+        const response = await axios.post('/api/reconappointments', appointmentData);
         console.log('Add appointment response:', response.data);
       }
       setNewAppointment({ reconditionerName: '', dayTime: '', carItems: [] });
@@ -152,7 +152,7 @@ const ReconAppointments = () => {
       }
 
       console.log('Updating appointment:', updateData);
-      const response = await axios.put(`http://localhost:5000/api/reconappointments/${appointmentId}`, updateData);
+      const response = await axios.put(`/api/reconappointments/${appointmentId}`, updateData);
       console.log('Update response:', response.data);
       setEditingField(null);
       setIsEditingActive(false);
@@ -181,7 +181,7 @@ const ReconAppointments = () => {
     if (!window.confirm('Are you sure you want to delete this appointment?')) return;
     try {
       console.log('Deleting appointment:', id);
-      const response = await axios.delete(`http://localhost:5000/api/reconappointments/${id}`);
+      const response = await axios.delete(`/api/reconappointments/${id}`);
       console.log('Delete response:', response.data);
       fetchAppointments();
     } catch (err) {
@@ -216,12 +216,12 @@ const ReconAppointments = () => {
       };
 
       console.log('Updating appointment after car item deletion:', updateData);
-      const response = await axios.put(`http://localhost:5000/api/reconappointments/${appointmentId}`, updateData);
+      const response = await axios.put(`/api/reconappointments/${appointmentId}`, updateData);
       console.log('Update response:', response.data);
 
       // If no car items remain, delete the appointment
       if (updatedCarItems.length === 0) {
-        await axios.delete(`http://localhost:5000/api/reconappointments/${appointmentId}`);
+        await axios.delete(`/api/reconappointments/${appointmentId}`);
         console.log('Deleted appointment as no car items remain');
       }
 
@@ -241,7 +241,7 @@ const ReconAppointments = () => {
     try {
       const carDetails = [];
       for (const carId of carIds) {
-        const response = await axios.get(`http://localhost:5000/api/cars/${carId}`);
+        const response = await axios.get(`/api/cars/${carId}`);
         const car = response.data;
         carDetails.push({
           carId,
@@ -289,7 +289,7 @@ const ReconAppointments = () => {
           })),
         };
         console.log('Updating appointment with new car:', updateData);
-        const response = await axios.put(`http://localhost:5000/api/reconappointments/${editingField.appointmentId}`, updateData);
+        const response = await axios.put(`/api/reconappointments/${editingField.appointmentId}`, updateData);
         console.log('Update response:', response.data);
         setEditingField(null);
         setIsEditingActive(false);
@@ -517,7 +517,7 @@ const ReconAppointments = () => {
                       <div style={{ flexShrink: '0' }}>
                         {row.car.photos && row.car.photos.length > 0 ? (
                           <img
-                            src={`http://localhost:5000/${row.car.photos[0]}`}
+                            src={`${process.env.REACT_APP_API_URL}/${row.car.photos[0]}`}
                             alt={`Car ${row.car.rego}`}
                             style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                             onError={(e) => (e.target.style.display = 'none')}

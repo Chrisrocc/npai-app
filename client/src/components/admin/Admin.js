@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../utils/axiosConfig'; // Updated path
-import HamburgerMenu from '../shared/HamburgerMenu'; // Updated path
+import axios from '../../utils/axiosConfig';
+import HamburgerMenu from '../shared/HamburgerMenu';
 import { useNavigate } from 'react-router-dom';
 
 const Admin = () => {
@@ -12,7 +12,7 @@ const Admin = () => {
   useEffect(() => {
     const fetchPendingUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/users/pending');
+        const response = await axios.get('/api/auth/users/pending');
         setPendingUsers(response.data);
         setLoading(false);
       } catch (err) {
@@ -29,7 +29,7 @@ const Admin = () => {
 
   const handleApprove = async (userId) => {
     try {
-      await axios.post(`http://localhost:5000/api/auth/approve/${userId}`);
+      await axios.post(`/api/auth/approve/${userId}`);
       setPendingUsers(pendingUsers.filter(user => user._id !== userId));
     } catch (err) {
       if (err.response?.status === 401 || err.response?.status === 403) {
@@ -42,7 +42,7 @@ const Admin = () => {
 
   const handleReject = async (userId) => {
     try {
-      await axios.post(`http://localhost:5000/api/auth/reject/${userId}`);
+      await axios.post(`/api/auth/reject/${userId}`);
       setPendingUsers(pendingUsers.filter(user => user._id !== userId));
     } catch (err) {
       if (err.response?.status === 401 || err.response?.status === 403) {

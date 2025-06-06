@@ -14,7 +14,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
 
   const fetchCarsWithoutRefresh = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/cars');
+      const response = await axios.get('/api/cars');
       setCars(response.data);
     } catch (err) {
       console.error('Error fetching cars:', err);
@@ -31,7 +31,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
       const updatedNext = [...(car.next || [])];
       updatedNext.splice(indexToRemove, 1);
 
-      await axios.post(`http://localhost:5000/api/cars/${carId}/set-location`, {
+      await axios.post(`/api/cars/${carId}/set-location`, {
         location: newLocation,
         message: `Set as current location from next list`,
         next: updatedNext,
@@ -170,7 +170,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                   >
                     {car.photos && car.photos.length > 0 ? (
                       <img
-                        src={`http://localhost:5000/${car.photos[0]}`}
+                        src={`${process.env.REACT_APP_API_URL}/${car.photos[0]}`}
                         alt={`Car ${car.rego}`}
                         style={{
                           width: '100%',
@@ -180,6 +180,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                           verticalAlign: 'middle',
                           borderRadius: '4px',
                         }}
+                        onError={(e) => (e.target.style.display = 'none')}
                       />
                     ) : (
                       <span style={{ fontSize: '12px', color: '#6c757d' }}>

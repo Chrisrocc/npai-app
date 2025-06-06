@@ -37,7 +37,7 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
       }}
     >
       <img
-        src={`http://localhost:5000/${photo}`}
+        src={`${process.env.REACT_APP_API_URL}/${photo}`}
         alt={`Car ${rego} - Photo ${index + 1}`}
         style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
       />
@@ -84,7 +84,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   useEffect(() => {
     const fetchCar = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/cars/${carId}`);
+        const response = await axios.get(`/api/cars/${carId}`);
         setCar(response.data);
         setModalLoading(false);
       } catch (err) {
@@ -99,7 +99,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     // Poll for updates every 5 seconds to reflect pending location changes
     const interval = setInterval(async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/cars/${carId}`);
+        const response = await axios.get(`/api/cars/${carId}`);
         setCar(response.data);
       } catch (err) {
         console.error('Error polling car data:', err);
@@ -111,7 +111,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
 
   const fetchCarWithoutRefresh = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/cars/${carId}`);
+      const response = await axios.get(`/api/cars/${carId}`);
       setCar(response.data);
       if (fetchCars) fetchCars(); // Call parent fetchCars to update the table
     } catch (err) {
@@ -132,7 +132,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     if (!editingField) return;
     try {
       const updatedCar = { [editingField]: editValue };
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, updatedCar);
+      await axios.put(`/api/cars/${carId}`, updatedCar);
       await fetchCarWithoutRefresh();
       setEditingField(null);
       setEditValue('');
@@ -166,7 +166,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       } else {
         entry[editingHistory.field] = editValue;
       }
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, { history: updatedHistory });
+      await axios.put(`/api/cars/${carId}`, { history: updatedHistory });
       await fetchCarWithoutRefresh();
       setEditingHistory(null);
       setEditValue('');
@@ -184,7 +184,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   const handleDeleteHistoryEntry = async (index) => {
     try {
       const updatedHistory = car.history.filter((_, i) => i !== index);
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, { history: updatedHistory });
+      await axios.put(`/api/cars/${carId}`, { history: updatedHistory });
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error deleting history entry:', err);
@@ -196,7 +196,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     const updatedChecklist = [...car.checklist];
     updatedChecklist[index] = newValue;
     try {
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, { checklist: updatedChecklist });
+      await axios.put(`/api/cars/${carId}`, { checklist: updatedChecklist });
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error updating checklist:', err);
@@ -208,7 +208,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     if (newChecklistItem && !car.checklist.includes(newChecklistItem)) {
       const updatedChecklist = [...car.checklist, newChecklistItem];
       try {
-        await axios.put(`http://localhost:5000/api/cars/${carId}`, { checklist: updatedChecklist });
+        await axios.put(`/api/cars/${carId}`, { checklist: updatedChecklist });
         await fetchCarWithoutRefresh();
         setNewChecklistItem('');
       } catch (err) {
@@ -221,7 +221,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   const handleRemoveChecklistItem = async (index) => {
     const updatedChecklist = car.checklist.filter((_, i) => i !== index);
     try {
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, { checklist: updatedChecklist });
+      await axios.put(`/api/cars/${carId}`, { checklist: updatedChecklist });
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error removing checklist item:', err);
@@ -231,7 +231,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
 
   const handleStageChange = async (newStage) => {
     try {
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, { stage: newStage });
+      await axios.put(`/api/cars/${carId}`, { stage: newStage });
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error updating stage:', err);
@@ -250,7 +250,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       newPhotos.forEach((photo) => {
         formData.append('photos', photo);
       });
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, formData, {
+      await axios.put(`/api/cars/${carId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -266,7 +266,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   const handleDeletePhoto = async (index) => {
     const updatedPhotos = car.photos.filter((_, i) => i !== index);
     try {
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, { photos: updatedPhotos });
+      await axios.put(`/api/cars/${carId}`, { photos: updatedPhotos });
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error deleting photo:', err);
@@ -279,7 +279,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     const [movedPhoto] = updatedPhotos.splice(fromIndex, 1);
     updatedPhotos.splice(toIndex, 0, movedPhoto);
     try {
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, { photos: updatedPhotos });
+      await axios.put(`/api/cars/${carId}`, { photos: updatedPhotos });
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error rearranging photos:', err);
@@ -296,7 +296,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       const updatedNext = [...(car.next || [])];
       updatedNext.splice(indexToRemove, 1);
 
-      await axios.post(`http://localhost:5000/api/cars/${carId}/set-location`, {
+      await axios.post(`/api/cars/${carId}/set-location`, {
         location: newLocation,
         message: `Set as current location from next list`,
         next: updatedNext,

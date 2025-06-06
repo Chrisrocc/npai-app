@@ -16,7 +16,7 @@ const NextDestinationsEditor = ({ carId, nextDestinations, onSave, onCancel, fet
     if (!newLocation.trim()) return;
 
     try {
-      const response = await axios.post(`http://localhost:5000/api/cars/${carId}/next`, { location: newLocation });
+      const response = await axios.post(`/api/cars/${carId}/next`, { location: newLocation });
       setNewLocation('');
       setLocalNextDestinations(response.data.next); // Update local state
       if (fetchCars) fetchCars(); // Update parent state without closing the form
@@ -29,7 +29,7 @@ const NextDestinationsEditor = ({ carId, nextDestinations, onSave, onCancel, fet
 
   const handleDeleteLocation = async (index) => {
     try {
-      const response = await axios.delete(`http://localhost:5000/api/cars/${carId}/next/${index}`);
+      const response = await axios.delete(`/api/cars/${carId}/next/${index}`);
       setLocalNextDestinations(response.data.next);
       if (fetchCars) fetchCars();
     } catch (err) {
@@ -46,7 +46,7 @@ const NextDestinationsEditor = ({ carId, nextDestinations, onSave, onCancel, fet
       if (onSetCurrentLocation) {
         await onSetCurrentLocation(destination.location, index);
       }
-      const updatedCar = await axios.get(`http://localhost:5000/api/cars/${carId}`);
+      const updatedCar = await axios.get(`/api/cars/${carId}`);
       setLocalNextDestinations(updatedCar.data.next);
     } catch (err) {
       console.error('Error setting current location:', err);
@@ -73,7 +73,7 @@ const NextDestinationsEditor = ({ carId, nextDestinations, onSave, onCancel, fet
     };
 
     try {
-      const response = await axios.put(`http://localhost:5000/api/cars/${carId}`, { next: updatedDestinations });
+      const response = await axios.put(`/api/cars/${carId}`, { next: updatedDestinations });
       setLocalNextDestinations(response.data.next);
       setEditingIndex(null);
       setEditValue('');
