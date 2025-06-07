@@ -37,9 +37,10 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
       }}
     >
       <img
-        src={`${process.env.REACT_APP_API_URL}/${photo}`}
+        src={`${process.env.REACT_APP_API_URL}/uploads/${photo}`}
         alt={`Car ${rego} - Photo ${index + 1}`}
         style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
+        onError={(e) => console.error(`Failed to load image: ${photo}`, e)}
       />
       <button
         onClick={() => deletePhoto(index)}
@@ -78,6 +79,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   const [editValue, setEditValue] = useState('');
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [newPhotos, setNewPhotos] = useState([]);
+  const [existingPhotos, setExistingPhotos] = useState([]);
   const [editingHistory, setEditingHistory] = useState(null);
   const [showNextEditor, setShowNextEditor] = useState(false);
 
@@ -86,6 +88,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       try {
         const response = await axios.get(`/api/cars/${carId}`);
         setCar(response.data);
+        setExistingPhotos(response.data.photos || []); // Initialize existing photos
         setModalLoading(false);
       } catch (err) {
         setModalError('Failed to fetch car details');
@@ -95,16 +98,17 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     fetchCar();
   }, [carId]);
 
+  // Reduce polling frequency to avoid overload
   useEffect(() => {
-    // Poll for updates every 5 seconds to reflect pending location changes
     const interval = setInterval(async () => {
       try {
         const response = await axios.get(`/api/cars/${carId}`);
         setCar(response.data);
+        setExistingPhotos(response.data.photos || []);
       } catch (err) {
         console.error('Error polling car data:', err);
       }
-    }, 5000);
+    }, 30000); // Poll every 30 seconds instead of 5
 
     return () => clearInterval(interval);
   }, [carId]);
@@ -113,6 +117,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     try {
       const response = await axios.get(`/api/cars/${carId}`);
       setCar(response.data);
+      setExistingPhotos(response.data.photos || []);
       if (fetchCars) fetchCars(); // Call parent fetchCars to update the table
     } catch (err) {
       console.error('Error fetching car:', err);
@@ -240,16 +245,16 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   };
 
   const handleFileChange = (e) => {
-    setNewPhotos(Array.from(e.target.files));
+    const selectedFiles = Array.from(e.target.files);
+    setNewPhotos((prevPhotos) => [...prevPhotos, ...selectedFiles]);
   };
 
   const handleAddPhotos = async () => {
     if (newPhotos.length === 0) return;
     try {
       const formData = new FormData();
-      newPhotos.forEach((photo) => {
-        formData.append('photos', photo);
-      });
+      formData.append('existingPhotos', JSON.stringify(existingPhotos)); // Send as JSON string
+      newPhotos.forEach((photo) => formData.append('photos', photo)); // Send new photos as files
       await axios.put(`/api/cars/${carId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -259,12 +264,13 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       setNewPhotos([]);
     } catch (err) {
       console.error('Error adding photos:', err);
-      alert('Failed to add photos');
+      alert('Failed to add photos: ' + (err.response?.data?.message || err.message));
     }
   };
 
   const handleDeletePhoto = async (index) => {
-    const updatedPhotos = car.photos.filter((_, i) => i !== index);
+    const updatedPhotos = existingPhotos.filter((_, i) => i !== index);
+    setExistingPhotos(updatedPhotos);
     try {
       await axios.put(`/api/cars/${carId}`, { photos: updatedPhotos });
       await fetchCarWithoutRefresh();
@@ -275,9 +281,10 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   };
 
   const movePhoto = async (fromIndex, toIndex) => {
-    const updatedPhotos = [...car.photos];
+    const updatedPhotos = [...existingPhotos];
     const [movedPhoto] = updatedPhotos.splice(fromIndex, 1);
     updatedPhotos.splice(toIndex, 0, movedPhoto);
+    setExistingPhotos(updatedPhotos);
     try {
       await axios.put(`/api/cars/${carId}`, { photos: updatedPhotos });
       await fetchCarWithoutRefresh();
@@ -675,9 +682,9 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
           {/* Photos Section */}
           <div style={{ marginBottom: '20px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#343a40', marginBottom: '10px' }}>Photos</h3>
-            {car.photos && car.photos.length > 0 ? (
+            {existingPhotos.length > 0 ? (
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                {car.photos.map((photo, index) => (
+                {existingPhotos.map((photo, index) => (
                   <Photo
                     key={index}
                     photo={photo}
@@ -713,6 +720,21 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                 Add Photos
               </button>
             </div>
+            {newPhotos.length > 0 && (
+              <div>
+                <h4>New Photos to Upload:</h4>
+                <ul>
+                  {newPhotos.map((photo, index) => (
+                    <li key={index}>
+                      {photo.name}
+                      <button type="button" onClick={() => setNewPhotos(newPhotos.filter((_, i) => i !== index))}>
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* History Section */}
