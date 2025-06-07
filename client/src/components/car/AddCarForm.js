@@ -21,7 +21,12 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
   };
 
   const handleFileChange = (e) => {
-    setPhotos(Array.from(e.target.files));
+    const selectedFiles = Array.from(e.target.files);
+    setPhotos((prevPhotos) => [...prevPhotos, ...selectedFiles]);
+  };
+
+  const removePhoto = (index) => {
+    setPhotos((prevPhotos) => prevPhotos.filter((_, i) => i !== index));
   };
 
   const handleAddChecklistItem = () => {
@@ -32,7 +37,7 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
   };
 
   const handleRemoveChecklistItem = (item) => {
-    setChecklist(checklist.filter(task => task !== item));
+    setChecklist(checklist.filter((task) => task !== item));
   };
 
   const handleSubmit = async (e) => {
@@ -207,6 +212,21 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
             onChange={handleFileChange}
             style={{ width: '100%', padding: '5px' }}
           />
+          {photos.length > 0 && (
+            <div>
+              <h4>Selected Photos:</h4>
+              <ul>
+                {photos.map((photo, index) => (
+                  <li key={index}>
+                    {photo.name}
+                    <button type="button" onClick={() => removePhoto(index)}>
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
           <button
