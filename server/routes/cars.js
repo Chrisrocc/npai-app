@@ -21,12 +21,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-const asyncHandler = fn => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(err => {
+const asyncHandler = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch((err) => {
     console.error(chalk.red(`Route error: ${req.method} ${req.path}`, err.message, err.stack));
     res.status(500).json({ message: 'Server error', error: err.message, details: process.env.NODE_ENV === 'development' ? err.stack : undefined });
   });
-};
 
 router.use(asyncHandler(async (req, res, next) => {
   console.log(chalk.blue(`Processing middleware for ${req.method} ${req.path}, User: ${req.user ? req.user.id : 'Not authenticated'}`));
@@ -37,16 +36,16 @@ router.use(asyncHandler(async (req, res, next) => {
 router.get('/archived', asyncHandler(async (req, res) => {
   console.log(chalk.blue('Handling GET /api/cars/archived'));
   const archivedCars = await Car.find({ archived: true });
-  console.log(chalk.blue(`Found ${archivedCars.length} archived cars: ${JSON.stringify(archivedCars.map(c => ({ _id: c._id, rego: c.rego })))}`));
+  console.log(chalk.blue(`Found ${archivedCars.length} archived cars: ${JSON.stringify(archivedCars.map((c) => ({ _id: c._id, rego: c.rego })))}`));
   res.json(archivedCars);
 }));
 
 router.get('/', asyncHandler(async (req, res) => {
   console.log(chalk.blue('Handling GET /api/cars'));
   const allCars = await Car.find({}); // Log all cars to see if new ones are visible
-  console.log(chalk.blue(`Found ${allCars.length} total cars: ${JSON.stringify(allCars.map(c => ({ _id: c._id, rego: c.rego, archived: c.archived })))}`));
+  console.log(chalk.blue(`Found ${allCars.length} total cars: ${JSON.stringify(allCars.map((c) => ({ _id: c._id, rego: c.rego, archived: c.archived })))}`));
   const cars = await Car.find({ archived: false });
-  console.log(chalk.blue(`Found ${cars.length} non-archived cars: ${JSON.stringify(cars.map(c => ({ _id: c._id, rego: c.rego, archived: c.archived })))}`));
+  console.log(chalk.blue(`Found ${cars.length} non-archived cars: ${JSON.stringify(cars.map((c) => ({ _id: c._id, rego: c.rego, archived: c.archived })))}`));
   res.json(cars);
 }));
 
@@ -61,14 +60,14 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 router.post('/', upload.array('photos'), asyncHandler(async (req, res) => {
   const { make, model, badge, rego, year, description, location, status, next, checklist, notes } = req.body;
-  const photos = req.files ? req.files.map(file => `Uploads/${file.filename}`) : [];
+  const photos = req.files ? req.files.map((file) => `Uploads/${file.filename}`) : [];
 
   let nextDestinations = [];
   if (next) {
     if (typeof next === 'string') {
       nextDestinations = [{ location: next, created: new Date() }];
     } else if (Array.isArray(next)) {
-      nextDestinations = next.map(loc => ({
+      nextDestinations = next.map((loc) => ({
         location: loc.location || loc,
         created: loc.created ? new Date(loc.created) : new Date(),
       }));
@@ -85,7 +84,7 @@ router.post('/', upload.array('photos'), asyncHandler(async (req, res) => {
     location,
     status,
     next: nextDestinations,
-    checklist: checklist ? checklist.split(',').map(item => item.trim()) : [],
+    checklist: checklist ? checklist.split(',').map((item) => item.trim()) : [],
     notes,
     photos,
     history: location ? [{ location, dateAdded: new Date(), dateLeft: null }] : [],
@@ -99,24 +98,24 @@ router.post('/', upload.array('photos'), asyncHandler(async (req, res) => {
 router.put('/:id', upload.array('photos'), asyncHandler(async (req, res) => {
   const carId = req.params.id;
   const updateData = req.body;
-  const newPhotos = req.files ? req.files.map(file => `Uploads/${file.filename}`) : [];
+  const newPhotos = req.files ? req.files.map((file) => `Uploads/${file.filename}`) : [];
 
-  if (updateData.photos) {
-    updateData.photos = [...(updateData.photos || []), ...newPhotos];
+  // Merge existing photos with new photos if provided
+  if (req.body.existingPhotos) {
+    const existingPhotos = JSON.parse(req.body.existingPhotos);
+    updateData.photos = [...existingPhotos, ...newPhotos];
   } else if (newPhotos.length > 0) {
-    updateData.photos = newPhotos;
+    updateData.photos = newPhotos.length > 0 ? [...(car.photos || []), ...newPhotos] : car.photos;
   }
 
   if (updateData.checklist) {
     if (Array.isArray(updateData.checklist)) {
-      updateData.checklist = updateData.checklist
-        .map(item => String(item).trim())
-        .filter(item => item);
+      updateData.checklist = updateData.checklist.map((item) => String(item).trim()).filter((item) => item);
     } else if (typeof updateData.checklist === 'string') {
       updateData.checklist = updateData.checklist
         .split(',')
-        .map(item => item.trim())
-        .filter(item => item);
+        .map((item) => item.trim())
+        .filter((item) => item);
     } else {
       return res.status(400).json({ message: 'Checklist must be a string or array' });
     }
@@ -126,7 +125,7 @@ router.put('/:id', upload.array('photos'), asyncHandler(async (req, res) => {
     if (typeof updateData.next === 'string') {
       updateData.next = [{ location: updateData.next, created: new Date() }];
     } else if (Array.isArray(updateData.next)) {
-      updateData.next = updateData.next.map(loc => ({
+      updateData.next = updateData.next.map((loc) => ({
         location: loc.location || loc,
         created: loc.created ? new Date(loc.created) : new Date(),
       }));
@@ -218,7 +217,7 @@ router.post('/:id/set-location', asyncHandler(async (req, res) => {
 
   let updatedNext = car.next;
   if (next) {
-    updatedNext = next.map(loc => ({
+    updatedNext = next.map((loc) => ({
       location: loc.location || loc,
       created: loc.created ? new Date(loc.created) : new Date(),
     }));
