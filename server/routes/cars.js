@@ -9,7 +9,11 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'Uploads/');
+    const uploadDir = 'Uploads/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     cb(null, `car_${Date.now()}${path.extname(file.originalname)}`);
@@ -20,7 +24,7 @@ const upload = multer({ storage });
 const asyncHandler = fn => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(err => {
     console.error(chalk.red(`Route error: ${req.method} ${req.path}`, err.message, err.stack));
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: 'Server error', error: err.message, details: process.env.NODE_ENV === 'development' ? err.stack : undefined });
   });
 };
 
