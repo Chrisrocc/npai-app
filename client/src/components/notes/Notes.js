@@ -17,8 +17,8 @@ const Notes = () => {
 
   const fetchNotes = useCallback(async () => {
     try {
-      console.log('Fetching notes from http://localhost:5000/api/notes...');
-      const response = await axios.get('http://localhost:5000/api/notes');
+      console.log('Fetching notes...');
+      const response = await axios.get('/api/notes');
       console.log('Notes response:', response.data);
       if (!Array.isArray(response.data)) {
         throw new Error('Expected an array of notes, but received: ' + JSON.stringify(response.data));
@@ -75,7 +75,7 @@ const Notes = () => {
         }));
       }
 
-      const response = await axios.put(`http://localhost:5000/api/notes/${editNoteId}`, updateData);
+      const response = await axios.put(`/api/notes/${editNoteId}`, updateData);
       console.log('Update note response:', response.data);
       setNotes(prevNotes =>
         prevNotes.map(note =>
@@ -105,7 +105,7 @@ const Notes = () => {
     if (window.confirm('Are you sure you want to delete this note?')) {
       try {
         console.log('Deleting note:', id);
-        const response = await axios.delete(`http://localhost:5000/api/notes/${id}`);
+        const response = await axios.delete(`/api/notes/${id}`);
         console.log('Delete note response:', response.data);
         fetchNotes();
       } catch (err) {
@@ -137,7 +137,7 @@ const Notes = () => {
           })
         };
 
-        const response = await axios.put(`http://localhost:5000/api/notes/${editNoteId}`, updateData);
+        const response = await axios.put(`/api/notes/${editNoteId}`, updateData);
         console.log('Update note with new car response:', response.data);
 
         await fetchNotes();
@@ -227,7 +227,7 @@ const Notes = () => {
                         <div style={{ flexShrink: '0' }}>
                           {row.car.photos && row.car.photos.length > 0 ? (
                             <img
-                              src={`http://localhost:5000/${row.car.photos[0]}`}
+                              src={`${process.env.REACT_APP_API_URL}/${row.car.photos[0]}`}
                               alt={`Car ${row.car.rego}`}
                               style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                               onError={(e) => (e.target.style.display = 'none')}

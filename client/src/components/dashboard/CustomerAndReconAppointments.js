@@ -12,26 +12,26 @@ const CustomerAndReconAppointments = () => {
     if (!dayTime) return null;
 
     const dayTimeLower = dayTime.toLowerCase().trim();
-    const now = new Date('2025-06-02T21:05:00+10:00'); // Current date and time: June 02, 2025, 09:05 PM AEST
+    const now = new Date('2025-06-07T09:15:00+10:00'); // Current date and time: June 07, 2025, 09:15 AM AEST
     const today = new Date(now);
-    today.setHours(0, 0, 0, 0); // Start of today: June 02, 2025, 00:00:00
+    today.setHours(0, 0, 0, 0); // Start of today: June 07, 2025, 00:00:00
 
-    // Map of weekday names to their dates relative to today (Monday, June 02, 2025)
+    // Map of weekday names to their dates relative to today (Saturday, June 07, 2025)
     const weekdayMap = {
-      'mon': 0, // Monday (June 02, 2025)
-      'monday': 0,
-      'tue': 1, // Tuesday (June 03, 2025)
-      'tuesday': 1,
-      'wed': 2, // Wednesday (June 04, 2025)
-      'wednesday': 2,
-      'thu': 3, // Thursday (June 05, 2025)
-      'thursday': 3,
-      'fri': 4, // Friday (June 06, 2025)
-      'friday': 4,
-      'sat': 5, // Saturday (June 07, 2025)
-      'saturday': 5,
-      'sun': 6, // Sunday (June 08, 2025)
-      'sunday': 6,
+      'sat': 0, // Saturday (June 07, 2025)
+      'saturday': 0,
+      'sun': 1, // Sunday (June 08, 2025)
+      'sunday': 1,
+      'mon': 2, // Monday (June 09, 2025)
+      'monday': 2,
+      'tue': 3, // Tuesday (June 10, 2025)
+      'tuesday': 3,
+      'wed': 4, // Wednesday (June 11, 2025)
+      'wednesday': 4,
+      'thu': 5, // Thursday (June 12, 2025)
+      'thursday': 5,
+      'fri': 6, // Friday (June 13, 2025)
+      'friday': 6,
     };
 
     // Check for "today" or phrases like "Could be today"
@@ -115,23 +115,23 @@ const CustomerAndReconAppointments = () => {
   const fetchAppointments = useCallback(async () => {
     try {
       // Fetch Customer Appointments
-      const customerResponse = await axios.get('http://localhost:5000/api/customerappointments');
+      const customerResponse = await axios.get('/api/customerappointments');
       const customerApps = customerResponse.data;
 
       // Fetch Reconditioning Appointments
-      const reconResponse = await axios.get('http://localhost:5000/api/reconappointments');
+      const reconResponse = await axios.get('/api/reconappointments');
       const reconApps = reconResponse.data;
 
       // Define today and tomorrow
-      const now = new Date('2025-06-02T21:05:00+10:00'); // Current date and time: June 02, 2025, 09:05 PM AEST
+      const now = new Date('2025-06-07T09:15:00+10:00'); // Current date and time: June 07, 2025, 09:15 AM AEST
       const todayStart = new Date(now);
-      todayStart.setHours(0, 0, 0, 0); // Start of today: June 02, 2025, 00:00:00
+      todayStart.setHours(0, 0, 0, 0); // Start of today: June 07, 2025, 00:00:00
       const todayEnd = new Date(now);
-      todayEnd.setHours(23, 59, 59, 999); // End of today: June 02, 2025, 23:59:59
+      todayEnd.setHours(23, 59, 59, 999); // End of today: June 07, 2025, 23:59:59
       const tomorrowStart = new Date(todayStart);
-      tomorrowStart.setDate(todayStart.getDate() + 1); // Start of tomorrow: June 03, 2025, 00:00:00
+      tomorrowStart.setDate(todayStart.getDate() + 1); // Start of tomorrow: June 08, 2025, 00:00:00
       const tomorrowEnd = new Date(tomorrowStart);
-      tomorrowEnd.setHours(23, 59, 59, 999); // End of tomorrow: June 03, 2025, 23:59:59
+      tomorrowEnd.setHours(23, 59, 59, 999); // End of tomorrow: June 08, 2025, 23:59:59
 
       // Filter Customer Appointments for today and tomorrow
       const filteredCustomerApps = customerApps.filter(app => {

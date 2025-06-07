@@ -21,8 +21,8 @@ const Tasks = () => {
 
   const fetchTasks = useCallback(async () => {
     try {
-      console.log('Fetching tasks from http://localhost:5000/api/tasks...');
-      const response = await axios.get('http://localhost:5000/api/tasks');
+      console.log('Fetching tasks...');
+      const response = await axios.get('/api/tasks');
       console.log('Tasks response:', response.data);
       if (!Array.isArray(response.data)) {
         throw new Error('Expected an array of tasks, but received: ' + JSON.stringify(response.data));
@@ -94,7 +94,7 @@ const Tasks = () => {
         }));
       }
 
-      const response = await axios.put(`http://localhost:5000/api/tasks/${editTaskId}`, updateData);
+      const response = await axios.put(`/api/tasks/${editTaskId}`, updateData);
       console.log('Update task response:', response.data);
 
       setTasks(prevTasks =>
@@ -126,7 +126,7 @@ const Tasks = () => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
         console.log('Deleting task:', id);
-        const response = await axios.delete(`http://localhost:5000/api/tasks/${id}`);
+        const response = await axios.delete(`/api/tasks/${id}`);
         console.log('Delete task response:', response.data);
         fetchTasks();
       } catch (err) {
@@ -138,7 +138,7 @@ const Tasks = () => {
 
   const handleAddTask = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/api/tasks', newTask);
+      const response = await axios.post('/api/tasks', newTask);
       console.log('Add task response:', response.data);
       setNewTask({ name: '', dayTime: '', carItems: [] });
       setShowAddModal(false);
@@ -175,7 +175,7 @@ const Tasks = () => {
           })
         };
 
-        const response = await axios.put(`http://localhost:5000/api/tasks/${editTaskId}`, updateData);
+        const response = await axios.put(`/api/tasks/${editTaskId}`, updateData);
         console.log('Update task with new car response:', response.data);
 
         // Fetch the updated task list to ensure the UI reflects the latest data
@@ -193,7 +193,7 @@ const Tasks = () => {
     } else {
       // When adding a new task, fetch the car details and update newTask
       try {
-        const response = await axios.get(`http://localhost:5000/api/cars/${carId}`);
+        const response = await axios.get(`/api/cars/${carId}`);
         const selectedCar = response.data;
         console.log('Fetched car details:', selectedCar);
 
@@ -222,7 +222,7 @@ const Tasks = () => {
   };
 
   const getTaskRowColor = (dayTime, dateCreated) => {
-    const now = new Date('2025-06-01T22:15:00+10:00'); // Current date and time: June 01, 2025, 10:15 PM AEST
+    const now = new Date('2025-06-07T09:15:00+10:00'); // Current date and time: June 07, 2025, 09:15 AM AEST
     let isPastDue = false;
     let isOverTwoHours = false;
 
@@ -387,7 +387,7 @@ const Tasks = () => {
                       <div style={{ flexShrink: 0 }}>
                         {row.car.photos && row.car.photos.length > 0 ? (
                           <img
-                            src={`http://localhost:5000/${row.car.photos[0]}`}
+                            src={`${process.env.REACT_APP_API_URL}/${row.car.photos[0]}`}
                             alt={`Car ${row.car.rego}`}
                             style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }}
                             onError={(e) => (e.target.style.display = 'none')}

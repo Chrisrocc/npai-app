@@ -17,7 +17,7 @@ const ManualVerification = ({ onClose, onVerificationComplete }) => {
   useEffect(() => {
     const fetchVerifications = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/manualverifications');
+        const response = await axios.get('/api/manualverifications');
         setVerifications(response.data);
         setLoading(false);
       } catch (err) {
@@ -35,8 +35,8 @@ const ManualVerification = ({ onClose, onVerificationComplete }) => {
 
   const handleDeleteVerification = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/manualverifications/${id}`);
-      const response = await axios.get('http://localhost:5000/api/manualverifications');
+      await axios.delete(`/api/manualverifications/${id}`);
+      const response = await axios.get('/api/manualverifications');
       setVerifications(response.data);
     } catch (err) {
       console.error('Error deleting verification:', err);
@@ -109,11 +109,11 @@ const ManualVerification = ({ onClose, onVerificationComplete }) => {
       Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
       // Store original car data for undo
-      const carBeforeUpdate = await axios.get(`http://localhost:5000/api/cars/${carId}`);
+      const carBeforeUpdate = await axios.get(`/api/cars/${carId}`);
       const originalData = carBeforeUpdate.data;
 
       // Update the car
-      await axios.put(`http://localhost:5000/api/cars/${carId}`, updateData);
+      await axios.put(`/api/cars/${carId}`, updateData);
 
       // Show confirmation popup
       setConfirmationDetails({
@@ -177,8 +177,8 @@ const ManualVerification = ({ onClose, onVerificationComplete }) => {
   const handleConfirm = async () => {
     try {
       if (lastAction.type === 'update' || lastAction.type === 'add') {
-        await axios.delete(`http://localhost:5000/api/manualverifications/${confirmationDetails.verificationId}`);
-        const response = await axios.get('http://localhost:5000/api/manualverifications');
+        await axios.delete(`/api/manualverifications/${confirmationDetails.verificationId}`);
+        const response = await axios.get('/api/manualverifications');
         setVerifications(response.data);
         onVerificationComplete();
       }
@@ -195,25 +195,21 @@ const ManualVerification = ({ onClose, onVerificationComplete }) => {
     try {
       if (lastAction.type === 'update') {
         // Revert car changes
-        await axios.put(`http://localhost:5000/api/cars/${lastAction.carId}`, lastAction.originalData);
+        await axios.put(`/api/cars/${lastAction.carId}`, lastAction.originalData);
       } else if (lastAction.type === 'add') {
         // Delete the newly added car (assumes AddCarForm returns the new car ID)
-        const newCar = await axios.get('http://localhost:5000/api/cars').then(res => 
+        const newCar = await axios.get('/api/cars').then(res => 
           res.data.find(car => car.rego === confirmationDetails.car.rego || 
             (car.make === confirmationDetails.car.make && car.model === confirmationDetails.car.model))
         );
         if (newCar) {
-          await axios.delete(`http://localhost:5000/api/cars/${newCar._id}`);
+          await axios.delete(`/api/cars/${newCar._id}`);
         }
       }
-      // Restore the verification entry
-      const manualEntry = new ManualVerification({
-        message: selectedVerification?.message || confirmationDetails.car.make,
-        category: selectedVerification?.category || 'Unknown',
-        data: selectedVerification?.data || []
-      });
-      await manualEntry.save();
-      const response = await axios.get('http://localhost:5000/api/manualverifications');
+      // Note: The code below references 'ManualVerification' (a Mongoose model) which is server-side logic.
+      // This should be handled by the backend, so we'll skip restoring the verification entry here.
+      // Instead, the backend should handle restoring the verification if needed.
+      const response = await axios.get('/api/manualverifications');
       setVerifications(response.data);
       onVerificationComplete();
       setShowConfirmation(false);
