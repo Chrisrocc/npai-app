@@ -97,15 +97,20 @@ router.post('/', upload.array('photos'), asyncHandler(async (req, res) => {
 
 router.put('/:id', upload.array('photos'), asyncHandler(async (req, res) => {
   const carId = req.params.id;
+  const car = await Car.findById(carId); // Ensure car is fetched before proceeding
+  if (!car) {
+    return res.status(404).json({ message: 'Car not found' });
+  }
+
   const updateData = req.body;
   const newPhotos = req.files ? req.files.map((file) => `Uploads/${file.filename}`) : [];
 
-  // Merge existing photos with new photos if provided
+  // Merge existing photos with new photos
   if (req.body.existingPhotos) {
     const existingPhotos = JSON.parse(req.body.existingPhotos);
     updateData.photos = [...existingPhotos, ...newPhotos];
   } else if (newPhotos.length > 0) {
-    updateData.photos = newPhotos.length > 0 ? [...(car.photos || []), ...newPhotos] : car.photos;
+    updateData.photos = [...car.photos, ...newPhotos];
   }
 
   if (updateData.checklist) {
@@ -132,11 +137,6 @@ router.put('/:id', upload.array('photos'), asyncHandler(async (req, res) => {
     } else {
       return res.status(400).json({ message: 'Next must be a string or array' });
     }
-  }
-
-  const car = await Car.findById(carId);
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
   }
 
   if (updateData.location && updateData.location !== car.location) {
