@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../utils/axiosConfig';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { DndProvider, useDrag, useDrop } from 'react-dnd'; // Fixed typo from react-dny to react-dnd
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import NextDestinationsEditor from './NextDestinationsEditor';
 
+// Define drag-and-drop item types
 const ItemTypes = {
   PHOTO: 'photo',
 };
 
+// Photo component for drag-and-drop functionality
 const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.PHOTO,
@@ -34,15 +36,16 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
       style={{
         position: 'relative',
         opacity: isDragging ? 0.5 : 1,
+        margin: '5px',
       }}
     >
       <img
-        src={`${process.env.REACT_APP_API_URL}/uploads/${photo}`}
+        src={`${process.env.REACT_APP_API_URL}/uploads/${photo}`} // Consistent /uploads/ path
         alt={`Car ${rego} - Photo ${index + 1}`}
         style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
         onError={(e) => {
-          console.error(`Failed to load image: ${photo}`, e);
-          e.target.src = 'https://via.placeholder.com/100'; // Fallback image
+          console.error(`Failed to load image: /uploads/${photo}`, e);
+          e.target.src = 'https://placehold.co/100x100?text=Image+Not+Found'; // Reliable fallback
         }}
       />
       <button
@@ -70,6 +73,7 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
   );
 };
 
+// Main CarProfileModal component
 const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true }) => {
   const { id: routeCarId } = useParams();
   const navigate = useNavigate();
@@ -90,10 +94,12 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     const fetchCar = async () => {
       try {
         const response = await axios.get(`/api/cars/${carId}`);
-        setCar(response.data);
-        setExistingPhotos(response.data.photos || []); // Sync with server
+        const carData = response.data;
+        setCar(carData);
+        setExistingPhotos(carData.photos || []); // Sync with server on initial load
         setModalLoading(false);
       } catch (err) {
+        console.error('Error fetching car details:', err);
         setModalError('Failed to fetch car details');
         setModalLoading(false);
       }
@@ -105,21 +111,25 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     const interval = setInterval(async () => {
       try {
         const response = await axios.get(`/api/cars/${carId}`);
-        setCar(response.data);
-        setExistingPhotos(response.data.photos || []); // Sync on poll
+        const carData = response.data;
+        if (JSON.stringify(car) !== JSON.stringify(carData)) {
+          setCar(carData);
+          setExistingPhotos(carData.photos || []); // Sync only if data changed
+        }
       } catch (err) {
         console.error('Error polling car data:', err);
       }
-    }, 30000); // 30-second polling
+    }, 30000); // Poll every 30 seconds
 
     return () => clearInterval(interval);
-  }, [carId]);
+  }, [carId, car]);
 
   const fetchCarWithoutRefresh = async () => {
     try {
       const response = await axios.get(`/api/cars/${carId}`);
-      setCar(response.data);
-      setExistingPhotos(response.data.photos || []);
+      const carData = response.data;
+      setCar(carData);
+      setExistingPhotos(carData.photos || []);
       if (fetchCars) fetchCars();
     } catch (err) {
       console.error('Error fetching car:', err);
@@ -144,8 +154,8 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       setEditingField(null);
       setEditValue('');
     } catch (err) {
-      console.error('Error updating car:', err);
-      alert('Failed to update car');
+      console.error(`Error updating ${editingField}:`, err);
+      alert(`Failed to update ${editingField}: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -179,7 +189,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       setEditValue('');
     } catch (err) {
       console.error('Error updating history:', err);
-      alert('Failed to update history');
+      alert('Failed to update history: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -195,7 +205,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error deleting history entry:', err);
-      alert('Failed to delete history entry');
+      alert('Failed to delete history entry: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -207,7 +217,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error updating checklist:', err);
-      alert('Failed to update checklist');
+      alert('Failed to update checklist: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -220,7 +230,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
         setNewChecklistItem('');
       } catch (err) {
         console.error('Error adding checklist item:', err);
-        alert('Failed to add checklist item');
+        alert('Failed to add checklist item: ' + (err.response?.data?.message || err.message));
       }
     }
   };
@@ -232,7 +242,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error removing checklist item:', err);
-      alert('Failed to remove checklist item');
+      alert('Failed to remove checklist item: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -242,7 +252,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error updating stage:', err);
-      alert('Failed to update stage');
+      alert('Failed to update stage: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -279,7 +289,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error deleting photo:', err);
-      alert('Failed to delete photo');
+      alert('Failed to delete photo: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -293,7 +303,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error rearranging photos:', err);
-      alert('Failed to rearrange photos');
+      alert('Failed to rearrange photos: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -315,7 +325,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       await fetchCarWithoutRefresh();
     } catch (err) {
       console.error('Error setting current location:', err);
-      alert('Failed to set current location');
+      alert('Failed to set current location: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -927,4 +937,4 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   );
 };
 
-export default CarProfileModal;
+export default CarProfileModal; // Ensure export is at the top level
