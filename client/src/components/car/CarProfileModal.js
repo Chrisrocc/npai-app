@@ -40,7 +40,10 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
         src={`${process.env.REACT_APP_API_URL}/uploads/${photo}`}
         alt={`Car ${rego} - Photo ${index + 1}`}
         style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
-        onError={(e) => console.error(`Failed to load image: ${photo}`, e)}
+        onError={(e) => {
+          console.error(`Failed to load image: ${photo}`, e);
+          e.target.src = 'https://via.placeholder.com/100'; // Fallback image
+        }}
       />
       <button
         onClick={() => deletePhoto(index)}
@@ -88,7 +91,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       try {
         const response = await axios.get(`/api/cars/${carId}`);
         setCar(response.data);
-        setExistingPhotos(response.data.photos || []); // Initialize existing photos
+        setExistingPhotos(response.data.photos || []); // Sync with server
         setModalLoading(false);
       } catch (err) {
         setModalError('Failed to fetch car details');
@@ -98,17 +101,16 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     fetchCar();
   }, [carId]);
 
-  // Reduce polling frequency to avoid overload
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const response = await axios.get(`/api/cars/${carId}`);
         setCar(response.data);
-        setExistingPhotos(response.data.photos || []);
+        setExistingPhotos(response.data.photos || []); // Sync on poll
       } catch (err) {
         console.error('Error polling car data:', err);
       }
-    }, 30000); // Poll every 30 seconds instead of 5
+    }, 30000); // 30-second polling
 
     return () => clearInterval(interval);
   }, [carId]);
@@ -118,7 +120,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       const response = await axios.get(`/api/cars/${carId}`);
       setCar(response.data);
       setExistingPhotos(response.data.photos || []);
-      if (fetchCars) fetchCars(); // Call parent fetchCars to update the table
+      if (fetchCars) fetchCars();
     } catch (err) {
       console.error('Error fetching car:', err);
     }
@@ -253,15 +255,16 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     if (newPhotos.length === 0) return;
     try {
       const formData = new FormData();
-      formData.append('existingPhotos', JSON.stringify(existingPhotos)); // Send as JSON string
-      newPhotos.forEach((photo) => formData.append('photos', photo)); // Send new photos as files
-      await axios.put(`/api/cars/${carId}`, formData, {
+      formData.append('existingPhotos', JSON.stringify(existingPhotos)); // Send as JSON
+      newPhotos.forEach((photo) => formData.append('photos', photo)); // Send new files
+      const response = await axios.put(`/api/cars/${carId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       await fetchCarWithoutRefresh();
       setNewPhotos([]);
+      console.log('Photo upload response:', response.data);
     } catch (err) {
       console.error('Error adding photos:', err);
       alert('Failed to add photos: ' + (err.response?.data?.message || err.message));
