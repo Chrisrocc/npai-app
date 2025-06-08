@@ -107,20 +107,20 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
 
       try {
         const updateData = {
-          location: currentLocation, // Always set location to the provided value
-          status: readyStatus || carToUpdate.status, // Update status if provided, otherwise keep existing
+          location: currentLocation || carToUpdate.location, // Set location only if provided, otherwise keep existing
+          status: readyStatus || carToUpdate.status, // Set status only if provided, otherwise keep existing
           description: description || carToUpdate.description,
           notes: notes ? (carToUpdate.notes ? `${carToUpdate.notes}; ${notes}` : notes) : carToUpdate.notes,
         };
 
-        // Schedule history update if location changed
         if (currentLocation && currentLocation !== carToUpdate.location) {
           const historyUpdated = await updateCarHistory(carToUpdate._id, currentLocation, cleanedMessage);
           if (!historyUpdated) {
             throw new Error('Failed to schedule history update');
           }
+        } else {
+          await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
         }
-        await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
 
         telegramLogger(`- Updated car status to ${updateData.status} at ${updateData.location}`, 'action');
       } catch (e) {
@@ -609,7 +609,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         };
         telegramLogger(`- Attempting to update with checklist: ${JSON.stringify(updateData.checklist)}`, 'debug');
 
-        const updatedCar = await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true, runValidators: true });
+        const updatedCar = await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true, runValidators: true});
 
         if (!updatedCar) {
           telegramLogger(`- Failed to update car: Document not found`, 'error');
