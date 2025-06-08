@@ -12,17 +12,44 @@ const { parse } = require('csv-parse');
 const fs = require('fs');
 const { processPendingLocationUpdates } = require('./utils/helpers');
 const { startCronJobs } = require('./utils/cron-jobs');
-const { exec } = require('child_process');
+
+// Import routes
+const carRoutes = require('./routes/cars');
+const customerAppointmentRoutes = require('./routes/customerAppointments');
+const reconAppointmentRoutes = require('./routes/reconappointments');
+const manualVerificationRoutes = require('./routes/manualVerifications');
+const taskRoutes = require('./routes/tasks');
+const noteRoutes = require('./routes/notes');
+
+// Register models
+console.log(chalk.blue('Registering models...'));
+require('./models/Cars');
+require('./models/CustomerAppointment');
+require('./models/ReconAppointment');
+require('./models/ManualVerification');
+require('./models/Tasks');
+require('./models/Note');
+console.log(chalk.green('Models registered successfully'));
+
+// Register User model
+console.log(chalk.blue('Registering User model...'));
+require('./models/Users');
+console.log(chalk.green('User model registered successfully'));
 
 dotenv.config();
 
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? chalk.green('Set') : chalk.red('Missing'));
+console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? chalk.green('Set') : chalk.red('Missing'));
+
 const app = express();
 
-// Multer Configuration
+// Configure Multer for CSV file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = 'uploads/';
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -56,7 +83,7 @@ app.use(cors({
 app.use(cookieParser());
 app.use(logRequest);
 
-// Serve static files from the Uploads folder
+// Serve static files from the Uploads folder (aligned with cars.js)
 app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
 // Connect to MongoDB
@@ -64,174 +91,15 @@ connectDB();
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/cars', authenticateToken, require('./routes/cars'));
-app.use('/api/customerappointments', authenticateToken, require('./routes/customerAppointments'));
-app.use('/api/reconappointments', authenticateToken, require('./routes/reconappointments'));
-app.use('/api/manualverifications', authenticateToken, require('./routes/manualVerifications'));
-app.use('/api/tasks', authenticateToken, require('./routes/tasks'));
-app.use('/api/notes', authenticateToken, require('./routes/notes'));
+app.use('/api/cars', authenticateToken, carRoutes); // Re-enabled authentication
+app.use('/api/customerappointments', authenticateToken, customerAppointmentRoutes);
+app.use('/api/reconappointments', authenticateToken, reconAppointmentRoutes);
+app.use('/api/manualverifications', authenticateToken, manualVerificationRoutes);
+app.use('/api/tasks', authenticateToken, taskRoutes);
+app.use('/api/notes', authenticateToken, noteRoutes);
 
-// Register models
-console.log(chalk.blue('Registering models...'));
-require('./models/Cars');
-require('./models/CustomerAppointment');
-require('./models/ReconAppointment');
-require('./models/ManualVerification');
-require('./models/Tasks');
-require('./models/Note');
-require('./models/Users');
-console.log(chalk.green('Models registered successfully'));
-
-// Register User model
-console.log(chalk.blue('Registering User model...'));
-require('./models/Users');
-console.log(chalk.green('User model registered successfully'));
-
-console.log('JWT_SECRET:', process.env.JWT_SECRET ? chalk.green('Set') : chalk.red('Missing'));
-console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? chalk.green('Set') : chalk.red('Missing'));
-
-// Python Script Runner
-async function runPythonScript(message) {
-  return new Promise((resolve) => {
-    exec(`python3 npai.py "${message}"`, (error, stdout, stderr) => {
-      if (error) {
-        console.error(chalk.red(`Python execution error: ${error.message}`));
-        resolve({ error: error.message });
-      } else {
-        try {
-          const result = JSON.parse(stdout);
-          resolve(result);
-        } catch (e) {
-          console.error(chalk.red(`Python output parse error: ${e.message}`));
-          resolve({ error: e.message });
-        }
-      }
-    });
-  });
-}
-
-// Telegram Webhook
-app.post('/telegram-webhook', async (req, res) => {
-  const { message } = req.body;
-  if (!message || !message.text) {
-    return res.sendStatus(200);
-  }
-
-  const pythonResult = await runPythonScript(message.text);
-  if (pythonResult.error) {
-    console.error(chalk.red('Python script error:', pythonResult.error));
-    return res.sendStatus(500);
-  }
-
-  const Car = require('./models/Cars');
-  const { categories } = pythonResult;
-
-  for (const category in categories) {
-    if (category === "Ready") {
-      for (const entry of categories[category]) {
-        const { data, fromPhoto } = entry;
-        const [make, model, badge, description, rego, location, status, notes] = data;
-        const query = {
-          ...(make && make !== "Car" ? { make: { $regex: new RegExp(`^${make}$`, 'i') } } : {}),
-          ...(model ? { model: { $regex: new RegExp(`^${model}$`, 'i') } } : {}),
-          ...(rego ? { rego: { $regex: new RegExp(`^${rego}$`, 'i') } } : {}),
-          ...(description ? { description: { $regex: new RegExp(description, 'i') } } : {})
-        };
-        try {
-          let car = await Car.findOne(query);
-          if (car) {
-            car.status = status === "Ready" || status === "ready" ? "Ready" : car.status;
-            car.location = location || car.location;
-            car.notes = notes || car.notes;
-            await car.save();
-            console.log(chalk.green(`Updated ${car.rego} to status: ${car.status}, location: ${car.location}, notes: ${car.notes}`));
-          } else if (make === "Car" && !rego) {
-            console.log(chalk.yellow("No specific car identified, skipping update."));
-          } else {
-            console.log(chalk.yellow(`No matching car found for query: ${JSON.stringify(query)}`));
-          }
-        } catch (error) {
-          console.error(chalk.red(`Error updating car: ${error.message}`));
-        }
-      }
-    } else if (category === "Drop Off") {
-      for (const entry of categories[category]) {
-        const { data } = entry;
-        const [make, model, badge, description, rego, currentLocation, nextLocation, notes] = data;
-        const query = {
-          ...(make && make !== "Car" ? { make: { $regex: new RegExp(`^${make}$`, 'i') } } : {}),
-          ...(model ? { model: { $regex: new RegExp(`^${model}$`, 'i') } } : {}),
-          ...(rego ? { rego: { $regex: new RegExp(`^${rego}$`, 'i') } } : {}),
-          ...(description ? { description: { $regex: new RegExp(description, 'i') } } : {})
-        };
-        try {
-          let car = await Car.findOne(query);
-          if (car) {
-            car.location = currentLocation || car.location;
-            if (nextLocation && nextLocation !== "picked up") {
-              car.next = [{ location: nextLocation, created: new Date() }, ...car.next];
-            }
-            car.notes = notes || car.notes;
-            await car.save();
-            console.log(chalk.green(`Updated ${car.rego} location to ${car.location}, next: ${nextLocation}, notes: ${car.notes}`));
-          } else if (make === "Car" && !rego) {
-            console.log(chalk.yellow("No specific car identified for drop-off, skipping update."));
-          } else {
-            console.log(chalk.yellow(`No matching car found for drop-off query: ${JSON.stringify(query)}`));
-          }
-        } catch (error) {
-          console.error(chalk.red(`Error updating car for drop-off: ${error.message}`));
-        }
-      }
-    } else if (category === "Customer Appointment") {
-      // Handle customer appointments (to be implemented based on your needs)
-      console.log(chalk.blue("Customer Appointment data received:", categories[category]));
-    } else if (category === "Reconditioning Appointment") {
-      // Handle reconditioning appointments (to be implemented)
-      console.log(chalk.blue("Reconditioning Appointment data received:", categories[category]));
-    } else if (category === "Car Repairs") {
-      // Handle car repairs (to be implemented)
-      console.log(chalk.blue("Car Repairs data received:", categories[category]));
-    } else if (category === "Location Update") {
-      for (const entry of categories[category]) {
-        const { data } = entry;
-        const [make, model, badge, description, rego, oldLocation, newLocation, notes] = data;
-        const query = {
-          ...(make && make !== "Car" ? { make: { $regex: new RegExp(`^${make}$`, 'i') } } : {}),
-          ...(model ? { model: { $regex: new RegExp(`^${model}$`, 'i') } } : {}),
-          ...(rego ? { rego: { $regex: new RegExp(`^${rego}$`, 'i') } } : {}),
-          ...(description ? { description: { $regex: new RegExp(description, 'i') } } : {})
-        };
-        try {
-          let car = await Car.findOne(query);
-          if (car) {
-            if (oldLocation && car.location !== oldLocation) {
-              console.log(chalk.yellow(`Location mismatch: expected ${oldLocation}, found ${car.location}, proceeding with update`));
-            }
-            car.location = newLocation || car.location;
-            car.notes = notes || car.notes;
-            await car.save();
-            console.log(chalk.green(`Updated ${car.rego} location to ${car.location}, notes: ${car.notes}`));
-          } else if (make === "Car" && !rego) {
-            console.log(chalk.yellow("No specific car identified for location update, skipping."));
-          } else {
-            console.log(chalk.yellow(`No matching car found for location update query: ${JSON.stringify(query)}`));
-          }
-        } catch (error) {
-          console.error(chalk.red(`Error updating car location: ${error.message}`));
-        }
-      }
-    } else if (category === "To Do") {
-      // Handle to-do tasks (to be implemented)
-      console.log(chalk.blue("To Do data received:", categories[category]));
-    } else if (category === "Notes") {
-      // Handle notes (to be implemented)
-      console.log(chalk.blue("Notes data received:", categories[category]));
-    }
-  }
-
-  res.sendStatus(200);
-});
+// Telegram webhook endpoint
+app.post('/telegram-webhook', require('./utils/telegram').telegramWebhook);
 
 // CSV file upload route to add new cars
 app.post('/api/cars/upload-csv', authenticateToken, upload.single('file'), async (req, res) => {
@@ -270,7 +138,7 @@ app.post('/api/cars/upload-csv', authenticateToken, upload.single('file'), async
               series: row.Series,
               badge: row.Badge,
               year: parseInt(row.CompYear, 10) || undefined,
-              description: row.Colour, // Color is part of description
+              description: row.Colour,
               rego: row.REGO,
               stage: 'In Works',
               photos: [],
