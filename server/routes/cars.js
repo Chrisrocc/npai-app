@@ -36,16 +36,16 @@ router.use(asyncHandler(async (req, res, next) => {
 router.get('/archived', asyncHandler(async (req, res) => {
   console.log(chalk.blue('Handling GET /api/cars/archived'));
   const archivedCars = await Car.find({ archived: true });
-  console.log(chalk.blue(`Found ${archivedCars.length} archived cars: ${JSON.stringify(archivedCars.map((c) => ({ _id: c._id, rego: c.rego })))}`));
+  // Removed detailed log: console.log(chalk.blue(`Found ${archivedCars.length} archived cars: ${JSON.stringify(archivedCars.map((c) => ({ _id: c._id, rego: c.rego })))`));
   res.json(archivedCars);
 }));
 
 router.get('/', asyncHandler(async (req, res) => {
   console.log(chalk.blue('Handling GET /api/cars'));
   const allCars = await Car.find({}); // Log all cars to see if new ones are visible
-  console.log(chalk.blue(`Found ${allCars.length} total cars: ${JSON.stringify(allCars.map((c) => ({ _id: c._id, rego: c.rego, archived: c.archived })))}`));
+  // Removed detailed log: console.log(chalk.blue(`Found ${allCars.length} total cars: ${JSON.stringify(allCars.map((c) => ({ _id: c._id, rego: c.rego, archived: c.archived })))`));
   const cars = await Car.find({ archived: false });
-  console.log(chalk.blue(`Found ${cars.length} non-archived cars: ${JSON.stringify(cars.map((c) => ({ _id: c._id, rego: c.rego, archived: c.archived })))}`));
+  // Removed detailed log: console.log(chalk.blue(`Found ${cars.length} non-archived cars: ${JSON.stringify(cars.map((c) => ({ _id: c._id, rego: c.rego, archived: c.archived })))`));
   res.json(cars);
 }));
 
