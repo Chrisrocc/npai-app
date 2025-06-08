@@ -39,9 +39,11 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const navigate = useNavigate();
 
+  const apiUrl = process.env.REACT_APP_API_URL || '';
+
   const fetchCars = useCallback(async () => {
     try {
-      const response = await axios.get('/api/cars');
+      const response = await axios.get(`${apiUrl}/api/cars`);
       const fetchedCars = response.data;
       const updatedCars = await Promise.all(fetchedCars.map(async car => {
         if (car.pendingLocationUpdate && car.pendingLocationUpdate.message) {
@@ -78,7 +80,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const fetchVerificationCount = useCallback(async () => {
     try {
-      const response = await axios.get('/api/manualverifications');
+      const response = await (`${apiUrl}/api/manualverifications`);
       const count = response.data.length;
       setVerificationCount(count);
       console.log(`Fetched verification count: ${count}`);
@@ -93,7 +95,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const fetchPlans = useCallback(async () => {
     try {
-      const response = await axios.get('/api/plans');
+      const response = await axios.get(`${apiUrl}/api/plans`)
       setPlans(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('Error fetching plans:', err);
@@ -183,7 +185,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
   const handleSelectCar = async (selectedCarIds) => {
     try {
       const carId = selectedCarIds[0];
-      const response = await axios.get(`/api/cars/${carId}`);
+      const response = await axios.get(`${apiUrl}/api/cars/${carId}`);
       const car = response.data;
       await axios.put(`/api/plans/${planToIdentify.id}`, {
         identifiedCar: {
