@@ -73,13 +73,12 @@ def analyze_photo(photo_path: str) -> str:
             "- Make (e.g., Mitsubishi, Toyota)\n"
             "- Model (e.g., Triton, Corolla)\n"
             "- Badge/Trim (e.g., SR5, XR6)\n"
-            "- Color (e.g., blue, white)\n"
-            "- Descriptive features (e.g., bullbar, canopy)\n"
+            "- Color and descriptive features (e.g., 'blue with bullbar', 'white canopy')\n"
             "- Registration/license plate number (rego, if visible, e.g., 123ABC)\n"
             "Format vehicle responses as a single string starting with 'Photo:', e.g., 'Photo: Blue Mitsubishi Triton SR5 rego 123ABC with bullbar'. "
             "Omit any details not identifiable, keeping it short. "
             "If the vehicle cannot be identified, return 'Photo: Car'. "
-            "If the image is not a full vehicle (e.g., a car part, check engine light, invoice, oil or fluid - Brown or Black = Oil, Pink or Green = Coolent, Red = Brake Fluid), return a brief description starting with 'Photo Analysis: ', "
+            "If the image is not a full vehicle (e.g., a car part, check engine light, invoice, oil or fluid - Brown or Black = Oil, Pink or Green = Coolant, Red = Brake Fluid), return a brief description starting with 'Photo Analysis: ', "
             "e.g., 'Photo Analysis: Check engine light', 'Photo Analysis: Motor oil', 'Photo Analysis: Invoice for Unique Automotive'. "
             "Keep all responses concise—no lengthy descriptions."
         )
@@ -283,11 +282,11 @@ Output:
 
 3. Preserve the sender from each line.
 4. Preserve the '[PHOTO]' marker if present.
-5. Preserve relvant information like Colour and general descriptive words, Conditions ("When John has the <car> ready")
+5. Preserve relevant information like Colour and general descriptive words, Conditions ("When John has the <car> ready")
 
 6. Car Makes and Models - Only Makes and Models sold in Australia and use the proper names  
 Liberty = Subaru Liberty NOT Jeep Liberty 
-Caddy = Volkswagen Caddy NOT Cadilac 
+Caddy = Volkswagen Caddy NOT Cadillac 
 Prado = Toyota Landcruiser Prado NOT Toyota Prado
 Colorado = Holden Colorado NOT Chevrolet
 Challenger = Mitsubishi Challenger NOT Dodge Challenger 
@@ -305,15 +304,15 @@ You are provided with sub-messages from a car yard group chat, each prefixed wit
 - Drop Off: Car(s) need to be dropped off, picked up, or swapped. For example: "Take the Isuzu D-MAX to Capital" 
 - Customer Appointment: A customer is scheduled to view a car. 
 - Reconditioning Appointment: A service or repair appointment. 
-- Location Update: A car’s location has change or is currently changing. For example "Christian is picking up the Ford Falcon from Haytham and taking it to Imad" or "Dad is swapping the Honda Civic with the Isuzu D-MAX at Sky"
+- Location Update: A car’s location has changed or is currently changing. For example "Christian is picking up the Ford Falcon from Haytham and taking it to Imad" or "Dad is swapping the Honda Civic with the Isuzu D-MAX at Sky"
 - To Do: Actionable tasks such as orders or follow-ups. 
 - Notes: Things that aren't actionable but staff should remember. Eg "<car> is clean" or "<part> is upstairs" 
-- Car Repairs: Not recoditioning appointments but jobs that need to be done. "The holden colorado needs a front bumper" or "The toyota landcruiser prado is leaking oil". 
+- Car Repairs: Not reconditioning appointments but jobs that need to be done. "The Holden Colorado needs a front bumper" or "The Toyota Landcruiser Prado is leaking oil". 
 
 Name of our mobile reconditioners, if these names appear, it likely means it’s a reconditioning appointment:
 - Rick | Interior Repair - Minor | Mobile
 - Jan, Jian, Gian, Gan | Auto Electrician | Mobile
-- Ermin | Dint Repair | Mobile
+- Ermin | Dent Repair | Mobile
 - Richo | Windscreen Tint | Mobile
 - National, National Windscreens | Windscreens | Mobile
 - Bill, Billie, Billie Windscreen, Bill Windscreen | Windscreens | Mobile
@@ -323,43 +322,39 @@ Name of our mobile reconditioners, if these names appear, it likely means it’s
 
 If the message infers we need to book them
 
-Rule 1: in rare cases a message may fall into two categories, add the message to both categories. 
+Rule 1: In rare cases a message may fall into two categories, add the message to both categories. 
 Example 
 - Christian: ix35 pickup at bjm - it should be ready later today. 
-
 That line falls into both Drop Off and Ready categories so duplicate the message and make one for each category 
 
 Another Example
-
-- Christian:Plan to swap Hyundai I30 ylk029 with Mazda 6 at Unique this afternoon
-
+- Christian: Plan to swap Hyundai I30 ylk029 with Mazda 6 at Unique this afternoon
 That line falls into both Drop Off and Ready categories so duplicate the message and make one for each category 
 
 Another Example 
 - Christian: Toyota Landcruiser Prado Kakadu xc769g at Al's has a potential wheel bearing issue
+That line falls into both Location Update and Car Repairs 
 
-That line falls into both Location update and Car Repairs 
-
-Rule 2: for reconditioner appointment, if someone not in the list is mentioned but the list mentions someone coming to do car repairs add a recondtioner appointment with that persons name. 
+Rule 2: For reconditioner appointment, if someone not in the list is mentioned but the list mentions someone coming to do car repairs add a reconditioner appointment with that person's name. 
 Example
-- Joseph: Simon coming to fix the Hilux suspension should fall into the reconidtioner appointment category 
+- Joseph: Simon coming to fix the Hilux suspension should fall into the reconditioner appointment category 
 
 Rule 3: If message says "someone coming to see <car(s)>" this is a customer appointment 
 
-Rule 4: If message says "Custmomer is coming to pick up <car>", then this should be a customer appointment 
+Rule 4: If message says "Customer is coming to pick up <car>", then this should be a customer appointment 
 
 Rule 5: If message mentions car being delivered it most likely means customer appointment
 
-Rule 6: If message mentions "Lets bring in <car>" it should be a to do task as its refering to bring a car in off the street 
+Rule 6: If message mentions "Let's bring in <car>" it should be a to do task as it's referring to bringing a car in off the street 
 
-Rule 7: If a message mentions a car going somehwere for a service, or RWC, or any repairs it will be a (drop off or location update) AND (car repairs)
+Rule 7: If a message mentions a car going somewhere for a service, or RWC, or any repairs it will be a (Drop Off or Location Update) AND (Car Repairs)
 Example 
-- Christian:Nissan Navara D22 white, sold at Unique. John will do the RWC while Christian waits
- Output 
-- Christian:Nissan Navara D22 white, sold at Unique. John will do the RWC while Christian waits: Location Update 
-- Christian:Nissan Navara D22 white, sold at Unique. John will do the RWC while Christian waits: Car Repairs 
+- Christian: Nissan Navara D22 white, sold at Unique. John will do the RWC while Christian waits
+Output 
+- Christian: Nissan Navara D22 white, sold at Unique. John will do the RWC while Christian waits: Location Update 
+- Christian: Nissan Navara D22 white, sold at Unique. John will do the RWC while Christian waits: Car Repairs 
 
-Rule 8: When a message refers to a person or location having nothing ready in general, this is not a ready message, this is a note. If the message refers to a specific car, then that is a ready catgeory message. 
+Rule 8: When a message refers to a person or location having nothing ready in general, this is not a ready message, this is a note. If the message refers to a specific car, then that is a ready category message. 
 For example 
 - James: Haytham has nothing ready = Notes
 - James: John doesn't have the Isuzu D-MAX ready = Ready 
@@ -380,21 +375,21 @@ For each line create a list. Lists will then be used to update our inventory lis
 Index 1 - Make (ford, holden, toyota)
 Index 2 - Model (civic, Landcruiser Prado, Megane)
 Index 3 - Badge (GLX, RS, GTI)
-Index 4 - Description (Blue, Bullbar, Canopy - include all descriptive features like 'with bullbar' here)
+Index 4 - Description (includes color and features, e.g., 'Grey with bullbar')
 Index 5 - Registration (1HU4SH - must match a pattern like 'rego ABC123', do not include descriptive features here)
 Index 6 - Current Location ("Ready at Haythams" - Location = Haythams)
 Index 7 - Ready status. If the car is ready, or when it will be (Ready, Not ready, 1pm, tomorrow). 
 Index 8 - Notes: Anything that should be noted. 
 
 Output Format 
-- Message : List
+- Message : [make, model, badge, description, registration, current location, ready status, notes]
 
 Example:
-- Christian:Grey Volkswagen Golf R rego 1OY2AJ is ready at Al's
+- Christian: Grey Volkswagen Golf R rego 1OY2AJ is ready at Al's
 - Sam: Holden Commodore SV6 will be ready at 2 at Unique. 
 Output 
-- Christian:Grey Volkswagen Golf R rego 1OY2AJ is ready at Al's : [Volkswagen, Golf, R, Grey, 1OY2AJ, Al's, Ready]
-- Sam: Holden Commodore SV6 will be ready at 2 at Unique. : [Holden, Commodore, SV6, , , Unique, 2pm]
+- Christian: Grey Volkswagen Golf R rego 1OY2AJ is ready at Al's : [Volkswagen, Golf, R, Grey, 1OY2AJ, Al's, Ready, ]
+- Sam: Holden Commodore SV6 will be ready at 2 at Unique. : [Holden, Commodore, SV6, , , Unique, 2pm, ]
 
 Rules:
 1. If a message just mentions "Car" and not a specific car, in index 1, make it "Car" and leave index 2 and 3 blank. 
@@ -411,9 +406,9 @@ Output
 Example:
 - Christian: Silver Nissan Pathfinder with bullbar, rego 1MJ3VS is ready at AKS
 Output
-- Christian: Silver Nissan Pathfinder with bullbar, rego 1MJ3VS is ready at AKS : [Nissan, Pathfinder, , Silver with bullbar, 1MJ3VS, AKS, Ready]
+- Christian: Silver Nissan Pathfinder with bullbar, rego 1MJ3VS is ready at AKS : [Nissan, Pathfinder, , Silver with bullbar, 1MJ3VS, AKS, Ready, ]
 
-Rule 2: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
+Rule 6: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 {sub_message}
 """
     return analyze_with_grok(prompt)
@@ -425,24 +420,24 @@ For each line create a list. Lists will then be used to update our inventory lis
 Index 1 - Make (ford, holden, toyota)
 Index 2 - Model (civic, Landcruiser Prado, Megane)
 Index 3 - Badge (GLX, RS, GTI)
-Index 4 - Description (Blue, Bulbar, Canopy)
+Index 4 - Description (includes color and features, e.g., 'Blue with bullbar')
 Index 5 - Registration (1HU4SH)
 Index 6 - Current Location ("Take the Honda Civic from Imad to Unique" - Current Location = Imad)
-Index 7 - Next Location: Where the car needs to go ("Take the Honda Civic from Imad to Unique" - Next Location = Unique, If it doesn't specify where the car is going just say "picked up")
+Index 7 - Next Location: Where the car needs to go ("Take the Honda Civic from Imad to Unique" - Next Location = Unique, if it doesn't specify where the car is going just say "picked up")
 Index 8 - Notes: Anything that should be noted. For example "Take the Honda Civic to Imad when he has the Toyota Hilux ready" - Notes = "When he has the Toyota Hilux ready" 
 
 Output Format 
-- Sender: Message : List [make, model, badge, description, registration, current location, next location, notes]
+- Message : [make, model, badge, description, registration, current location, next location, notes]
 
 Example
- - Christian: When Al has the Toyota Hilux ready, take him the Toyota Landcruiser Prado
+- Christian: When Al has the Toyota Hilux ready, take him the Toyota Landcruiser Prado
 - Christian: When Al has the Toyota Hilux ready, take him the Ford Falcon
 Output 
- - Christian: When Al has the Toyota Hilux ready, take him the Toyota Landcruiser Prado : [Toyota, Landcruiser Prado, , , , , Al's, When Al has the Toyota Hilux Ready]
-- Christian: When Al has the Toyota Hilux ready, take him the Ford Falcon :  [Ford, Falcon, , , , , Al's, When Al has the Toyota Hilux Ready]
+- Christian: When Al has the Toyota Hilux ready, take him the Toyota Landcruiser Prado : [Toyota, Landcruiser Prado, , , , , Al's, When Al has the Toyota Hilux Ready]
+- Christian: When Al has the Toyota Hilux ready, take him the Ford Falcon : [Ford, Falcon, , , , , Al's, When Al has the Toyota Hilux Ready]
 
 Rules:
-1. If a messages just mentioned "Car" and not a specific car. In index 1, make it "Car" and leave index 2 and 3 blank. 
+1. If a message just mentions "Car" and not a specific car, in index 1, make it "Car" and leave index 2 and 3 blank. 
 For example
 - Christian: Take a Car to Imad
 Output 
@@ -454,17 +449,17 @@ Example:
 - Christian: Swap the Blue Kia Optima with the Subaru Liberty
 OUTPUT 
 - Christian: Blue Kia Optima is sold and will be taken to Al's : [Kia, Optima, , Blue, , , Al's, Is sold]
-- Christian: Swap the Blue Kia Optima with the Toyota Prado Kakadu : [Toyota, Landcruiser Prado, , , , , Picked up, Swap for kia optima]
-- Christian: Swap the Blue Kia Optima with the Subaru Liberty : [Subaru, Liberty, , , , , Picked up, Swap for kia optima]
+- Christian: Swap the Blue Kia Optima with the Toyota Prado Kakadu : [Toyota, Landcruiser Prado, , , , , Picked up, Swap for Kia Optima]
+- Christian: Swap the Blue Kia Optima with the Subaru Liberty : [Subaru, Liberty, , , , , Picked up, Swap for Kia Optima]
 
 Another Example:
-  - Christian:Christian will use the sold Volkswagen Amarok to swap for the Honda Accord at Unique
-  - Christian:If the Holden Colorado sells, use it to pick up the Volkswagen Amarok at Unique
- OUTPUT
-  - Christian:Christian will use the sold Volkswagen Amarok to swap for the Honda Accord at Unique : [Volkswagen, Amarok, , , , Unique, Swap for Honda Accord]
-  - Christian:If the Holden Colorado sells, use it to pick up the Volkswagen Amarok at Unique : [Holden, Colorado, , , , , Unique, When the Amarok is ready]
+- Christian: Christian will use the sold Volkswagen Amarok to swap for the Honda Accord at Unique
+- Christian: If the Holden Colorado sells, use it to pick up the Volkswagen Amarok at Unique
+OUTPUT
+- Christian: Christian will use the sold Volkswagen Amarok to swap for the Honda Accord at Unique : [Volkswagen, Amarok, , , , Unique, Swap for Honda Accord, ]
+- Christian: If the Holden Colorado sells, use it to pick up the Volkswagen Amarok at Unique : [Holden, Colorado, , , , , Unique, When the Amarok is ready]
 
-Rule 2: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
+Rule 5: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 {sub_message}
 """
     return analyze_with_grok(prompt)
@@ -476,12 +471,12 @@ For each line create a list. Lists will then be used to update our customer appo
 Index 1 - Make (ford, holden, toyota)
 Index 2 - Model (civic, Landcruiser Prado, Megane)
 Index 3 - Badge (GLX, RS, GTI)
-Index 4 - Description (Blue, Bulbar, Canopy)
+Index 4 - Description (includes color and features, e.g., 'Blue with bullbar')
 Index 5 - Registration (1HU4SH)
 Index 6 - Customer Name
 Index 7 - Day of appointment 
 Index 8 - Time of appointment 
-Index 9 - Notes: anything to note about the appointment, e.g has a trade in, wants finance.
+Index 9 - Notes: anything to note about the appointment, e.g., has a trade in, wants finance.
 Index 10 - Delivery: If it is about a customer picking up/delivery of a sold car, write "delivery" 
 
 If no day is mentioned, say "Could be today"
@@ -492,14 +487,13 @@ Example
 Output
 - Joseph: Chris is coming to see the Holden Colorado Wednesday at 12pm. He has a trade in : [Holden, Colorado, , , , Chris, Wednesday, 12pm, Trade in, ]
 
-Rule: If a car is sold mention it in the notes, or if the messages says "coming to pick up" infer it as sold
+Rule: If a car is sold mention it in the notes, or if the message says "coming to pick up" infer it as sold
 Example:
 - Christian: Customer coming to pick up the sold Kia Optima today at 4:40pm
 Output
-- Christian: Customer coming to pick up the sold Kia Optima today at 4:40pm : [Kia, Optima, , , , , today, 4:40pm, Sold Customer Pickup, Delivery]
+- Christian: Customer coming to pick up the sold Kia Optima today at 4:40pm : [Kia, Optima, , , , , today, 4:40pm, Sold Customer Pickup, delivery]
 
-Rule 1: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
-
+Rule 4: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 {sub_message}
 """
     return analyze_with_grok(prompt)
@@ -511,20 +505,19 @@ For each line create a list. Lists will then be used to update our reconditioner
 Index 1 - Make (ford, holden, toyota)
 Index 2 - Model (civic, Landcruiser Prado, Megane)
 Index 3 - Badge (GLX, RS, GTI)
-Index 4 - Description (For example Blue, Bulbar, Canopy)
+Index 4 - Description (includes color and features, e.g., 'Blue with bullbar')
 Index 5 - Registration (1HU4SH)
 Index 6 - Reconditioner Name
 Index 7 - Day of appointment 
 Index 8 - Time of appointment 
-Index 9 - Notes: anything to note about the appointment. Usually this will be about the work they are doing, e.g Steering wheel.
+Index 9 - Notes: anything to note about the appointment. Usually this will be about the work they are doing, e.g., steering wheel.
 
 Example
 - Joseph: Rick coming to do Gold Ford Territory seats today 
 Output
 - Joseph: Rick coming to do Ford Territory seats today : [Ford, Territory, , Gold, , Rick, Today, , Seats]
 
-Rule 1: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
-
+Rule 4: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 {sub_message}
 """
     return analyze_with_grok(prompt)
@@ -536,21 +529,21 @@ For each line create a list. Lists will then be used to update our internal car 
 Index 1 - Make (ford, holden, toyota)
 Index 2 - Model (civic, Landcruiser Prado, Megane)
 Index 3 - Badge (GLX, RS, GTI)
-Index 4 - Description (Blue, Bullbar, Canopy)
+Index 4 - Description (includes color and features, e.g., 'Blue with bullbar')
 Index 5 - Registration (1HU4SH)
 Index 6 - Repair Task: The specific repair job to be done internally (e.g., "Fix AC", "Replace front bumper", "Check oil leak", "Check tyre damage")
 
 Output Format 
-- Message : List
+- Message : [make, model, badge, description, registration, repair task]
 
 Example:
 - Christian: Fix the AC on the Volkswagen GTI
 Output:
-- Christian: Fix the AC on the Volkswagen GTI : [Volkswagen, GTI, , , , Fix AC, ]
+- Christian: Fix the AC on the Volkswagen GTI : [Volkswagen, GTI, , , , Fix AC]
 
-Rule 1: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
+Rule 4: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 Example 
-- Christian: Black Ford Ranger XLT tonneau cover is too small : [Ford, Ranger, , Black, ,Tonneau cover too small]
+- Christian: Black Ford Ranger XLT tonneau cover is too small : [Ford, Ranger, , Black, , Tonneau cover too small]
 
 PLEASE ENSURE ALL INDEXES ARE CORRECT 
 
@@ -565,21 +558,21 @@ For each line create a list. Lists will then be used to update our inventory lis
 Index 1 - Make (ford, holden, toyota)
 Index 2 - Model (civic, Landcruiser Prado, Megane)
 Index 3 - Badge (GLX, RS, GTI)
-Index 4 - Description (Blue, Bullbar, Canopy - include all descriptive features like 'with bullbar' here)
+Index 4 - Description (includes color and features, e.g., 'Blue with bullbar')
 Index 5 - Registration (1HU4SH - must match a pattern like 'rego ABC123', do not include descriptive features here)
 Index 6 - Old location ("James is picking up the Holden Colorado from Al's and taking it to Imad" - Old Location = Al's. "Sarah is picking up Honda Civic from Capital" - Old Location = Capital)
 Index 7 - New Location ("Ford Falcon is at Capital" - current location = Capital. "Christian picking up the Holden Colorado and taking it to Al's" - Location = Al's. "Sam picking up the BMW X5 from Sky" - Location = With Sam)
 Index 8 - Notes: anything worth noting ("He will do while he waits")
 
 Output Format 
-- Message : List
+- Message : [make, model, badge, description, registration, old location, new location, notes]
 
 Rules
 - If someone is picking that car up and no next location is specified then the location is set to "with <sender's name>"
 - Ensure that descriptive features like 'with bullbar' are included in the Description field (index 4), not in the Registration field (index 5).
 - The Registration field (index 5) should only contain the actual rego (e.g., 1HU4SH), not descriptive words like 'bullbar'.
-- If messages says "back from <location>" make the new location "Northpoint" 
-Rule : If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
+- If message says "back from <location>" make the new location "Northpoint" 
+Rule 4: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 
 Example
 - Christian: James is taking the Holden Colorado to Al's
@@ -598,30 +591,28 @@ def prompt_to_do(sub_message):
     """Prompt for To Do category"""
     prompt = f"""
 For each line create a list. Lists will then be used to update our to do list.
-Index 1 - Make (e.g ford, holden, toyota)
-Index 2 - Model (e.g civic, Landcruiser Prado, Megane)
-Index 3 - Badge (e.g GLX, RS, GTI)
-Index 4 - Description (e.g Blue, Bulbar, Canopy)
-Index 5 - Registration (e.g 1HU4SH)
+Index 1 - Make (e.g., ford, holden, toyota)
+Index 2 - Model (e.g., civic, Landcruiser Prado, Megane)
+Index 3 - Badge (e.g., GLX, RS, GTI)
+Index 4 - Description (includes color and features, e.g., 'Blue with bullbar')
+Index 5 - Registration (e.g., 1HU4SH)
 Index 6 - Task
 
 Output Format 
-- Message : List
+- Message : [make, model, badge, description, registration, task]
 
-   
 Example 
 - Christian: Photograph the Alfa Romeo 
 - Sam: Follow up Jenny
 Output 
 - Christian: Photograph the Alfa Romeo : [Alfa Romeo, , , , , Photograph]
-- Sam: Follow up Jenny :  [, , , , , Follow up Jenny]
+- Sam: Follow up Jenny : [ , , , , , Follow up Jenny]
 
-Rule 1: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
+Rule 4: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 Example
 - Christian: Black Ford Ranger XLT back seats need a clean
 Output 
 - Christian: Black Ford Ranger XLT back seats need a clean : [Ford, Ranger, XLT, Black, , Back seats need a clean]
-
 
 {sub_message}
 """
@@ -630,21 +621,21 @@ Output
 def prompt_notes(sub_message):
     """Prompt for Notes category"""
     prompt = f"""
-For each line create a list. Lists will then be used to update our to do list.
+For each line create a list. Lists will then be used to update our notes list.
 Index 1 - Make (ford, holden, toyota)
 Index 2 - Model (civic, Landcruiser Prado, Megane)
 Index 3 - Badge (GLX, RS, GTI)
-Index 4 - Description (Blue, Bulbar, Canopy)
+Index 4 - Description (includes color and features, e.g., 'Blue with bullbar')
 Index 5 - Registration (1HU4SH)
 Index 6 - Notes
 
 Output Format 
-- Message : List
+- Message : [make, model, badge, description, registration, notes]
 
 Example
 - Christian: Capital doesn't want anymore cars this week
 Output
-- Christian: Capital doesn't want anymore cars this week : [,,,,,Capital doesn't want anymore cars this week]
+- Christian: Capital doesn't want anymore cars this week : [ , , , , , Capital doesn't want anymore cars this week]
 
 Another Example 
 - Christian: Please don't leave windows down in the cars, only leave them down 2 inches after detail
@@ -653,25 +644,21 @@ Output
 
 Rule 1: Don't be afraid to include a large notes section. Be as descriptive in the notes as necessary. 
 
-Rule 2: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small andback seats need cleaning"
+Rule 4: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 
 Example 
- - Christian: Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own
+- Christian: Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own
 Output
- - Christian: Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own : [ , , , , , Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own]
-
+- Christian: Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own : [ , , , , , Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own]
 
 {sub_message}
 """
     return analyze_with_grok(prompt)
 
 # Orchestration
-# Orchestration
-# Orchestration
-# Orchestration
 def run_pipeline(original_message: str, media_url: str = None) -> dict:
     """Process the incoming message through prompts and return structured JSON."""
-    print(f"Raw input received: {original_message}", file=sys.stderr)
+    print(f"[FILTER] Python debug: Raw input received: {original_message}", file=sys.stderr)
 
     # Track photo messages explicitly
     photo_messages = []
@@ -680,8 +667,7 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
         if photo_path:
             photo_analysis = analyze_photo(photo_path)
             os.remove(photo_path)
-            print(f"Photo analysis result: {photo_analysis}", file=sys.stderr)
-            # Prepend photo analysis with sender from the message, with [PHOTO] marker
+            print(f"[FILTER] Python debug: Photo analysis result: {photo_analysis}", file=sys.stderr)
             first_sender = original_message.split(": ", 1)[0] if ": " in original_message else "Unknown"
             photo_message = f"[PHOTO] {first_sender}: {photo_analysis}"
             photo_messages.append(photo_message)
@@ -693,11 +679,11 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
 
     # Run initial three prompts
     output_prompt1 = prompt_1(original_message) if original_message.strip() else ""
-    print(f"Prompt 1 output: {output_prompt1}", file=sys.stderr)
+    print(f"[FILTER] Python debug: Prompt 1 output: {output_prompt1}", file=sys.stderr)
     output_prompt2 = prompt_2(output_prompt1) if output_prompt1.strip() else ""
-    print(f"Prompt 2 output: {output_prompt2}", file=sys.stderr)
+    print(f"[FILTER] Python debug: Prompt 2 output: {output_prompt2}", file=sys.stderr)
     output_prompt3 = prompt_3(output_prompt2) if output_prompt2.strip() else ""
-    print(f"Prompt 3 output: {output_prompt3}", file=sys.stderr)
+    print(f"[FILTER] Python debug: Prompt 3 output: {output_prompt3}", file=sys.stderr)
 
     # Process category-specific prompts
     category_outputs = {
@@ -728,51 +714,51 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
                         category = category.strip()
                         # Construct sub_message without the leading dash
                         sub_message = f"{sender}: {summary}"
-                        print(f"Processing category: '{category}', sub_message: {sub_message}", file=sys.stderr)
+                        print(f"[FILTER] Python debug: Processing category: '{category}', sub_message: {sub_message}", file=sys.stderr)
                         # Determine if this message corresponds to a photo message
                         summary_without_sender = summary.strip()
                         is_from_photo = any(summary_without_sender in pm.split(": ", 1)[1] for pm in photo_messages)
-                        print(f"Line {idx}: {line}, is_from_photo: {is_from_photo}, summary: {summary_without_sender}", file=sys.stderr)
-                        print(f"Photo messages to compare: {photo_messages}", file=sys.stderr)
+                        print(f"[FILTER] Python debug: Line {idx}: {line}, is_from_photo: {is_from_photo}, summary: {summary_without_sender}", file=sys.stderr)
+                        print(f"[FILTER] Python debug: Photo messages to compare: {photo_messages}", file=sys.stderr)
                         result = None
                         if category == "Ready":
-                            print(f"Calling prompt_ready with: {sub_message}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Calling prompt_ready with: {sub_message}", file=sys.stderr)
                             result = prompt_ready(sub_message)
                         elif category == "Drop Off":
-                            print(f"Calling prompt_drop_off with: {sub_message}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Calling prompt_drop_off with: {sub_message}", file=sys.stderr)
                             result = prompt_drop_off(sub_message)
                         elif category == "Customer Appointment":
-                            print(f"Calling prompt_customer_appointment with: {sub_message}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Calling prompt_customer_appointment with: {sub_message}", file=sys.stderr)
                             result = prompt_customer_appointment(sub_message)
                         elif category == "Reconditioning Appointment":
-                            print(f"Calling prompt_reconditioning_appointment with: {sub_message}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Calling prompt_reconditioning_appointment with: {sub_message}", file=sys.stderr)
                             result = prompt_reconditioning_appointment(sub_message)
                         elif category == "Car Repairs":
-                            print(f"Calling prompt_car_repairs with: {sub_message}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Calling prompt_car_repairs with: {sub_message}", file=sys.stderr)
                             result = prompt_car_repairs(sub_message)
                         elif category == "Location Update":
-                            print(f"Calling prompt_location_update with: {sub_message}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Calling prompt_location_update with: {sub_message}", file=sys.stderr)
                             result = prompt_location_update(sub_message)
                         elif category == "To Do":
-                            print(f"Calling prompt_to_do with: {sub_message}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Calling prompt_to_do with: {sub_message}", file=sys.stderr)
                             result = prompt_to_do(sub_message)
                         elif category == "Notes":
-                            print(f"Calling prompt_notes with: {sub_message}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Calling prompt_notes with: {sub_message}", file=sys.stderr)
                             result = prompt_notes(sub_message)
                         else:
-                            print(f"Unknown category: '{category}'", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Unknown category: '{category}'", file=sys.stderr)
                             continue
-                        print(f"Result from category prompt: {result}", file=sys.stderr)
+                        print(f"[FILTER] Python debug: Result from category prompt: {result}", file=sys.stderr)
                         if result:
                             parsed_output = parse_category_output(result, is_from_photo)
-                            print(f"Parsed output for {category}: {parsed_output}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: Parsed output for {category}: {parsed_output}", file=sys.stderr)
                             category_outputs[category].extend(parsed_output)
                         else:
-                            print(f"No result returned from category prompt for {category}", file=sys.stderr)
+                            print(f"[FILTER] Python debug: No result returned from category prompt for {category}", file=sys.stderr)
                     else:
-                        print(f"Malformed line: {line}", file=sys.stderr)
+                        print(f"[FILTER] Python debug: Malformed line: {line}", file=sys.stderr)
                 except Exception as e:
-                    print(f"Failed to parse line: {line} - {str(e)}", file=sys.stderr)
+                    print(f"[FILTER] Python debug: Failed to parse line: {line} - {str(e)}", file=sys.stderr)
                     continue
 
     # Prepare JSON output
@@ -786,14 +772,14 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
     if not output_prompt1.strip() and not output_prompt2.strip() and not output_prompt3.strip():
         output["error"] = "Unable to parse input"
 
-    print(f"Final category outputs: {category_outputs}", file=sys.stderr)
+    print(f"[FILTER] Python debug: Final category outputs: {category_outputs}", file=sys.stderr)
     return output
 
 def parse_category_output(output: str, is_from_photo: bool = False) -> list:
     """Parse category prompt output into a list of dictionaries, adding fromPhoto flag for rego."""
     results = []
     if not output.strip():
-        print("No output to parse", file=sys.stderr)
+        print("[FILTER] Python debug: No output to parse", file=sys.stderr)
         return results
 
     for line in output.split("\n"):
@@ -801,7 +787,7 @@ def parse_category_output(output: str, is_from_photo: bool = False) -> list:
             try:
                 # Split the line into message and list parts
                 message, list_str = line.split(" : ", 1)
-                print(f"Parsing line: {line}", file=sys.stderr)
+                print(f"[FILTER] Python debug: Parsing line: {line}", file=sys.stderr)
                 list_match = re.match(r'^\[(.*)\]$', list_str.strip())
                 if list_match:
                     # Parse the list items, handling potential empty or malformed entries
@@ -831,7 +817,7 @@ def parse_category_output(output: str, is_from_photo: bool = False) -> list:
                     rego = items[4] if len(items) > 4 else ""
                     from_photo_for_rego = is_from_photo and rego != ""
                     # Log the parsed output
-                    print(f"Parsed category output: {message}, rego: {rego}, fromPhoto: {from_photo_for_rego}, items: {items}", file=sys.stderr)
+                    print(f"[FILTER] Python debug: Parsed category output: {message}, rego: {rego}, fromPhoto: {from_photo_for_rego}, items: {items}", file=sys.stderr)
                     # Append the result
                     results.append({
                         "message": message,
@@ -839,9 +825,9 @@ def parse_category_output(output: str, is_from_photo: bool = False) -> list:
                         "fromPhoto": from_photo_for_rego
                     })
                 else:
-                    print(f"Invalid list format: {line}", file=sys.stderr)
+                    print(f"[FILTER] Python debug: Invalid list format: {line}", file=sys.stderr)
             except Exception as e:
-                print(f"Error parsing category output: {line} - {str(e)}", file=sys.stderr)
+                print(f"[FILTER] Python debug: Error parsing category output: {line} - {str(e)}", file=sys.stderr)
                 continue
     return results
 

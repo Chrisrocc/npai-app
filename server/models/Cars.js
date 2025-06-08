@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 
 const CarSchema = new mongoose.Schema({
-  make: { type: String },
-  model: { type: String },
+  make: { type: String, required: true },
+  model: { type: String, required: true },
   badge: { type: String },
-  rego: { type: String, unique: true },
+  rego: { type: String, unique: true, required: true },
   year: { type: Number },
-  description: { type: String },
+  description: { type: String }, // Includes color and features (e.g., "Grey with bullbar")
   location: { type: String },
   status: { type: String },
   next: [
@@ -39,6 +39,6 @@ const CarSchema = new mongoose.Schema({
   },
   archived: { type: Boolean, default: false },
   archivedAt: { type: Date },
-}, { strict: false }); // Add this line
+}, { strict: false });
 
 module.exports = mongoose.model("Car", CarSchema);

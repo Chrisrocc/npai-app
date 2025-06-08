@@ -49,6 +49,21 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json(cars);
 }));
 
+router.get('/search', asyncHandler(async (req, res) => {
+  console.log(chalk.blue('Handling GET /api/cars/search'));
+  const { make, model, description, rego } = req.query;
+  const query = {
+    archived: false,
+    ...(make ? { make: { $regex: new RegExp(`^${make}$`, 'i') } } : {}),
+    ...(model ? { model: { $regex: new RegExp(`^${model}$`, 'i') } } : {}),
+    ...(description ? { description: { $regex: new RegExp(description, 'i') } } : {}),
+    ...(rego ? { rego: { $regex: new RegExp(`^${rego}$`, 'i') } } : {}),
+  };
+  const cars = await Car.find(query);
+  console.log(chalk.blue(`Found ${cars.length} cars for search: ${JSON.stringify(cars.map((c) => ({ _id: c._id, rego: c.rego })))}`));
+  res.json(cars);
+}));
+
 router.get('/:id', asyncHandler(async (req, res) => {
   console.log(chalk.blue(`Handling GET /api/cars/:id with id=${req.params.id}`));
   const car = await Car.findById(req.params.id);
@@ -80,7 +95,7 @@ router.post('/', upload.array('photos'), asyncHandler(async (req, res) => {
     badge,
     rego,
     year,
-    description,
+    description, // Includes color and features (e.g., "Grey with bullbar")
     location,
     status,
     next: nextDestinations,
@@ -97,7 +112,7 @@ router.post('/', upload.array('photos'), asyncHandler(async (req, res) => {
 
 router.put('/:id', upload.array('photos'), asyncHandler(async (req, res) => {
   const carId = req.params.id;
-  const car = await Car.findById(carId); // Ensure car is fetched before proceeding
+  const car = await Car.findById(carId);
   if (!car) {
     return res.status(404).json({ message: 'Car not found' });
   }
