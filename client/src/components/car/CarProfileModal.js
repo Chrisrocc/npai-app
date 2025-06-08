@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../utils/axiosConfig';
-import { DndProvider, useDrag, useDrop } from 'react-dnd'; // Fixed typo from react-dny to react-dnd
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import NextDestinationsEditor from './NextDestinationsEditor';
 
@@ -30,6 +30,9 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
     },
   }));
 
+  // Extract just the filename from the photo path
+  const photoFileName = photo.split('/').pop();
+
   return (
     <div
       ref={(node) => drag(drop(node))}
@@ -40,12 +43,12 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
       }}
     >
       <img
-        src={`${process.env.REACT_APP_API_URL}/uploads/${photo}`} // Consistent /uploads/ path
+        src={`${process.env.REACT_APP_API_URL}/uploads/${photoFileName}`}
         alt={`Car ${rego} - Photo ${index + 1}`}
         style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
         onError={(e) => {
-          console.error(`Failed to load image: /uploads/${photo}`, e);
-          e.target.src = 'https://placehold.co/100x100?text=Image+Not+Found'; // Reliable fallback
+          console.error(`Failed to load image: ${process.env.REACT_APP_API_URL}/uploads/${photoFileName}`, e);
+          e.target.src = 'https://placehold.co/100x100?text=Image+Not+Found';
         }}
       />
       <button
@@ -96,7 +99,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
         const response = await axios.get(`/api/cars/${carId}`);
         const carData = response.data;
         setCar(carData);
-        setExistingPhotos(carData.photos || []); // Sync with server on initial load
+        setExistingPhotos(carData.photos || []);
         setModalLoading(false);
       } catch (err) {
         console.error('Error fetching car details:', err);
@@ -114,12 +117,12 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
         const carData = response.data;
         if (JSON.stringify(car) !== JSON.stringify(carData)) {
           setCar(carData);
-          setExistingPhotos(carData.photos || []); // Sync only if data changed
+          setExistingPhotos(carData.photos || []);
         }
       } catch (err) {
         console.error('Error polling car data:', err);
       }
-    }, 30000); // Poll every 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [carId, car]);
@@ -265,8 +268,8 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     if (newPhotos.length === 0) return;
     try {
       const formData = new FormData();
-      formData.append('existingPhotos', JSON.stringify(existingPhotos)); // Send as JSON
-      newPhotos.forEach((photo) => formData.append('photos', photo)); // Send new files
+      formData.append('existingPhotos', JSON.stringify(existingPhotos));
+      newPhotos.forEach((photo) => formData.append('photos', photo));
       const response = await axios.put(`/api/cars/${carId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -889,7 +892,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   borderRadius: '4px',
                   fontSize: '14px',
                   color: car.notes ? '#495057' : '#6c757d',
-                  whiteSpace: 'pre-wrap', // Preserve line breaks
+                  whiteSpace: 'pre-wrap',
                 }}
               >
                 {car.notes || 'No Notes'}
@@ -937,4 +940,4 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   );
 };
 
-export default CarProfileModal; // Ensure export is at the top level
+export default CarProfileModal;
