@@ -107,20 +107,20 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
 
       try {
         const updateData = {
-          location: currentLocation || carToUpdate.location,
-          status: readyStatus || carToUpdate.status,
+          location: currentLocation, // Always set location to the provided value
+          status: readyStatus || carToUpdate.status, // Update status if provided, otherwise keep existing
           description: description || carToUpdate.description,
           notes: notes ? (carToUpdate.notes ? `${carToUpdate.notes}; ${notes}` : notes) : carToUpdate.notes,
         };
 
+        // Schedule history update if location changed
         if (currentLocation && currentLocation !== carToUpdate.location) {
           const historyUpdated = await updateCarHistory(carToUpdate._id, currentLocation, cleanedMessage);
           if (!historyUpdated) {
             throw new Error('Failed to schedule history update');
           }
-        } else {
-          await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
         }
+        await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
 
         telegramLogger(`- Updated car status to ${updateData.status} at ${updateData.location}`, 'action');
       } catch (e) {
