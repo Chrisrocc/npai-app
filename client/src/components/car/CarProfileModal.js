@@ -11,7 +11,7 @@ const ItemTypes = {
 };
 
 // Photo component for drag-and-drop functionality
-const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
+const Photo = ({ photo, index, movePhoto, deletePhoto, rego, onEnlarge }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.PHOTO,
     item: { index },
@@ -28,6 +28,9 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
         item.index = index;
       }
     },
+    drop: () => {
+      // Ensure the move is finalized on drop
+    },
   }));
 
   // Extract just the filename from the photo path
@@ -40,7 +43,10 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
         position: 'relative',
         opacity: isDragging ? 0.5 : 1,
         margin: '5px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease', // Smooth transition for dragging
       }}
+      onClick={() => onEnlarge(photoFileName)}
     >
       <img
         src={`${process.env.REACT_APP_API_URL}/uploads/${photoFileName}`}
@@ -52,7 +58,10 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
         }}
       />
       <button
-        onClick={() => deletePhoto(index)}
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent triggering enlargement on delete
+          deletePhoto(index);
+        }}
         style={{
           position: 'absolute',
           top: '5px',
@@ -76,6 +85,33 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego }) => {
   );
 };
 
+// Enlarged Photo Modal Component
+const EnlargedPhotoModal = ({ photoUrl, onClose }) => {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 2000,
+      }}
+      onClick={onClose}
+    >
+      <img
+        src={photoUrl}
+        alt="Enlarged view"
+        style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }}
+      />
+    </div>
+  );
+};
+
 // Main CarProfileModal component
 const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true }) => {
   const { id: routeCarId } = useParams();
@@ -92,6 +128,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [editingHistory, setEditingHistory] = useState(null);
   const [showNextEditor, setShowNextEditor] = useState(false);
+  const [enlargedPhoto, setEnlargedPhoto] = useState(null);
 
   useEffect(() => {
     const fetchCar = async () => {
@@ -330,6 +367,14 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       console.error('Error setting current location:', err);
       alert('Failed to set current location: ' + (err.response?.data?.message || err.message));
     }
+  };
+
+  const handleEnlargePhoto = (photoFileName) => {
+    setEnlargedPhoto(`${process.env.REACT_APP_API_URL}/uploads/${photoFileName}`);
+  };
+
+  const closeEnlargedPhoto = () => {
+    setEnlargedPhoto(null);
   };
 
   if (modalLoading) return <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>;
@@ -708,6 +753,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                     movePhoto={movePhoto}
                     deletePhoto={handleDeletePhoto}
                     rego={car.rego}
+                    onEnlarge={handleEnlargePhoto}
                   />
                 ))}
               </div>
@@ -752,6 +798,14 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
               </div>
             )}
           </div>
+
+          {/* Enlarged Photo Modal */}
+          {enlargedPhoto && (
+            <EnlargedPhotoModal
+              photoUrl={enlargedPhoto}
+              onClose={closeEnlargedPhoto}
+            />
+          )}
 
           {/* History Section */}
           <div style={{ marginBottom: '20px' }}>
