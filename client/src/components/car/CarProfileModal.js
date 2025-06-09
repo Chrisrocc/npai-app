@@ -303,24 +303,32 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   };
 
   const handleAddPhotos = async () => {
-    if (newPhotos.length === 0) return;
-    try {
-      const formData = new FormData();
-      formData.append('existingPhotos', JSON.stringify(existingPhotos));
-      newPhotos.forEach((photo) => formData.append('photos', photo));
-      const response = await axios.put(`/api/cars/${carId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      await fetchCarWithoutRefresh();
-      setNewPhotos([]);
-      console.log('Photo upload response:', response.data);
-    } catch (err) {
-      console.error('Error adding photos:', err);
+  if (newPhotos.length === 0) return;
+  try {
+    const formData = new FormData();
+    formData.append('existingPhotos', JSON.stringify(existingPhotos));
+    newPhotos.forEach((photo) => formData.append('photos', photo));
+
+    const response = await axios.put(`/api/cars/${carId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 30000, // ⏰ Extended timeout for large files / mobile
+    });
+
+    await fetchCarWithoutRefresh();
+    setNewPhotos([]);
+    console.log('Photo upload response:', response.data);
+  } catch (err) {
+    console.error('Error adding photos:', err);
+    if (err.code === 'ECONNABORTED') {
+      alert('Upload timed out. Please check your internet and try again.');
+    } else {
       alert('Failed to add photos: ' + (err.response?.data?.message || err.message));
     }
-  };
+  }
+};
+
 
   const handleDeletePhoto = async (index) => {
     const updatedPhotos = existingPhotos.filter((_, i) => i !== index);

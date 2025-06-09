@@ -41,48 +41,55 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('rego', formData.rego);
-      formDataToSend.append('make', formData.make);
-      formDataToSend.append('model', formData.model);
-      formDataToSend.append('badge', formData.badge);
-      formDataToSend.append('year', formData.year);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('location', formData.location);
-      formDataToSend.append('status', 'In Works');
-      formDataToSend.append('next', formData.next);
-      formDataToSend.append('checklist', JSON.stringify(checklist));
-      photos.forEach((photo) => {
-        formDataToSend.append('photos', photo);
-      });
+  e.preventDefault();
+  try {
+    const formDataToSend = new FormData();
+    formDataToSend.append('rego', formData.rego);
+    formDataToSend.append('make', formData.make);
+    formDataToSend.append('model', formData.model);
+    formDataToSend.append('badge', formData.badge);
+    formDataToSend.append('year', formData.year);
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('location', formData.location);
+    formDataToSend.append('status', 'In Works');
+    formDataToSend.append('next', formData.next);
+    formDataToSend.append('checklist', JSON.stringify(checklist));
+    photos.forEach((photo) => {
+      formDataToSend.append('photos', photo);
+    });
 
-      await axios.post('/api/cars', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      onAdd();
-      setFormData({
-        rego: '',
-        make: '',
-        model: '',
-        badge: '',
-        year: '',
-        description: '',
-        location: '',
-        next: '',
-      });
-      setChecklist([]);
-      setNewChecklistItem('');
-      setPhotos([]);
-      onClose();
-    } catch (err) {
-      console.error('Error adding car:', err);
+    await axios.post('/api/cars', formDataToSend, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 30000, // ⏰ Prevents hanging on iPhone uploads
+    });
+
+    onAdd();
+    setFormData({
+      rego: '',
+      make: '',
+      model: '',
+      badge: '',
+      year: '',
+      description: '',
+      location: '',
+      next: '',
+    });
+    setChecklist([]);
+    setNewChecklistItem('');
+    setPhotos([]);
+    onClose();
+  } catch (err) {
+    console.error('Error adding car:', err);
+    if (err.code === 'ECONNABORTED') {
+      alert('Upload timed out. Please check your mobile internet and try again.');
+    } else {
       alert('Failed to add car: ' + (err.response?.data?.message || err.message));
     }
-  };
+  }
+};
+
 
   return (
     <div>
