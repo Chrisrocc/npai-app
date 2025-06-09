@@ -50,7 +50,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
           const message = car.pendingLocationUpdate.message;
           const statusMatch = message.match(/will be ready at \S+ (?:at )?(.+)$/i);
           const telegramStatus = statusMatch ? statusMatch[1] : car.status;
-          await axios.put(`/api/cars/${car._id}`, {
+          await axios.put(`${apiUrl}/api/cars/${car._id}`, {
             ...car,
             location: car.pendingLocationUpdate.location || car.location,
             status: telegramStatus,
@@ -80,7 +80,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const fetchVerificationCount = useCallback(async () => {
     try {
-      const response = await (`${apiUrl}/api/manualverifications`);
+      const response = await axios.get(`${apiUrl}/api/manualverifications`);
       const count = response.data.length;
       setVerificationCount(count);
       console.log(`Fetched verification count: ${count}`);
@@ -95,7 +95,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const fetchPlans = useCallback(async () => {
     try {
-      const response = await axios.get(`${apiUrl}/api/plans`)
+      const response = await axios.get(`${apiUrl}/api/plans`);
       setPlans(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('Error fetching plans:', err);
@@ -127,7 +127,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
     formData.append('file', file);
 
     try {
-      const response = await axios.post('/api/cars/upload-csv', formData, {
+      const response = await axios.post(`${apiUrl}/api/cars/upload-csv`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -149,11 +149,11 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
     if (plan.identifiedCar) {
       try {
         const [, , , , , , newLocation] = plan.data;
-        await axios.put(`/api/cars/${plan.identifiedCar.id}`, {
+        await axios.put(`${apiUrl}/api/cars/${plan.identifiedCar.id}`, {
           location: newLocation,
           status: '',
         });
-        await axios.put(`/api/plans/${plan.id}`, { status: 'happened' });
+        await axios.put(`${apiUrl}/api/plans/${plan.id}`, { status: 'happened' });
         fetchCars();
         fetchPlans();
         alert('Plan executed successfully');
@@ -165,7 +165,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const handlePlanDidntHappen = async (plan) => {
     try {
-      await axios.put(`/api/plans/${plan.id}`, { status: 'didnt_happen' });
+      await axios.put(`${apiUrl}/api/plans/${plan.id}`, { status: 'didnt_happen' });
       fetchPlans();
     } catch (err) {
       alert('Failed to dismiss plan: ' + (err.response?.data?.message || err.message));
@@ -187,7 +187,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
       const carId = selectedCarIds[0];
       const response = await axios.get(`${apiUrl}/api/cars/${carId}`);
       const car = response.data;
-      await axios.put(`/api/plans/${planToIdentify.id}`, {
+      await axios.put(`${apiUrl}/api/plans/${planToIdentify.id}`, {
         identifiedCar: {
           id: car._id,
           make: car.make,
@@ -206,9 +206,9 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const handleAddCarSubmit = async (newCar) => {
     try {
-      const response = await axios.post('/api/cars', newCar);
+      const response = await axios.post(`${apiUrl}/api/cars`, newCar);
       const car = response.data;
-      await axios.put(`/api/plans/${planToIdentify.id}`, {
+      await axios.put(`${apiUrl}/api/plans/${planToIdentify.id}`, {
         identifiedCar: {
           id: car._id,
           make: car.make,
@@ -228,7 +228,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/cars/${id}`);
+      await axios.delete(`${apiUrl}/api/cars/${id}`);
       fetchCars();
     } catch (err) {
       console.error('Error deleting car:', err);
@@ -298,7 +298,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
         updateData[editingField.field] = editValue;
       }
 
-      await axios.put(`/api/cars/${carId}`, updateData);
+      await axios.put(`${apiUrl}/api/cars/${carId}`, updateData);
       fetchCars();
       setEditingField(null);
       setEditValue('');

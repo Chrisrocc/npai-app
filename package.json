@@ -27,5 +27,13 @@
     "nodemailer": "^7.0.2",
     "python-shell": "^5.0.0",
     "twilio": "^5.5.2"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chrisrocc/npai-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Chrisrocc/npai-app/issues"
+  },
+  "homepage": "https://github.com/Chrisrocc/npai-app#readme"
 }

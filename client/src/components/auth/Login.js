@@ -44,25 +44,22 @@ const Login = () => {
 
   // Handle Login
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.post('/api/auth/login', {
-        email,
-        password,
-      });
-      // Assuming the backend returns a token in the response
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token); // Store token
-      }
-      setLoading(false);
-      navigate('/dashboard');
-    } catch (err) {
-      setLoading(false);
-      setError(err.response?.data?.message || 'Error logging in');
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+  console.log('Login URL:', '/api/auth/login'); // Debug log
+  try {
+    const response = await axios.post('/api/auth/login', { email, password });
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
     }
-  };
+    setLoading(false);
+    navigate('/dashboard');
+  } catch (err) {
+    setLoading(false);
+    setError(err.response?.data?.message || 'Error logging in');
+  }
+};
 
   // Handle Forgot Password
   const handleForgotPassword = async (e) => {
