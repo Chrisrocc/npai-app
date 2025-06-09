@@ -57,6 +57,7 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego, onEnlarge }) => {
           e.target.src = 'https://placehold.co/100x100?text=Image+Not+Found';
         }}
       />
+
       <button
         onClick={(e) => {
           e.stopPropagation(); // Prevent triggering enlargement on delete
