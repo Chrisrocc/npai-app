@@ -84,7 +84,7 @@ app.use(cookieParser());
 app.use(logRequest);
 
 // Serve static files from the Uploads folder (aligned with cars.js)
-app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB
 connectDB();

@@ -9,7 +9,7 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = 'Uploads/';
+    const uploadDir = 'uploads/';
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -60,7 +60,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 router.post('/', upload.array('photos'), asyncHandler(async (req, res) => {
   const { make, model, badge, rego, year, description, location, status, next, checklist, notes } = req.body;
-  const photos = req.files ? req.files.map((file) => `Uploads/${file.filename}`) : [];
+  const photos = req.files ? req.files.map((file) => `uploads/${file.filename}`) : [];
 
   let nextDestinations = [];
   if (next) {
@@ -103,7 +103,7 @@ router.put('/:id', upload.array('photos'), asyncHandler(async (req, res) => {
   }
 
   const updateData = req.body;
-  const newPhotos = req.files ? req.files.map((file) => `Uploads/${file.filename}`) : [];
+  const newPhotos = req.files ? req.files.map((file) => `uploads/${file.filename}`) : [];
 
   // Merge existing photos with new photos
   if (req.body.existingPhotos) {
