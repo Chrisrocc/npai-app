@@ -74,42 +74,51 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json(car);
 }));
 
-router.post('/', upload.array('photos'), asyncHandler(async (req, res) => {
-  const { make, model, badge, rego, year, description, location, status, next, checklist, notes } = req.body;
-  const photos = req.files ? req.files.map((file) => `uploads/${file.filename}`) : [];
-
-  let nextDestinations = [];
-  if (next) {
-    if (typeof next === 'string') {
-      nextDestinations = [{ location: next, created: new Date() }];
-    } else if (Array.isArray(next)) {
-      nextDestinations = next.map((loc) => ({
-        location: loc.location || loc,
-        created: loc.created ? new Date(loc.created) : new Date(),
-      }));
+router.post('/', (req, res) => {
+  upload.array('photos')(req, res, async function (err) {
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ message: 'Photo too large. Please upload a smaller one.' });
+    } else if (err) {
+      return res.status(500).json({ message: 'Upload error', error: err.message });
     }
-  }
 
-  const car = new Car({
-    make,
-    model,
-    badge,
-    rego,
-    year,
-    description,
-    location,
-    status,
-    next: nextDestinations,
-    checklist: checklist ? checklist.split(',').map((item) => item.trim()) : [],
-    notes,
-    photos,
-    history: location ? [{ location, dateAdded: new Date(), dateLeft: null }] : [],
+    // Continue with the original logic:
+    const { make, model, badge, rego, year, description, location, status, next, checklist, notes } = req.body;
+    const photos = req.files ? req.files.map((file) => `uploads/${file.filename}`) : [];
+
+    let nextDestinations = [];
+    if (next) {
+      if (typeof next === 'string') {
+        nextDestinations = [{ location: next, created: new Date() }];
+      } else if (Array.isArray(next)) {
+        nextDestinations = next.map((loc) => ({
+          location: loc.location || loc,
+          created: loc.created ? new Date(loc.created) : new Date(),
+        }));
+      }
+    }
+
+    const car = new Car({
+      make,
+      model,
+      badge,
+      rego,
+      year,
+      description,
+      location,
+      status,
+      next: nextDestinations,
+      checklist: checklist ? checklist.split(',').map((item) => item.trim()) : [],
+      notes,
+      photos,
+      history: location ? [{ location, dateAdded: new Date(), dateLeft: null }] : [],
+    });
+
+    await car.save();
+    console.log(chalk.green(`Created new car: ${car.make} ${car.model}, Location: ${car.location}`));
+    res.status(201).json(car);
   });
-
-  await car.save();
-  console.log(chalk.green(`Created new car: ${car.make} ${car.model}, Location: ${car.location}`));
-  res.status(201).json(car);
-}));
+});
 
 router.put('/:id', upload.array('photos'), asyncHandler(async (req, res) => {
   const carId = req.params.id;
