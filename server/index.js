@@ -60,7 +60,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const fileTypes = /csv/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -77,42 +77,37 @@ const upload = multer({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Dynamic origin for production
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(cookieParser());
-app.use(logRequest);
+app.use(logRequest());
 
-// Serve static files from the Uploads folder (aligned with cars.js)
+// Serve static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB
 connectDB();
 
-// Routes
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/cars', authenticateToken, carRoutes); // Re-enabled authentication
+app.use('/api/cars', authenticateToken, carRoutes);
 app.use('/api/customerappointments', authenticateToken, customerAppointmentRoutes);
 app.use('/api/reconappointments', authenticateToken, reconAppointmentRoutes);
 app.use('/api/manualverifications', authenticateToken, manualVerificationRoutes);
 app.use('/api/tasks', authenticateToken, taskRoutes);
 app.use('/api/notes', authenticateToken, noteRoutes);
 
-// Telegram webhook endpoint
+// Telegram webhook
 app.post('/telegram-webhook', require('./utils/telegram').telegramWebhook);
 
-// CSV file upload route to add new cars
+// CSV upload route
 app.post('/api/cars/upload-csv', authenticateToken, upload.single('file'), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     const mongoose = require('mongoose');
     const Car = mongoose.model('Car');
     const newCars = [];
-
-    console.log(chalk.blue(`Processing CSV file: ${req.file.path}`));
 
     const parser = parse({ delimiter: ',', columns: true, skip_empty_lines: true, quote: '"' });
     const fileStream = fs.createReadStream(req.file.path);
@@ -120,60 +115,38 @@ app.post('/api/cars/upload-csv', authenticateToken, upload.single('file'), async
     fileStream
       .pipe(parser)
       .on('data', async (row) => {
-        try {
-          console.log(chalk.blue('Processing row:'), row);
+        const requiredColumns = ['Make', 'Model', 'Series', 'Badge', 'CompYear', 'Colour', 'REGO'];
+        if (!requiredColumns.every(col => row[col] !== undefined)) return;
 
-          const requiredColumns = ['Make', 'Model', 'Series', 'Badge', 'CompYear', 'Colour', 'REGO'];
-          const hasRequiredColumns = requiredColumns.every(col => row[col] !== undefined);
-          if (!hasRequiredColumns) {
-            console.log(chalk.yellow(`Skipping row due to missing required columns: ${JSON.stringify(row)}`));
-            return;
-          }
-
-          const existingCar = await Car.findOne({ rego: row.REGO });
-          if (!existingCar) {
-            const newCar = new Car({
-              make: row.Make,
-              model: row.Model,
-              series: row.Series,
-              badge: row.Badge,
-              year: parseInt(row.CompYear, 10) || undefined,
-              description: row.Colour,
-              rego: row.REGO,
-              stage: 'In Works',
-              photos: [],
-              checklist: [],
-              notes: '',
-              history: [],
-            });
-
-            await newCar.save();
-            newCars.push({
-              make: row.Make,
-              model: row.Model,
-              rego: row.REGO,
-            });
-            console.log(chalk.green(`Added new car: ${row.REGO}`));
-          } else {
-            console.log(chalk.yellow(`Car with REGO ${row.REGO} already exists, skipping.`));
-          }
-        } catch (err) {
-          console.error(chalk.red(`Error processing row: ${JSON.stringify(row)}`), err);
+        const existingCar = await Car.findOne({ rego: row.REGO });
+        if (!existingCar) {
+          const newCar = new Car({
+            make: row.Make,
+            model: row.Model,
+            series: row.Series,
+            badge: row.Badge,
+            year: parseInt(row.CompYear, 10) || undefined,
+            description: row.Colour,
+            rego: row.REGO,
+            stage: 'In Works',
+            photos: [],
+            checklist: [],
+            notes: '',
+            history: [],
+          });
+          await newCar.save();
+          newCars.push({ make: row.Make, model: row.Model, rego: row.REGO });
         }
       })
       .on('end', () => {
-        console.log(chalk.green('Finished processing CSV file'));
         fs.unlinkSync(req.file.path);
         res.status(200).json({ message: 'CSV processed successfully', newCars });
       })
       .on('error', (err) => {
-        console.error(chalk.red('CSV parsing error:'), err);
         fs.unlinkSync(req.file.path);
         res.status(500).json({ message: 'Error processing CSV', error: err.message });
       });
-
   } catch (err) {
-    console.error(chalk.red('Upload route error:'), err);
     if (req.file) fs.unlinkSync(req.file.path);
     res.status(500).json({ message: 'Error uploading CSV', error: err.message });
   }
@@ -193,9 +166,8 @@ app.put('/api/plans/:id', authenticateToken, (req, res) => {
   try {
     const plans = JSON.parse(fs.readFileSync(path.join(__dirname, 'plans.json'), 'utf8'));
     const planIndex = plans.findIndex(plan => plan.id === req.params.id);
-    if (planIndex === -1) {
-      return res.status(404).json({ message: 'Plan not found' });
-    }
+    if (planIndex === -1) return res.status(404).json({ message: 'Plan not found' });
+
     plans[planIndex] = { ...plans[planIndex], ...req.body };
     fs.writeFileSync(path.join(__dirname, 'plans.json'), JSON.stringify(plans, null, 2));
     res.status(200).json({ message: 'Plan updated successfully' });
@@ -204,23 +176,28 @@ app.put('/api/plans/:id', authenticateToken, (req, res) => {
   }
 });
 
-// Basic route
+// Default route
 app.get('/', (req, res) => {
-  console.log(chalk.blue('Received request for /'));
   res.send('Welcome to NPAI Car Yard API');
 });
 
-// Process pending location updates every minute
+// Static React frontend
+app.use(express.static(path.join(__dirname, '../client/build')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(chalk.red(`Unhandled error in ${req.method} ${req.path}:`, err.message));
+  res.status(500).json({ message: 'Internal Server Error' });
+});
+
+// Cron job every minute
 setInterval(async () => {
   console.log(chalk.blue('Checking for pending location updates...'));
   await processPendingLocationUpdates();
 }, 60 * 1000);
-
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error(chalk.red(`Unhandled error in ${req.method} ${req.path}:`, err.message, err.stack));
-  res.status(500).json({ message: 'Internal Server Error' }); // Hide error details in production
-});
 
 // Start server
 const PORT = process.env.PORT || 5000;
