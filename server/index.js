@@ -31,7 +31,6 @@ require('./models/Tasks');
 require('./models/Note');
 console.log(chalk.green('Models registered successfully'));
 
-// Register User model
 console.log(chalk.blue('Registering User model...'));
 require('./models/Users');
 console.log(chalk.green('User model registered successfully'));
@@ -43,7 +42,7 @@ console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? chalk.green('Set') : chalk.r
 
 const app = express();
 
-// Configure Multer for CSV file uploads
+// Configure Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = 'uploads/';
@@ -81,12 +80,12 @@ app.use(cors({
   credentials: true,
 }));
 app.use(cookieParser());
-app.use(logRequest); // ✅ Fixed
+app.use(logRequest);
 
 // Serve static uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Connect to MongoDB
+// Connect to DB
 connectDB();
 
 // API Routes
@@ -101,7 +100,7 @@ app.use('/api/notes', authenticateToken, noteRoutes);
 // Telegram webhook
 app.post('/telegram-webhook', require('./utils/telegram').telegramWebhook);
 
-// CSV upload route
+// CSV Upload
 app.post('/api/cars/upload-csv', authenticateToken, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
@@ -152,7 +151,7 @@ app.post('/api/cars/upload-csv', authenticateToken, upload.single('file'), async
   }
 });
 
-// API routes for plans
+// Plans endpoints
 app.get('/api/plans', authenticateToken, (req, res) => {
   try {
     const plans = JSON.parse(fs.readFileSync(path.join(__dirname, 'plans.json'), 'utf8'));
@@ -176,14 +175,14 @@ app.put('/api/plans/:id', authenticateToken, (req, res) => {
   }
 });
 
-// Default route
+// Default API ping
 app.get('/', (req, res) => {
   res.send('Welcome to NPAI Car Yard API');
 });
 
 // Static React frontend
 app.use(express.static(path.join(__dirname, '../client/build')));
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
 
