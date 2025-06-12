@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 1000 * 1024 * 1024 }, // 1000MB limit
+  limits: { fileSize: 15 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const fileTypes = /jpeg|jpg|png|heic/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -120,7 +120,7 @@ router.post('/', (req, res) => {
   });
 });
 
-router.put('/:id', upload.array('photos', 20), asyncHandler(async (req, res) => {
+router.put('/:id', upload.array('photos',20), asyncHandler(async (req, res) => {
   const carId = req.params.id;
   const car = await Car.findById(carId); // Ensure car is fetched before proceeding
   if (!car) {
