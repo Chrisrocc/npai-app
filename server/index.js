@@ -42,8 +42,8 @@ console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? chalk.green('Set') : chalk.r
 
 const app = express();
 
-// Configure Multer
-const storage = multer.diskStorage({
+// Configure Multer for CSV Uploads
+const csvStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = 'uploads/';
     if (!fs.existsSync(uploadDir)) {
@@ -57,9 +57,9 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 100 * 1024 * 1024 },
+const uploadCSV = multer({
+  storage: csvStorage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
   fileFilter: (req, file, cb) => {
     const fileTypes = /csv/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -101,7 +101,7 @@ app.use('/api/notes', authenticateToken, noteRoutes);
 app.post('/telegram-webhook', require('./utils/telegram').telegramWebhook);
 
 // CSV Upload
-app.post('/api/cars/upload-csv', authenticateToken, upload.single('file'), async (req, res) => {
+app.post('/api/cars/upload-csv', authenticateToken, uploadCSV.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     const mongoose = require('mongoose');
