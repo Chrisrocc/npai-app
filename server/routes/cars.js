@@ -75,7 +75,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }));
 
 router.post('/', (req, res) => {
-  upload.array('photos')(req, res, async function (err) {
+  upload.array('photos', 20)(req, res, async function (err) {
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
       return res.status(413).json({ message: 'Photo too large. Please upload a smaller one.' });
     } else if (err) {
@@ -120,7 +120,7 @@ router.post('/', (req, res) => {
   });
 });
 
-router.put('/:id', upload.array('photos'), asyncHandler(async (req, res) => {
+router.put('/:id', upload.array('photos', 20), asyncHandler(async (req, res) => {
   const carId = req.params.id;
   const car = await Car.findById(carId); // Ensure car is fetched before proceeding
   if (!car) {
