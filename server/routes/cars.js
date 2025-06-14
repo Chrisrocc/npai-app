@@ -21,9 +21,10 @@ const storage = multer.diskStorage({
 
   },
 });
+
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB per photo
   fileFilter: (req, file, cb) => {
     const fileTypes = /jpeg|jpg|png|heic/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -35,6 +36,7 @@ const upload = multer({
     }
   }
 });
+
 
 
 const asyncHandler = (fn) => (req, res, next) =>
