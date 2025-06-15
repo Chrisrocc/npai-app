@@ -1,3 +1,5 @@
+// server/index.js
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -42,37 +44,6 @@ console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? chalk.green('Set') : chalk.r
 
 const app = express();
 
-// Configure Multer for CSV Uploads
-const csvStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = 'uploads/';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const uploadCSV = multer({
-  storage: csvStorage,
-  limits: { fileSize: 15 * 1024 * 1024 }, // 100MB limit
-  files: 20,
-  fileFilter: (req, file, cb) => {
-    const fileTypes = /csv/;
-    const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = fileTypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only CSV files are allowed'));
-    }
-  }
-});
-
 // Middleware
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb'}));
@@ -102,6 +73,36 @@ app.use('/api/notes', authenticateToken, noteRoutes);
 app.post('/telegram-webhook', require('./utils/telegram').telegramWebhook);
 
 // CSV Upload
+const csvStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadCSV = multer({
+  storage: csvStorage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+  files: 20,
+  fileFilter: (req, file, cb) => {
+    const fileTypes = /csv/;
+    const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = fileTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
+    }
+  }
+});
+
 app.post('/api/cars/upload-csv', authenticateToken, uploadCSV.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
@@ -199,10 +200,12 @@ setInterval(async () => {
   await processPendingLocationUpdates();
 }, 60 * 1000);
 
-// Start server
+// Start server with extended timeout
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(chalk.green(`Server running on port ${PORT}`));
   startCronJobs();
   console.log(chalk.green('Cron jobs started'));
 });
+
+server.setTimeout(5 * 60 * 1000); // 5-minute timeout for large uploads

@@ -5,26 +5,15 @@ const multer = require('multer');
 const path = require('path');
 const chalk = require('chalk');
 const { updateCarHistory, processPendingLocationUpdates } = require('../utils/helpers');
+const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
+const s3 = require('../s3');
+const bucketName = process.env.AWS_BUCKET_NAME;
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = 'uploads/';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-  cb(null, `car_${Date.now()}_${safeName}`);
-
-  },
-});
-
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB per photo
+  limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const fileTypes = /jpeg|jpg|png|heic/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -34,10 +23,28 @@ const upload = multer({
     } else {
       cb(new Error('Only image files (jpeg, jpg, png, heic) are allowed.'));
     }
-  }
+  },
 });
 
+const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
+  const key = `car_${Date.now()}_${uuidv4()}_${fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+  const params = {
+    Bucket: bucketName,
+    Key: key,
+    Body: fileBuffer,
+    ContentType: mimetype,
+    ACL: 'private',
+    CacheControl: 'public, max-age=31536000',
+  };
+  await s3.upload(params).promise();
+  return `https://${bucketName}.s3.${process.env.AWS_REGION || 'ap-southeast-2'}.amazonaws.com/${key}`;
+};
 
+const deleteFromS3 = async (url) => {
+  const key = url.split(`${bucketName}.s3.${process.env.AWS_REGION || 'ap-southeast-2'}.amazonaws.com/`)[1];
+  if (!key) return;
+  await s3.deleteObject({ Bucket: bucketName, Key: key }).promise();
+};
 
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch((err) => {
@@ -52,131 +59,8 @@ router.use(asyncHandler(async (req, res, next) => {
 }));
 
 router.get('/archived', asyncHandler(async (req, res) => {
-  console.log(chalk.blue('Handling GET /api/cars/archived'));
   const archivedCars = await Car.find({ archived: true });
-  // Removed detailed log: console.log(chalk.blue(`Found ${archivedCars.length} archived cars: ${JSON.stringify(archivedCars.map((c) => ({ _id: c._id, rego: c.rego })))`));
   res.json(archivedCars);
-}));
-
-router.get('/', asyncHandler(async (req, res) => {
-  console.log(chalk.blue('Handling GET /api/cars'));
-  const allCars = await Car.find({}); // Log all cars to see if new ones are visible
-  // Removed detailed log: console.log(chalk.blue(`Found ${allCars.length} total cars: ${JSON.stringify(allCars.map((c) => ({ _id: c._id, rego: c.rego, archived: c.archived })))`));
-  const cars = await Car.find({ archived: false });
-  // Removed detailed log: console.log(chalk.blue(`Found ${cars.length} non-archived cars: ${JSON.stringify(cars.map((c) => ({ _id: c._id, rego: c.rego, archived: c.archived })))`));
-  res.json(cars);
-}));
-
-router.get('/:id', asyncHandler(async (req, res) => {
-  console.log(chalk.blue(`Handling GET /api/cars/:id with id=${req.params.id}`));
-  const car = await Car.findById(req.params.id);
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
-  }
-  res.json(car);
-}));
-
-router.post('/', (req, res) => {
-  upload.array('photos', 20)(req, res, async function (err) {
-    if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ message: 'Photo too large. Please upload a smaller one.' });
-    } else if (err) {
-      return res.status(500).json({ message: 'Upload error', error: err.message });
-    }
-
-    // Continue with the original logic:
-    const { make, model, badge, rego, year, description, location, status, next, checklist, notes } = req.body;
-    const photos = req.files ? req.files.map((file) => `uploads/${file.filename}`) : [];
-
-    let nextDestinations = [];
-    if (next) {
-      if (typeof next === 'string') {
-        nextDestinations = [{ location: next, created: new Date() }];
-      } else if (Array.isArray(next)) {
-        nextDestinations = next.map((loc) => ({
-          location: loc.location || loc,
-          created: loc.created ? new Date(loc.created) : new Date(),
-        }));
-      }
-    }
-
-    const car = new Car({
-      make,
-      model,
-      badge,
-      rego,
-      year,
-      description,
-      location,
-      status,
-      next: nextDestinations,
-      checklist: checklist ? checklist.split(',').map((item) => item.trim()) : [],
-      notes,
-      photos,
-      history: location ? [{ location, dateAdded: new Date(), dateLeft: null }] : [],
-    });
-
-    await car.save();
-    console.log(chalk.green(`Created new car: ${car.make} ${car.model}, Location: ${car.location}`));
-    res.status(201).json(car);
-  });
-});
-
-router.put('/:id', upload.array('photos',20), asyncHandler(async (req, res) => {
-  const carId = req.params.id;
-  const car = await Car.findById(carId); // Ensure car is fetched before proceeding
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
-  }
-
-  const updateData = req.body;
-  const newPhotos = req.files ? req.files.map((file) => `uploads/${file.filename}`) : [];
-
-  // Merge existing photos with new photos
-  if (req.body.existingPhotos) {
-    const existingPhotos = JSON.parse(req.body.existingPhotos);
-    updateData.photos = [...existingPhotos, ...newPhotos];
-  } else if (newPhotos.length > 0) {
-    updateData.photos = [...car.photos, ...newPhotos];
-  }
-
-  if (updateData.checklist) {
-    if (Array.isArray(updateData.checklist)) {
-      updateData.checklist = updateData.checklist.map((item) => String(item).trim()).filter((item) => item);
-    } else if (typeof updateData.checklist === 'string') {
-      updateData.checklist = updateData.checklist
-        .split(',')
-        .map((item) => item.trim())
-        .filter((item) => item);
-    } else {
-      return res.status(400).json({ message: 'Checklist must be a string or array' });
-    }
-  }
-
-  if (updateData.next) {
-    if (typeof updateData.next === 'string') {
-      updateData.next = [{ location: updateData.next, created: new Date() }];
-    } else if (Array.isArray(updateData.next)) {
-      updateData.next = updateData.next.map((loc) => ({
-        location: loc.location || loc,
-        created: loc.created ? new Date(loc.created) : new Date(),
-      }));
-    } else {
-      return res.status(400).json({ message: 'Next must be a string or array' });
-    }
-  }
-
-  if (updateData.location && updateData.location !== car.location) {
-    const historyUpdated = await updateCarHistory(carId, updateData.location, 'Location update via PUT');
-    if (!historyUpdated) {
-      return res.status(500).json({ message: 'Failed to schedule history update' });
-    }
-    delete updateData.location;
-  }
-
-  const updatedCar = await Car.findByIdAndUpdate(carId, updateData, { new: true, runValidators: true });
-  console.log(chalk.green(`Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`));
-  res.json(updatedCar);
 }));
 
 router.post('/:id/next', asyncHandler(async (req, res) => {
@@ -195,13 +79,7 @@ router.post('/:id/next', asyncHandler(async (req, res) => {
   const newNextEntry = { location, created: new Date() };
   const updatedNext = [...car.next, newNextEntry];
 
-  const updatedCar = await Car.findByIdAndUpdate(
-    carId,
-    { next: updatedNext },
-    { new: true, runValidators: true }
-  );
-
-  console.log(chalk.green(`Added next location to car: ${updatedCar.make} ${updatedCar.model}, Next: ${location}`));
+  const updatedCar = await Car.findByIdAndUpdate(carId, { next: updatedNext }, { new: true, runValidators: true });
   res.json(updatedCar);
 }));
 
@@ -219,13 +97,7 @@ router.delete('/:id/next/:index', asyncHandler(async (req, res) => {
   }
 
   const updatedNext = car.next.filter((_, i) => i !== index);
-  const updatedCar = await Car.findByIdAndUpdate(
-    carId,
-    { next: updatedNext },
-    { new: true, runValidators: true }
-  );
-
-  console.log(chalk.green(`Deleted next location from car: ${updatedCar.make} ${updatedCar.model}, Index: ${index}`));
+  const updatedCar = await Car.findByIdAndUpdate(carId, { next: updatedNext }, { new: true, runValidators: true });
   res.json(updatedCar);
 }));
 
@@ -266,7 +138,6 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   car.archivedAt = new Date();
   await car.save();
 
-  console.log(chalk.green(`Archived car: ${car.make} ${car.model}`));
   res.json({ message: 'Car archived successfully' });
 }));
 
@@ -283,7 +154,6 @@ router.post('/:id/restore', asyncHandler(async (req, res) => {
   car.archivedAt = null;
   await car.save();
 
-  console.log(chalk.green(`Restored car: ${car.make} ${car.model}`));
   res.json({ message: 'Car restored successfully', car });
 }));
 
@@ -297,16 +167,10 @@ router.delete('/:id/permanent', asyncHandler(async (req, res) => {
   }
 
   if (car.photos && car.photos.length > 0) {
-    for (const photoPath of car.photos) {
-      const fullPath = path.join(__dirname, '..', photoPath);
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
-      }
-    }
+    await Promise.all(car.photos.map(deleteFromS3));
   }
 
   await Car.findByIdAndDelete(req.params.id);
-  console.log(chalk.green(`Permanently deleted car: ${car.make} ${car.model}`));
   res.json({ message: 'Car permanently deleted' });
 }));
 
