@@ -42,14 +42,17 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-  const maxRetries = 3;
+  const maxRetries = 5;
   let attempt = 0;
 
   while (attempt < maxRetries) {
     try {
       const token = localStorage.getItem('token');
       const formDataToSend = new FormData();
-      photos.forEach((photo) => formDataToSend.append('photos', photo));
+      photos.forEach((photo, index) => {
+        formDataToSend.append('photos', photo);
+        console.log(`Appending photo ${index + 1}: ${photo.name}, size: ${(photo.size / 1024 / 1024).toFixed(2)}MB`);
+      });
       formDataToSend.append('make', formData.make);
       formDataToSend.append('model', formData.model);
       formDataToSend.append('rego', formData.rego);
@@ -61,23 +64,26 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
       formDataToSend.append('next', formData.next);
       formDataToSend.append('checklist', checklist.join(','));
 
-      await axios.post('/api/cars', formDataToSend, {
+      console.log(`Attempt ${attempt + 1}: Sending POST /api/cars with ${photos.length} photos`);
+
+      const response = await axios.post('/api/cars', formDataToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        timeout: 60000, // Increased to 60 seconds
+        timeout: 90000, // 90 seconds
       });
 
+      console.log('Upload successful:', response.data);
       onAdd();
       setFormData({ rego: '', make: '', model: '', badge: '', year: '', description: '', location: '', next: '' });
       setChecklist([]);
       setNewChecklistItem('');
       setPhotos([]);
       onClose();
-      return; // Success, exit loop
+      return;
     } catch (err) {
       attempt++;
-      console.error(`Attempt ${attempt} failed:`, err);
+      console.error(`Attempt ${attempt} failed:`, err.message, err);
       if (attempt === maxRetries) {
         console.error('Max retries reached. Upload failed:', err);
         if (err.code === 'ECONNABORTED') {
@@ -87,8 +93,9 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
         }
         return;
       }
-      // Exponential backoff: wait 1s, 2s, 4s
-      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      const delay = Math.pow(2, attempt) * 1000;
+      console.log(`Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 };

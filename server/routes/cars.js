@@ -40,10 +40,12 @@ const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
     CacheControl: 'public, max-age=31536000',
   };
   try {
+    console.log(chalk.blue(`Uploading to S3: ${key}, size: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB`));
     const result = await s3.upload(params, {
-      partSize: 5 * 1024 * 1024, // 5MB chunks
+      partSize: 2 * 1024 * 1024, // 2MB chunks
       queueSize: 4, // Concurrent uploads
     }).promise();
+    console.log(chalk.green(`S3 upload successful: ${key}`));
     return `https://${bucketName}.s3.ap-southeast-2.amazonaws.com/${key}`;
   } catch (error) {
     console.error(chalk.red(`S3 upload error for ${key}:`, error.message));
