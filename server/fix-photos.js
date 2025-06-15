@@ -1,5 +1,5 @@
 // server/fix-photos.js
-require('dotenv').config(); // Load .env
+require('dotenv').config();
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const Car = require('./models/Cars');
@@ -9,8 +9,11 @@ async function fixPhotos() {
   const cars = await Car.find({ photos: { $ne: [] } });
   for (const car of cars) {
     const updatedPhotos = car.photos.map(photo => {
-      if (photo.startsWith('http')) return photo; // Already an S3 URL
-      const filename = photo.replace('uploads/', ''); // Remove uploads/ prefix
+      if (photo.startsWith('https://npai-car-photos.s3.ap-southeast-2.amazonaws.com')) return photo;
+      const filename = photo
+        .replace(/^uploads\//, '')
+        .replace(/^https:\/\/npai-backend\.onrender\.com\/uploads\//, '')
+        .replace(/^https:\/\/npai-backend\.onrender\.com\/uploads\//, '');
       return `https://npai-car-photos.s3.ap-southeast-2.amazonaws.com/${filename}`;
     });
     car.photos = updatedPhotos;

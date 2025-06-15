@@ -28,13 +28,7 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego, onEnlarge }) => {
         item.index = index;
       }
     },
-    drop: () => {
-      // Ensure the move is finalized on drop
-    },
   }));
-
-  // Extract just the filename from the photo path
-  const photoFileName = photo.split('/').pop();
 
   return (
     <div
@@ -44,23 +38,22 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego, onEnlarge }) => {
         opacity: isDragging ? 0.5 : 1,
         margin: '5px',
         cursor: 'pointer',
-        transition: 'all 0.2s ease', // Smooth transition for dragging
+        transition: 'all 0.2s ease',
       }}
-      onClick={() => onEnlarge(photoFileName)}
+      onClick={() => onEnlarge(photo)}
     >
       <img
-        src={`${process.env.REACT_APP_API_URL}/uploads/${photoFileName}`}
+        src={photo}
         alt={`Car ${rego} - Photo ${index + 1}`}
         style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px' }}
         onError={(e) => {
-          console.error(`Failed to load image: ${process.env.REACT_APP_API_URL}/uploads/${photoFileName}`, e);
+          console.error(`Failed to load image: ${photo}`, e);
           e.target.src = 'https://placehold.co/100x100?text=Image+Not+Found';
         }}
       />
-
       <button
         onClick={(e) => {
-          e.stopPropagation(); // Prevent triggering enlargement on delete
+          e.stopPropagation();
           deletePhoto(index);
         }}
         style={{
@@ -303,32 +296,31 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   };
 
   const handleAddPhotos = async () => {
-  if (newPhotos.length === 0) return;
-  try {
-    const formData = new FormData();
-    formData.append('existingPhotos', JSON.stringify(existingPhotos));
-    newPhotos.forEach((photo) => formData.append('photos', photo));
+    if (newPhotos.length === 0) return;
+    try {
+      const formData = new FormData();
+      formData.append('existingPhotos', JSON.stringify(existingPhotos));
+      newPhotos.forEach((photo) => formData.append('photos', photo));
 
-    const response = await axios.put(`/api/cars/${carId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      timeout: 30000, // ⏰ Extended timeout for large files / mobile
-    });
+      const response = await axios.put(`/api/cars/${carId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000,
+      });
 
-    await fetchCarWithoutRefresh();
-    setNewPhotos([]);
-    console.log('Photo upload response:', response.data);
-  } catch (err) {
-    console.error('Error adding photos:', err);
-    if (err.code === 'ECONNABORTED') {
-      alert('Upload timed out. Please check your internet and try again.');
-    } else {
-      alert('Failed to add photos: ' + (err.response?.data?.message || err.message));
+      await fetchCarWithoutRefresh();
+      setNewPhotos([]);
+      console.log('Photo upload response:', response.data);
+    } catch (err) {
+      console.error('Error adding photos:', err);
+      if (err.code === 'ECONNABORTED') {
+        alert('Upload timed out. Please check your internet and try again.');
+      } else {
+        alert('Failed to add photos: ' + (err.response?.data?.message || err.message));
+      }
     }
-  }
-};
-
+  };
 
   const handleDeletePhoto = async (index) => {
     const updatedPhotos = existingPhotos.filter((_, i) => i !== index);
@@ -378,8 +370,8 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
     }
   };
 
-  const handleEnlargePhoto = (photoFileName) => {
-    setEnlargedPhoto(`${process.env.REACT_APP_API_URL}/uploads/${photoFileName}`);
+  const handleEnlargePhoto = (photoUrl) => {
+    setEnlargedPhoto(photoUrl);
   };
 
   const closeEnlargedPhoto = () => {
