@@ -1,14 +1,23 @@
+// routes/cars.js
 const express = require('express');
 const router = express.Router();
 const Car = require('../models/Cars');
 const multer = require('multer');
 const path = require('path');
 const chalk = require('chalk');
-const { updateCarHistory, processPendingLocationUpdates } = require('../utils/helpers');
-const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
-const s3 = require('../s3');
-const bucketName = process.env.AWS_BUCKET_NAME;
+const { v4: uuidv4 } = require('uuid');
+const AWS = require('aws-sdk');
+const { updateCarHistory, processPendingLocationUpdates } = require('../utils/helpers');
+
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: 'ap-southeast-2',
+});
+
+const s3 = new AWS.S3();
+const bucketName = process.env.AWS_BUCKET_NAME || 'npai-car-photos';
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -18,11 +27,8 @@ const upload = multer({
     const fileTypes = /jpeg|jpg|png|heic/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = fileTypes.test(file.mimetype);
-    if (extname && mimetype) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files (jpeg, jpg, png, heic) are allowed.'));
-    }
+    if (extname && mimetype) cb(null, true);
+    else cb(new Error('Only image files (jpeg, jpg, png, heic) are allowed.'));
   },
 });
 
@@ -37,11 +43,11 @@ const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
     CacheControl: 'public, max-age=31536000',
   };
   await s3.upload(params).promise();
-  return `https://${bucketName}.s3.${process.env.AWS_REGION || 'ap-southeast-2'}.amazonaws.com/${key}`;
+  return `https://${bucketName}.s3.ap-southeast-2.amazonaws.com/${key}`;
 };
 
 const deleteFromS3 = async (url) => {
-  const key = url.split(`${bucketName}.s3.${process.env.AWS_REGION || 'ap-southeast-2'}.amazonaws.com/`)[1];
+  const key = url.split(`${bucketName}.s3.ap-southeast-2.amazonaws.com/`)[1];
   if (!key) return;
   await s3.deleteObject({ Bucket: bucketName, Key: key }).promise();
 };
@@ -63,113 +69,153 @@ router.get('/archived', asyncHandler(async (req, res) => {
   res.json(archivedCars);
 }));
 
-router.post('/:id/next', asyncHandler(async (req, res) => {
+router.get('/', asyncHandler(async (req, res) => {
+  const cars = await Car.find({ archived: false });
+  res.json(cars);
+}));
+
+router.get('/:id', asyncHandler(async (req, res) => {
+  const car = await Car.findById(req.params.id);
+  if (!car) return res.status(404).json({ message: 'Car not found' });
+  res.json(car);
+}));
+
+router.post('/', upload.array('photos', 20), asyncHandler(async (req, res) => {
+  const { make, model, badge, rego, year, description, location, status, next, checklist, notes } = req.body;
+  let photoUrls = [];
+  if (req.files && req.files.length > 0) {
+    const uploadPromises = req.files.map(file => uploadToS3(file.buffer, file.originalname, file.mimetype));
+    photoUrls = await Promise.all(uploadPromises);
+  }
+
+  let nextDestinations = [];
+  if (next) {
+    if (typeof next === 'string') {
+      nextDestinations = [{ location: next, created: new Date() }];
+    } else if (Array.isArray(next)) {
+      nextDestinations = next.map(loc => ({ location: loc.location || loc, created: loc.created ? new Date(loc.created) : new Date() }));
+    }
+  }
+
+  const car = new Car({
+    make,
+    model,
+    badge,
+    rego,
+    year,
+    description,
+    location,
+    status,
+    next: nextDestinations,
+    checklist: checklist ? checklist.split(',').map(item => item.trim()) : [],
+    notes,
+    photos: photoUrls,
+    history: location ? [{ location, dateAdded: new Date(), dateLeft: null }] : [],
+  });
+
+  await car.save();
+  console.log(chalk.green(`Created new car: ${car.make} ${car.model}, Location: ${car.location}`));
+  res.status(201).json(car);
+}));
+
+router.put('/:id', upload.array('photos', 20), asyncHandler(async (req, res) => {
   const carId = req.params.id;
-  const { location } = req.body;
-
-  if (!location) {
-    return res.status(400).json({ message: 'Location is required' });
-  }
-
   const car = await Car.findById(carId);
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
+  if (!car) return res.status(404).json({ message: 'Car not found' });
+
+  const updateData = req.body;
+  let newPhotoUrls = [];
+
+  if (req.files && req.files.length > 0) {
+    const uploadPromises = req.files.map(file => uploadToS3(file.buffer, file.originalname, file.mimetype));
+    newPhotoUrls = await Promise.all(uploadPromises);
   }
 
-  const newNextEntry = { location, created: new Date() };
-  const updatedNext = [...car.next, newNextEntry];
+  if (req.body.existingPhotos) {
+    const existingPhotos = JSON.parse(req.body.existingPhotos);
+    const removedPhotos = car.photos.filter(url => !existingPhotos.includes(url));
+    await Promise.all(removedPhotos.map(deleteFromS3));
+    updateData.photos = [...existingPhotos, ...newPhotoUrls];
+  } else if (newPhotoUrls.length > 0) {
+    updateData.photos = [...car.photos, ...newPhotoUrls];
+  }
 
-  const updatedCar = await Car.findByIdAndUpdate(carId, { next: updatedNext }, { new: true, runValidators: true });
+  if (updateData.checklist) {
+    updateData.checklist = typeof updateData.checklist === 'string'
+      ? updateData.checklist.split(',').map(item => item.trim()).filter(Boolean)
+      : updateData.checklist.map(item => String(item).trim()).filter(Boolean);
+  }
+
+  if (updateData.next) {
+    updateData.next = typeof updateData.next === 'string'
+      ? [{ location: updateData.next, created: new Date() }]
+      : updateData.next.map(loc => ({ location: loc.location || loc, created: loc.created ? new Date(loc.created) : new Date() }));
+  }
+
+  if (updateData.location && updateData.location !== car.location) {
+    const historyUpdated = await updateCarHistory(carId, updateData.location, 'Location update via PUT');
+    if (!historyUpdated) return res.status(500).json({ message: 'Failed to schedule history update' });
+    delete updateData.location;
+  }
+
+  const updatedCar = await Car.findByIdAndUpdate(carId, updateData, { new: true, runValidators: true });
+  console.log(chalk.green(`Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`));
   res.json(updatedCar);
+}));
+
+router.post('/:id/next', asyncHandler(async (req, res) => {
+  const { location } = req.body;
+  if (!location) return res.status(400).json({ message: 'Location is required' });
+  const car = await Car.findById(req.params.id);
+  if (!car) return res.status(404).json({ message: 'Car not found' });
+  car.next.push({ location, created: new Date() });
+  await car.save();
+  res.json(car);
 }));
 
 router.delete('/:id/next/:index', asyncHandler(async (req, res) => {
-  const carId = req.params.id;
   const index = parseInt(req.params.index, 10);
-
-  const car = await Car.findById(carId);
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
-  }
-
-  if (index < 0 || index >= car.next.length) {
-    return res.status(400).json({ message: 'Invalid next entry index' });
-  }
-
-  const updatedNext = car.next.filter((_, i) => i !== index);
-  const updatedCar = await Car.findByIdAndUpdate(carId, { next: updatedNext }, { new: true, runValidators: true });
-  res.json(updatedCar);
+  const car = await Car.findById(req.params.id);
+  if (!car || index < 0 || index >= car.next.length) return res.status(404).json({ message: 'Invalid car or index' });
+  car.next.splice(index, 1);
+  await car.save();
+  res.json(car);
 }));
 
 router.post('/:id/set-location', asyncHandler(async (req, res) => {
-  const carId = req.params.id;
   const { location, message, next } = req.body;
-
-  if (!location) {
-    return res.status(400).json({ message: 'Location is required' });
-  }
-
-  const car = await Car.findById(carId);
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
-  }
-
-  let updatedNext = car.next;
-  if (next) {
-    updatedNext = next.map((loc) => ({
-      location: loc.location || loc,
-      created: loc.created ? new Date(loc.created) : new Date(),
-    }));
-    await Car.findByIdAndUpdate(carId, { next: updatedNext }, { new: true });
-  }
-
-  await updateCarHistory(carId, location, message || 'Set as current location from next list');
-  const updatedCar = await Car.findById(carId);
+  const car = await Car.findById(req.params.id);
+  if (!car) return res.status(404).json({ message: 'Car not found' });
+  if (next) car.next = next.map(loc => ({ location: loc.location || loc, created: loc.created ? new Date(loc.created) : new Date() }));
+  await updateCarHistory(req.params.id, location, message || 'Set as current location from next list');
+  const updatedCar = await Car.findById(req.params.id);
   res.status(200).json(updatedCar);
 }));
 
 router.delete('/:id', asyncHandler(async (req, res) => {
   const car = await Car.findById(req.params.id);
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
-  }
-
+  if (!car) return res.status(404).json({ message: 'Car not found' });
   car.archived = true;
   car.archivedAt = new Date();
   await car.save();
-
   res.json({ message: 'Car archived successfully' });
 }));
 
 router.post('/:id/restore', asyncHandler(async (req, res) => {
   const car = await Car.findById(req.params.id);
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
-  }
-  if (!car.archived) {
-    return res.status(400).json({ message: 'Car is not archived' });
-  }
-
+  if (!car || !car.archived) return res.status(400).json({ message: 'Car not archived or not found' });
   car.archived = false;
   car.archivedAt = null;
   await car.save();
-
   res.json({ message: 'Car restored successfully', car });
 }));
 
 router.delete('/:id/permanent', asyncHandler(async (req, res) => {
   const car = await Car.findById(req.params.id);
-  if (!car) {
-    return res.status(404).json({ message: 'Car not found' });
-  }
-  if (!car.archived) {
-    return res.status(400).json({ message: 'Car is not archived' });
-  }
-
+  if (!car || !car.archived) return res.status(400).json({ message: 'Car not archived or not found' });
   if (car.photos && car.photos.length > 0) {
     await Promise.all(car.photos.map(deleteFromS3));
   }
-
   await Car.findByIdAndDelete(req.params.id);
   res.json({ message: 'Car permanently deleted' });
 }));
