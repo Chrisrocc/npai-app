@@ -1,5 +1,3 @@
-// server/index.js
-
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -54,9 +52,6 @@ app.use(cors({
 app.use(cookieParser());
 app.use(logRequest);
 
-// Serve static uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Connect to DB
 connectDB();
 
@@ -75,7 +70,7 @@ app.post('/telegram-webhook', require('./utils/telegram').telegramWebhook);
 // CSV Upload
 const csvStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = 'uploads/';
+    const uploadDir = 'Uploads/';
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }

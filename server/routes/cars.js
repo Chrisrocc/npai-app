@@ -1,4 +1,3 @@
-// routes/cars.js
 const express = require('express');
 const router = express.Router();
 const Car = require('../models/Cars');
@@ -32,6 +31,7 @@ const upload = multer({
   },
 });
 
+// routes/cars.js, replace uploadToS3 function
 const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
   const key = `car_${Date.now()}_${uuidv4()}_${fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
   const params = {
@@ -39,7 +39,6 @@ const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
     Key: key,
     Body: fileBuffer,
     ContentType: mimetype,
-    ACL: 'private',
     CacheControl: 'public, max-age=31536000',
   };
   await s3.upload(params).promise();
@@ -74,6 +73,22 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json(cars);
 }));
 
+router.get('/test-s3', asyncHandler(async (req, res) => {
+  try {
+    const params = {
+      Bucket: bucketName,
+      Key: `test/test-file-${Date.now()}.txt`,
+      Body: Buffer.from('Test file'),
+      ContentType: 'text/plain',
+    };
+    await s3.upload(params).promise();
+    res.json({ message: 'S3 upload successful' });
+  } catch (error) {
+    console.error('S3 test error:', error);
+    res.status(500).json({ error: error.message });
+  }
+}));
+
 router.get('/:id', asyncHandler(async (req, res) => {
   const car = await Car.findById(req.params.id);
   if (!car) return res.status(404).json({ message: 'Car not found' });
@@ -82,6 +97,9 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 router.post('/', upload.array('photos', 20), asyncHandler(async (req, res) => {
   const { make, model, badge, rego, year, description, location, status, next, checklist, notes } = req.body;
+  if (!make || !model || !rego) {
+    return res.status(400).json({ message: 'Make, model, and rego are required' });
+  }
   let photoUrls = [];
   if (req.files && req.files.length > 0) {
     const uploadPromises = req.files.map(file => uploadToS3(file.buffer, file.originalname, file.mimetype));
@@ -113,13 +131,21 @@ router.post('/', upload.array('photos', 20), asyncHandler(async (req, res) => {
     history: location ? [{ location, dateAdded: new Date(), dateLeft: null }] : [],
   });
 
-  await car.save();
-  console.log(chalk.green(`Created new car: ${car.make} ${car.model}, Location: ${car.location}`));
-  res.status(201).json(car);
+  try {
+    await car.save();
+    console.log(chalk.green(`Created new car: ${car.make} ${car.model}, Location: ${car.location}`));
+    res.status(201).json(car);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Car with this rego already exists' });
+    }
+    throw error;
+  }
 }));
 
 router.put('/:id', upload.array('photos', 20), asyncHandler(async (req, res) => {
   const carId = req.params.id;
+  console.log('PUT /api/cars/:id body:', req.body, 'files:', req.files ? req.files.length : 0);
   const car = await Car.findById(carId);
   if (!car) return res.status(404).json({ message: 'Car not found' });
 
