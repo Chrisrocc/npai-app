@@ -296,7 +296,11 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   };
 
   const handleAddPhotos = async () => {
-    if (newPhotos.length === 0) return;
+  if (newPhotos.length === 0) return;
+  const maxRetries = 3;
+  let attempt = 0;
+
+  while (attempt < maxRetries) {
     try {
       const formData = new FormData();
       formData.append('existingPhotos', JSON.stringify(existingPhotos));
@@ -306,21 +310,30 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        timeout: 30000,
+        timeout: 60000, // Increased to 60 seconds
       });
 
       await fetchCarWithoutRefresh();
       setNewPhotos([]);
       console.log('Photo upload response:', response.data);
+      return; // Success, exit loop
     } catch (err) {
-      console.error('Error adding photos:', err);
-      if (err.code === 'ECONNABORTED') {
-        alert('Upload timed out. Please check your internet and try again.');
-      } else {
-        alert('Failed to add photos: ' + (err.response?.data?.message || err.message));
+      attempt++;
+      console.error(`Attempt ${attempt} failed:`, err);
+      if (attempt === maxRetries) {
+        console.error('Max retries reached. Upload failed:', err);
+        if (err.code === 'ECONNABORTED') {
+          alert('Upload timed out after multiple attempts. Please try again with a stronger mobile signal or Wi-Fi.');
+        } else {
+          alert('Failed to add photos: ' + (err.response?.data?.message || err.message));
+        }
+        return;
       }
+      // Exponential backoff: wait 1s, 2s, 4s
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
     }
-  };
+  }
+};
 
   const handleDeletePhoto = async (index) => {
     const updatedPhotos = existingPhotos.filter((_, i) => i !== index);

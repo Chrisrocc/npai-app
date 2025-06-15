@@ -41,7 +41,11 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  const maxRetries = 3;
+  let attempt = 0;
+
+  while (attempt < maxRetries) {
     try {
       const token = localStorage.getItem('token');
       const formDataToSend = new FormData();
@@ -61,7 +65,7 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        timeout: 30000,
+        timeout: 60000, // Increased to 60 seconds
       });
 
       onAdd();
@@ -70,15 +74,24 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
       setNewChecklistItem('');
       setPhotos([]);
       onClose();
+      return; // Success, exit loop
     } catch (err) {
-      console.error('Error adding car:', err);
-      if (err.code === 'ECONNABORTED') {
-        alert('Upload timed out. Please check your mobile internet and try again.');
-      } else {
-        alert('Failed to add car: ' + (err.response?.data?.message || err.message));
+      attempt++;
+      console.error(`Attempt ${attempt} failed:`, err);
+      if (attempt === maxRetries) {
+        console.error('Max retries reached. Upload failed:', err);
+        if (err.code === 'ECONNABORTED') {
+          alert('Upload timed out after multiple attempts. Please try again with a stronger mobile signal or Wi-Fi.');
+        } else {
+          alert('Failed to add car: ' + (err.response?.data?.message || err.message));
+        }
+        return;
       }
+      // Exponential backoff: wait 1s, 2s, 4s
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
     }
-  };
+  }
+};
 
   return (
     <div>

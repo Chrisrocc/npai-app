@@ -4,7 +4,6 @@ const Car = require('../models/Cars');
 const multer = require('multer');
 const path = require('path');
 const chalk = require('chalk');
-const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const AWS = require('aws-sdk');
 const { updateCarHistory, processPendingLocationUpdates } = require('../utils/helpers');
@@ -21,7 +20,7 @@ const bucketName = process.env.AWS_BUCKET_NAME || 'npai-car-photos';
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024 },
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB limit
   fileFilter: (req, file, cb) => {
     const fileTypes = /jpeg|jpg|png|heic/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -31,7 +30,6 @@ const upload = multer({
   },
 });
 
-// routes/cars.js, replace uploadToS3 function
 const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
   const key = `car_${Date.now()}_${uuidv4()}_${fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
   const params = {
@@ -41,20 +39,37 @@ const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
     ContentType: mimetype,
     CacheControl: 'public, max-age=31536000',
   };
-  await s3.upload(params).promise();
-  return `https://${bucketName}.s3.ap-southeast-2.amazonaws.com/${key}`;
+  try {
+    const result = await s3.upload(params, {
+      partSize: 5 * 1024 * 1024, // 5MB chunks
+      queueSize: 4, // Concurrent uploads
+    }).promise();
+    return `https://${bucketName}.s3.ap-southeast-2.amazonaws.com/${key}`;
+  } catch (error) {
+    console.error(chalk.red(`S3 upload error for ${key}:`, error.message));
+    throw new Error(`Failed to upload to S3: ${error.message}`);
+  }
 };
 
 const deleteFromS3 = async (url) => {
-  const key = url.split(`${bucketName}.s3.ap-southeast-2.amazonaws.com/`)[1];
-  if (!key) return;
-  await s3.deleteObject({ Bucket: bucketName, Key: key }).promise();
+  try {
+    const key = url.split(`${bucketName}.s3.ap-southeast-2.amazonaws.com/`)[1];
+    if (!key) return;
+    await s3.deleteObject({ Bucket: bucketName, Key: key }).promise();
+    console.log(chalk.green(`Deleted from S3: ${key}`));
+  } catch (error) {
+    console.error(chalk.red(`S3 delete error for ${url}:`, error.message));
+  }
 };
 
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch((err) => {
     console.error(chalk.red(`Route error: ${req.method} ${req.path}`, err.message, err.stack));
-    res.status(500).json({ message: 'Server error', error: err.message, details: process.env.NODE_ENV === 'development' ? err.stack : undefined });
+    res.status(500).json({
+      message: 'Server error',
+      error: err.message,
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    });
   });
 
 router.use(asyncHandler(async (req, res, next) => {
@@ -74,19 +89,17 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 router.get('/test-s3', asyncHandler(async (req, res) => {
-  try {
-    const params = {
-      Bucket: bucketName,
-      Key: `test/test-file-${Date.now()}.txt`,
-      Body: Buffer.from('Test file'),
-      ContentType: 'text/plain',
-    };
-    await s3.upload(params).promise();
-    res.json({ message: 'S3 upload successful' });
-  } catch (error) {
-    console.error('S3 test error:', error);
-    res.status(500).json({ error: error.message });
-  }
+  const params = {
+    Bucket: bucketName,
+    Key: `test/test-file-${Date.now()}.txt`,
+    Body: Buffer.from('Test file'),
+    ContentType: 'text/plain',
+  };
+  await s3.upload(params, {
+    partSize: 5 * 1024 * 1024,
+    queueSize: 4,
+  }).promise();
+  res.json({ message: 'S3 upload successful' });
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {
@@ -111,7 +124,10 @@ router.post('/', upload.array('photos', 20), asyncHandler(async (req, res) => {
     if (typeof next === 'string') {
       nextDestinations = [{ location: next, created: new Date() }];
     } else if (Array.isArray(next)) {
-      nextDestinations = next.map(loc => ({ location: loc.location || loc, created: loc.created ? new Date(loc.created) : new Date() }));
+      nextDestinations = next.map(loc => ({
+        location: loc.location || loc,
+        created: loc.created ? new Date(loc.created) : new Date(),
+      }));
     }
   }
 
@@ -175,7 +191,10 @@ router.put('/:id', upload.array('photos', 20), asyncHandler(async (req, res) => 
   if (updateData.next) {
     updateData.next = typeof updateData.next === 'string'
       ? [{ location: updateData.next, created: new Date() }]
-      : updateData.next.map(loc => ({ location: loc.location || loc, created: loc.created ? new Date(loc.created) : new Date() }));
+      : updateData.next.map(loc => ({
+          location: loc.location || loc,
+          created: loc.created ? new Date(loc.created) : new Date(),
+        }));
   }
 
   if (updateData.location && updateData.location !== car.location) {
@@ -212,7 +231,10 @@ router.post('/:id/set-location', asyncHandler(async (req, res) => {
   const { location, message, next } = req.body;
   const car = await Car.findById(req.params.id);
   if (!car) return res.status(404).json({ message: 'Car not found' });
-  if (next) car.next = next.map(loc => ({ location: loc.location || loc, created: loc.created ? new Date(loc.created) : new Date() }));
+  if (next) car.next = next.map(loc => ({
+    location: loc.location || loc,
+    created: loc.created ? new Date(loc.created) : new Date(),
+  }));
   await updateCarHistory(req.params.id, location, message || 'Set as current location from next list');
   const updatedCar = await Car.findById(req.params.id);
   res.status(200).json(updatedCar);
