@@ -70,7 +70,7 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        timeout: 90000, // 90 seconds
+        timeout: 120000, // 120 seconds
       });
 
       console.log('Upload successful:', response.data);
@@ -82,21 +82,27 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
       onClose();
       return;
     } catch (err) {
-      attempt++;
-      console.error(`Attempt ${attempt} failed:`, err.message, err);
-      if (attempt === maxRetries) {
-        console.error('Max retries reached. Upload failed:', err);
-        if (err.code === 'ECONNABORTED') {
-          alert('Upload timed out after multiple attempts. Please try again with a stronger mobile signal or Wi-Fi.');
-        } else {
-          alert('Failed to add car: ' + (err.response?.data?.message || err.message));
-        }
-        return;
-      }
-      const delay = Math.pow(2, attempt) * 1000;
-      console.log(`Retrying in ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+  attempt++;
+  console.error(`Attempt ${attempt} failed:`, err.message, err);
+  if (attempt === maxRetries) {
+    console.error('Max retries reached. Upload failed:', err);
+    let errorMessage = 'Failed to add car: ';
+    if (err.code === 'ECONNABORTED') {
+      errorMessage += 'Upload timed out after multiple attempts. Please try again with a stronger mobile signal or Wi-Fi.';
+    } else if (err.response) {
+      errorMessage += `Server error: ${err.response.status} - ${JSON.stringify(err.response.data)}`;
+    } else if (err.request) {
+      errorMessage += 'No response received from server. Check your network connection.';
+    } else {
+      errorMessage += err.message;
     }
+    alert(errorMessage);
+    return;
+  }
+  const delay = Math.pow(2, attempt) * 1000;
+  console.log(`Retrying in ${delay}ms...`);
+  await new Promise(resolve => setTimeout(resolve, delay));
+}
   }
 };
 

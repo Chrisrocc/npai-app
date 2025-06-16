@@ -42,7 +42,7 @@ const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
   try {
     console.log(chalk.blue(`Uploading to S3: ${key}, size: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB`));
     const result = await s3.upload(params, {
-      partSize: 2 * 1024 * 1024, // 2MB chunks
+      partSize: 5 * 1024 * 1024, // 5MB chunks
       queueSize: 4, // Concurrent uploads
     }).promise();
     console.log(chalk.green(`S3 upload successful: ${key}`));
@@ -52,7 +52,6 @@ const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
     throw new Error(`Failed to upload to S3: ${error.message}`);
   }
 };
-
 const deleteFromS3 = async (url) => {
   try {
     const key = url.split(`${bucketName}.s3.ap-southeast-2.amazonaws.com/`)[1];
