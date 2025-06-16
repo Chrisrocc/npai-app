@@ -4,6 +4,7 @@ const Car = require('../models/Cars');
 const multer = require('multer');
 const path = require('path');
 const chalk = require('chalk');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const AWS = require('aws-sdk');
 const { updateCarHistory, processPendingLocationUpdates } = require('../utils/helpers');
@@ -17,10 +18,23 @@ AWS.config.update({
 const s3 = new AWS.S3();
 const bucketName = process.env.AWS_BUCKET_NAME || 'npai-car-photos';
 
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'Uploads/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB limit
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB per file
   fileFilter: (req, file, cb) => {
     const fileTypes = /jpeg|jpg|png|heic/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -30,17 +44,18 @@ const upload = multer({
   },
 });
 
-const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
+const uploadToS3 = async (filePath, fileName, mimetype) => {
   const key = `car_${Date.now()}_${uuidv4()}_${fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+  const fileStream = fs.createReadStream(filePath);
   const params = {
     Bucket: bucketName,
     Key: key,
-    Body: fileBuffer,
+    Body: fileStream,
     ContentType: mimetype,
     CacheControl: 'public, max-age=31536000',
   };
   try {
-    console.log(chalk.blue(`Uploading to S3: ${key}, size: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB`));
+    console.log(chalk.blue(`Uploading to S3: ${key}`));
     const result = await s3.upload(params, {
       partSize: 5 * 1024 * 1024, // 5MB chunks
       queueSize: 4, // Concurrent uploads
@@ -50,8 +65,13 @@ const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
   } catch (error) {
     console.error(chalk.red(`S3 upload error for ${key}:`, error.message));
     throw new Error(`Failed to upload to S3: ${error.message}`);
+  } finally {
+    fs.unlink(filePath, (err) => {
+      if (err) console.error(chalk.red(`Error deleting temp file ${filePath}:`, err.message));
+    });
   }
 };
+
 const deleteFromS3 = async (url) => {
   try {
     const key = url.split(`${bucketName}.s3.ap-southeast-2.amazonaws.com/`)[1];
@@ -116,7 +136,7 @@ router.post('/', upload.array('photos', 20), asyncHandler(async (req, res) => {
   }
   let photoUrls = [];
   if (req.files && req.files.length > 0) {
-    const uploadPromises = req.files.map(file => uploadToS3(file.buffer, file.originalname, file.mimetype));
+    const uploadPromises = req.files.map(file => uploadToS3(file.path, file.originalname, file.mimetype));
     photoUrls = await Promise.all(uploadPromises);
   }
 
@@ -170,7 +190,7 @@ router.put('/:id', upload.array('photos', 20), asyncHandler(async (req, res) => 
   let newPhotoUrls = [];
 
   if (req.files && req.files.length > 0) {
-    const uploadPromises = req.files.map(file => uploadToS3(file.buffer, file.originalname, file.mimetype));
+    const uploadPromises = req.files.map(file => uploadToS3(file.path, file.originalname, file.mimetype));
     newPhotoUrls = await Promise.all(uploadPromises);
   }
 

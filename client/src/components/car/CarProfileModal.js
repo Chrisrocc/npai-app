@@ -30,6 +30,8 @@ const Photo = ({ photo, index, movePhoto, deletePhoto, rego, onEnlarge }) => {
     },
   }));
 
+  console.log(`Rendering photo: ${photo}`); // Debug log to verify URL
+
   return (
     <div
       ref={(node) => drag(drop(node))}
@@ -296,44 +298,56 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
   };
 
   const handleAddPhotos = async () => {
-  if (newPhotos.length === 0) return;
-  const maxRetries = 3;
-  let attempt = 0;
+    if (newPhotos.length === 0) return;
+    const maxRetries = 5;
+    let attempt = 0;
 
-  while (attempt < maxRetries) {
-    try {
-      const formData = new FormData();
-      formData.append('existingPhotos', JSON.stringify(existingPhotos));
-      newPhotos.forEach((photo) => formData.append('photos', photo));
+    while (attempt < maxRetries) {
+      try {
+        const formData = new FormData();
+        formData.append('existingPhotos', JSON.stringify(existingPhotos));
+        newPhotos.forEach((photo, index) => {
+          formData.append('photos', photo);
+          console.log(`Attempt ${attempt + 1}: Appending photo ${index + 1}: ${photo.name}, size: ${(photo.size / 1024 / 1024).toFixed(2)}MB`);
+        });
 
-      const response = await axios.put(`/api/cars/${carId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 60000, // Increased to 60 seconds
-      });
+        console.log(`Attempt ${attempt + 1}: Sending PUT /api/cars/${carId} with ${newPhotos.length} photos`);
 
-      await fetchCarWithoutRefresh();
-      setNewPhotos([]);
-      console.log('Photo upload response:', response.data);
-      return; // Success, exit loop
-    } catch (err) {
-      attempt++;
-      console.error(`Attempt ${attempt} failed:`, err);
-      if (attempt === maxRetries) {
-        console.error('Max retries reached. Upload failed:', err);
-        if (err.code === 'ECONNABORTED') {
-          alert('Upload timed out after multiple attempts. Please try again with a stronger mobile signal or Wi-Fi.');
-        } else {
-          alert('Failed to add photos: ' + (err.response?.data?.message || err.message));
-        }
+        const response = await axios.put(`/api/cars/${carId}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 180000, // 180 seconds
+        });
+
+        console.log('Photo upload successful:', response.data);
+        await fetchCarWithoutRefresh();
+        setNewPhotos([]);
         return;
+      } catch (err) {
+        attempt++;
+        console.error(`Attempt ${attempt} failed:`, err.message, err);
+        if (attempt === maxRetries) {
+          console.error('Max retries reached. Upload failed:', err);
+          let errorMessage = 'Failed to add photos: ';
+          if (err.code === 'ECONNABORTED') {
+            errorMessage += 'Upload timed out after multiple attempts. Please try again with a stronger mobile signal or Wi-Fi.';
+          } else if (err.response) {
+            errorMessage += `Server error: ${err.response.status} - ${JSON.stringify(err.response.data)}`;
+          } else if (err.request) {
+            errorMessage += 'No response received from server. Check your network connection.';
+          } else {
+            errorMessage += err.message;
+          }
+          alert(errorMessage);
+          return;
+        }
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-      // Exponential backoff: wait 1s, 2s, 4s
-      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
     }
-  }
-};
+  };
 
   const handleDeletePhoto = async (index) => {
     const updatedPhotos = existingPhotos.filter((_, i) => i !== index);
@@ -802,7 +816,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                 <ul>
                   {newPhotos.map((photo, index) => (
                     <li key={index}>
-                      {photo.name}
+                      {photo.name} ({(photo.size / 1024 / 1024).toFixed(2)}MB)
                       <button type="button" onClick={() => setNewPhotos(newPhotos.filter((_, i) => i !== index))}>
                         Remove
                       </button>

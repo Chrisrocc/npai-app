@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from '../../utils/axiosConfig';
 
 const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
@@ -15,6 +15,7 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
   const [checklist, setChecklist] = useState(initialValues.checklist || []);
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [photos, setPhotos] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,70 +42,73 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  const maxRetries = 5;
-  let attempt = 0;
+    e.preventDefault();
+    setUploading(true);
+    const maxRetries = 5;
+    let attempt = 0;
 
-  while (attempt < maxRetries) {
-    try {
-      const token = localStorage.getItem('token');
-      const formDataToSend = new FormData();
-      photos.forEach((photo, index) => {
-        formDataToSend.append('photos', photo);
-        console.log(`Appending photo ${index + 1}: ${photo.name}, size: ${(photo.size / 1024 / 1024).toFixed(2)}MB`);
-      });
-      formDataToSend.append('make', formData.make);
-      formDataToSend.append('model', formData.model);
-      formDataToSend.append('rego', formData.rego);
-      formDataToSend.append('badge', formData.badge);
-      formDataToSend.append('year', formData.year);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('location', formData.location);
-      formDataToSend.append('status', 'In Works');
-      formDataToSend.append('next', formData.next);
-      formDataToSend.append('checklist', checklist.join(','));
+    while (attempt < maxRetries) {
+      try {
+        const token = localStorage.getItem('token');
+        const formDataToSend = new FormData();
+        photos.forEach((photo, index) => {
+          formDataToSend.append('photos', photo);
+          console.log(`Attempt ${attempt + 1}: Appending photo ${index + 1}: ${photo.name}, size: ${(photo.size / 1024 / 1024).toFixed(2)}MB`);
+        });
+        formDataToSend.append('make', formData.make);
+        formDataToSend.append('model', formData.model);
+        formDataToSend.append('rego', formData.rego);
+        formDataToSend.append('badge', formData.badge);
+        formDataToSend.append('year', formData.year);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('location', formData.location);
+        formDataToSend.append('status', 'In Works');
+        formDataToSend.append('next', formData.next);
+        formDataToSend.append('checklist', checklist.join(','));
 
-      console.log(`Attempt ${attempt + 1}: Sending POST /api/cars with ${photos.length} photos`);
+        console.log(`Attempt ${attempt + 1}: Sending POST /api/cars with ${photos.length} photos`);
 
-      const response = await axios.post('/api/cars', formDataToSend, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        timeout: 120000, // 120 seconds
-      });
+        const response = await axios.post('/api/cars', formDataToSend, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 180000, // 180 seconds
+        });
 
-      console.log('Upload successful:', response.data);
-      onAdd();
-      setFormData({ rego: '', make: '', model: '', badge: '', year: '', description: '', location: '', next: '' });
-      setChecklist([]);
-      setNewChecklistItem('');
-      setPhotos([]);
-      onClose();
-      return;
-    } catch (err) {
-  attempt++;
-  console.error(`Attempt ${attempt} failed:`, err.message, err);
-  if (attempt === maxRetries) {
-    console.error('Max retries reached. Upload failed:', err);
-    let errorMessage = 'Failed to add car: ';
-    if (err.code === 'ECONNABORTED') {
-      errorMessage += 'Upload timed out after multiple attempts. Please try again with a stronger mobile signal or Wi-Fi.';
-    } else if (err.response) {
-      errorMessage += `Server error: ${err.response.status} - ${JSON.stringify(err.response.data)}`;
-    } else if (err.request) {
-      errorMessage += 'No response received from server. Check your network connection.';
-    } else {
-      errorMessage += err.message;
+        console.log('Upload successful:', response.data);
+        onAdd();
+        setFormData({ rego: '', make: '', model: '', badge: '', year: '', description: '', location: '', next: '' });
+        setChecklist([]);
+        setNewChecklistItem('');
+        setPhotos([]);
+        setUploading(false);
+        onClose();
+        return;
+      } catch (err) {
+        attempt++;
+        console.error(`Attempt ${attempt} failed:`, err.message, err);
+        if (attempt === maxRetries) {
+          console.error('Max retries reached. Upload failed:', err);
+          let errorMessage = 'Failed to add car: ';
+          if (err.code === 'ECONNABORTED') {
+            errorMessage += 'Upload timed out after multiple attempts. Please try again with a stronger mobile signal or Wi-Fi.';
+          } else if (err.response) {
+            errorMessage += `Server error: ${err.response.status} - ${JSON.stringify(err.response.data)}`;
+          } else if (err.request) {
+            errorMessage += 'No response received from server. Check your network connection.';
+          } else {
+            errorMessage += err.message;
+          }
+          alert(errorMessage);
+          setUploading(false);
+          return;
+        }
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
-    alert(errorMessage);
-    return;
-  }
-  const delay = Math.pow(2, attempt) * 1000;
-  console.log(`Retrying in ${delay}ms...`);
-  await new Promise(resolve => setTimeout(resolve, delay));
-}
-  }
-};
+  };
 
   return (
     <div>
@@ -137,14 +141,32 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
         <div style={{ marginBottom: '10px' }}>
           <label>What It Needs: </label>
           <div>
-            <input type="text" value={newChecklistItem} onChange={(e) => setNewChecklistItem(e.target.value)} placeholder="e.g., Oil change" style={{ padding: '5px', marginRight: '10px', width: '70%' }} />
-            <button type="button" onClick={handleAddChecklistItem} style={{ padding: '5px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}>Add Task</button>
+            <input
+              type="text"
+              value={newChecklistItem}
+              onChange={(e) => setNewChecklistItem(e.target.value)}
+              placeholder="e.g., Oil change"
+              style={{ padding: '5px', marginRight: '10px', width: '70%' }}
+            />
+            <button
+              type="button"
+              onClick={handleAddChecklistItem}
+              style={{ padding: '5px 10px', backgroundColor: '#28a745', color: 'white', border: 'none', cursor: 'pointer' }}
+            >
+              Add Task
+            </button>
           </div>
           <ul style={{ listStyleType: 'none', padding: 0, marginTop: '10px' }}>
             {checklist.map((item) => (
               <li key={item} style={{ marginBottom: '5px' }}>
                 {item}
-                <button type="button" onClick={() => handleRemoveChecklistItem(item)} style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white', border: 'none', cursor: 'pointer', padding: '2px 5px' }}>Remove</button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveChecklistItem(item)}
+                  style={{ marginLeft: '10px', backgroundColor: 'red', color: 'white', border: 'none', cursor: 'pointer', padding: '2px 5px' }}
+                >
+                  Remove
+                </button>
               </li>
             ))}
           </ul>
@@ -159,14 +181,20 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
         </div>
         <div style={{ marginBottom: '10px' }}>
           <label>Photos: </label>
-          <input type="file" name="photos" multiple onChange={handleFileChange} style={{ width: '100%', padding: '5px' }} />
+          <input
+            type="file"
+            name="photos"
+            multiple
+            onChange={handleFileChange}
+            style={{ width: '100%', padding: '5px' }}
+          />
           {photos.length > 0 && (
             <div>
               <h4>Selected Photos:</h4>
               <ul>
                 {photos.map((photo, index) => (
                   <li key={index}>
-                    {photo.name}
+                    {photo.name} ({(photo.size / 1024 / 1024).toFixed(2)}MB)
                     <button type="button" onClick={() => removePhoto(index)}>Remove</button>
                   </li>
                 ))}
@@ -175,8 +203,28 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
           )}
         </div>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px' }}>Cancel</button>
-          <button type="submit" style={{ padding: '5px 10px', backgroundColor: '#007bff', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px' }}>Add Car</button>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={uploading}
+            style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px' }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={uploading}
+            style={{
+              padding: '5px 10px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              borderRadius: '5px',
+            }}
+          >
+            {uploading ? 'Uploading...' : 'Add Car'}
+          </button>
         </div>
       </form>
     </div>

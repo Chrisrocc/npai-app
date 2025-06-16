@@ -44,7 +44,7 @@ const app = express();
 
 // Middleware
 app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ extended: true, limit: '100mb'}));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
@@ -54,6 +54,15 @@ app.use(logRequest);
 
 // Connect to DB
 connectDB();
+
+// Reject invalid S3 URL requests
+app.use((req, res, next) => {
+  if (req.path.startsWith('/https://')) {
+    console.log(chalk.yellow(`Rejecting invalid S3 URL request: ${req.path}`));
+    return res.status(404).send('Invalid URL - Images should be fetched directly from S3');
+  }
+  next();
+});
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -186,7 +195,7 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(chalk.red(`Unhandled error in ${req.method} ${req.path}:`, err.message));
-  res.status(500).json({ message: 'Internal Server Error' });
+  res.status(500).json({ message: 'Internal Server Error', error: err.message });
 });
 
 // Cron job every minute
