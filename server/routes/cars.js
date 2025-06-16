@@ -69,7 +69,7 @@ const uploadToS3 = async (filePath, fileName, mimetype) => {
     fs.unlink(filePath, (err) => {
       if (err) console.error(chalk.red(`Error deleting temp file ${filePath}:`, err.message));
     });
-  };
+  }
 };
 
 const deleteFromS3 = async (url) => {
@@ -134,6 +134,12 @@ router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
   if (!make || !model || !rego) {
     return res.status(400).json({ message: 'Make, model, and rego are required' });
   }
+  // Sanitize rego: keep only first 6 alphanumeric characters
+  const sanitizedRego = rego.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
+  if (!sanitizedRego) {
+    return res.status(400).json({ message: 'Rego must contain at least one letter or number' });
+  }
+
   let photoUrls = [];
   if (req.files && req.files.length > 0) {
     const uploadPromises = req.files.map(file => uploadToS3(file.path, file.originalname, file.mimetype));
@@ -156,7 +162,7 @@ router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
     make,
     model,
     badge,
-    rego,
+    rego: sanitizedRego,
     year,
     description,
     location,
@@ -216,6 +222,15 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
           location: loc.location || loc,
           created: loc.created ? new Date(loc.created) : new Date(),
         }));
+  }
+
+  if (updateData.rego) {
+    // Sanitize rego: keep only first 6 alphanumeric characters
+    const sanitizedRego = updateData.rego.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
+    if (!sanitizedRego) {
+      return res.status(400).json({ message: 'Rego must contain at least one letter or number' });
+    }
+    updateData.rego = sanitizedRego;
   }
 
   if (updateData.location && updateData.location !== car.location) {
