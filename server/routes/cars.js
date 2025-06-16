@@ -69,7 +69,7 @@ const uploadToS3 = async (filePath, fileName, mimetype) => {
     fs.unlink(filePath, (err) => {
       if (err) console.error(chalk.red(`Error deleting temp file ${filePath}:`, err.message));
     });
-  }
+  };
 };
 
 const deleteFromS3 = async (url) => {
@@ -129,7 +129,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json(car);
 }));
 
-router.post('/', upload.array('photos', 20), asyncHandler(async (req, res) => {
+router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
   const { make, model, badge, rego, year, description, location, status, next, checklist, notes } = req.body;
   if (!make || !model || !rego) {
     return res.status(400).json({ message: 'Make, model, and rego are required' });
@@ -180,7 +180,7 @@ router.post('/', upload.array('photos', 20), asyncHandler(async (req, res) => {
   }
 }));
 
-router.put('/:id', upload.array('photos', 20), asyncHandler(async (req, res) => {
+router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => {
   const carId = req.params.id;
   console.log('PUT /api/cars/:id body:', req.body, 'files:', req.files ? req.files.length : 0);
   const car = await Car.findById(carId);
