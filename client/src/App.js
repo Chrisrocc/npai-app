@@ -126,6 +126,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Redirect /index.html to root */}
+          <Route
+            path="/index.html"
+            element={<Navigate to="/" replace />}
+          />
+          {/* Catch-all for unmatched routes */}
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
         </Routes>
       </Router>
     </AuthProvider>
