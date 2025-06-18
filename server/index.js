@@ -186,10 +186,16 @@ app.get('/', (req, res) => {
   res.send('Welcome to NPAI Car Yard API');
 });
 
-// Static React frontend
+// Static React frontend with SPA fallback
 app.use(express.static(path.join(__dirname, '../client/build')));
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) return next(); // Skip API routes
+  res.sendFile(path.join(__dirname, '../client/build', 'index.html'), (err) => {
+    if (err) {
+      console.error(chalk.red('Error serving index.html:', err.message));
+      res.status(500).send('Internal Server Error');
+    }
+  });
 });
 
 // Global error handler
