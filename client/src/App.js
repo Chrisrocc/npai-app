@@ -4,7 +4,6 @@ import {
   Routes,
   Route,
   Navigate,
-  useLocation,
 } from 'react-router-dom';
 import CarList from './components/car/CarList';
 import CustomerAppointments from './components/appointments/CustomerAppointments';
@@ -22,28 +21,22 @@ import { AuthContext, AuthProvider } from './context/AuthContext';
 // Simple 404 Component
 const NotFound = () => <div>Page Not Found</div>;
 
+// ProtectedRoute Component
 const ProtectedRoute = ({ children }) => {
-  const location = useLocation();
   const { isAuthenticated } = useContext(AuthContext);
 
   if (isAuthenticated === null) {
     return <div>Loading...</div>; // still checking auth
   }
 
-  return isAuthenticated ? (
-    children
-  ) : (
-    <Navigate to="/login" state={{ from: location }} />
-  );
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
 function App() {
-  const location = useLocation();
-
   return (
     <AuthProvider>
       <Router>
-        <Routes location={location}>
+        <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
