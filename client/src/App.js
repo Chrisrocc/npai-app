@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from 'react-router-dom';
 import CarList from './components/car/CarList';
 import CustomerAppointments from './components/appointments/CustomerAppointments';
@@ -24,19 +25,22 @@ const NotFound = () => <div>Page Not Found</div>;
 // ProtectedRoute Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useContext(AuthContext);
+  const location = useLocation();
 
   if (isAuthenticated === null) {
     return <div>Loading...</div>; // still checking auth
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  return isAuthenticated ? children : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
 function App() {
+  const location = useLocation();
+
   return (
     <AuthProvider>
       <Router>
-        <Routes>
+        <Routes location={location}>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -124,10 +128,19 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Redirect /index.html to the original path or root */}
+          {/* Handle Render's /index.html rewrite */}
           <Route
             path="/index.html"
-            element={<Navigate to={window.location.pathname.replace('/index.html', '') || '/'} replace />}
+            element={
+              <Navigate
+                to={
+                  location.pathname === '/index.html'
+                    ? '/'
+                    : location.pathname.replace('/index.html', '') || '/'
+                }
+                replace
+              />
+            }
           />
           {/* Catch-all for truly unmatched routes */}
           <Route
