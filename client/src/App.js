@@ -19,6 +19,9 @@ import Admin from './components/admin/Admin';
 import CarArchive from './components/car/CarArchive';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 
+// Simple 404 Component
+const NotFound = () => <div>Page Not Found</div>;
+
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   const { isAuthenticated } = useContext(AuthContext);
@@ -35,10 +38,12 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  const location = useLocation();
+
   return (
     <AuthProvider>
       <Router>
-        <Routes>
+        <Routes location={location}>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -131,10 +136,10 @@ function App() {
             path="/index.html"
             element={<Navigate to="/" replace />}
           />
-          {/* Catch-all for unmatched routes */}
+          {/* Catch-all for 404 */}
           <Route
             path="*"
-            element={<Navigate to="/" replace />}
+            element={<NotFound />}
           />
         </Routes>
       </Router>
