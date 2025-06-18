@@ -124,12 +124,12 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Redirect /index.html to root */}
+          {/* Redirect /index.html to the current path or root if no match */}
           <Route
             path="/index.html"
-            element={<Navigate to="/" replace />}
+            element={<Navigate to={window.location.pathname.replace('/index.html', '') || '/'} replace />}
           />
-          {/* Catch-all for 404 */}
+          {/* Catch-all for truly unmatched routes */}
           <Route
             path="*"
             element={<NotFound />}
