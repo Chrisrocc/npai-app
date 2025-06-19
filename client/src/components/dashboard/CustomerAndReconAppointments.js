@@ -12,7 +12,7 @@ const CustomerAndReconAppointments = () => {
     if (!dayTime) return null;
 
     const dayTimeLower = dayTime.toLowerCase().trim();
-    const now = new Date('2025-06-07T09:15:00+10:00'); // Current date and time: June 07, 2025, 09:15 AM AEST
+    const now = new Date();
     const today = new Date(now);
     today.setHours(0, 0, 0, 0); // Start of today: June 07, 2025, 00:00:00
 
@@ -123,7 +123,7 @@ const CustomerAndReconAppointments = () => {
       const reconApps = reconResponse.data;
 
       // Define today and tomorrow
-      const now = new Date('2025-06-07T09:15:00+10:00'); // Current date and time: June 07, 2025, 09:15 AM AEST
+      const now = new Date();  // Current date and time: June 07, 2025, 09:15 AM AEST
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0); // Start of today: June 07, 2025, 00:00:00
       const todayEnd = new Date(now);
