@@ -9,7 +9,7 @@ const carSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: function(v) {
-        return /^[a-zA-Z0-9]{1,6}$/.test(v);
+        return /^[a-zA-Z0-9]{1,6}$/.test(v); // Restrict to 1-6 alphanumeric characters
       },
       message: props => `${props.value} is not a valid rego! Must be 1-6 letters/numbers only.`
     }
@@ -17,7 +17,7 @@ const carSchema = new mongoose.Schema({
   year: Number,
   description: String,
   location: String,
-  status: String,
+  status: String, // Readiness status (e.g., empty, ready)
   next: [{
     location: String,
     created: { type: Date, default: Date.now }
@@ -31,14 +31,14 @@ const carSchema = new mongoose.Schema({
     dateLeft: Date
   }],
   pendingLocationUpdate: {
-  location: String,
-  scheduledAt: Date,
-  message: String
+    location: String,
+    scheduledAt: Date,
+    message: String
   },
-
   archived: { type: Boolean, default: false },
   archivedAt: Date,
   series: String,
+  stage: { type: String, default: 'In Works' }, // Default stage to "In Works"
   __v: Number
 });
 
