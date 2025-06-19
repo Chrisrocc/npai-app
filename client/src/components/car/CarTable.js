@@ -242,7 +242,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.make || '-'}
+                      {car.make || ''}
                     </span>
                   )}
                 </td>
@@ -299,13 +299,13 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.model || '-'}
+                      {car.model || ''}
                     </span>
                   )}
                 </td>
                 <td
                   className="badge-column"
-                  title={car.badge || '-'}
+                  title={car.badge || ''}
                   style={{
                     border: '1px solid #dee2e6',
                     padding: '4px',
@@ -354,7 +354,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         color: '#495057',
                       }}
                     >
-                      {car.badge || '-'}
+                      {car.badge || ''}
                     </span>
                   )}
                 </td>
@@ -468,7 +468,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.year || '-'}
+                      {car.year || ''}
                     </span>
                   )}
                 </td>
@@ -524,7 +524,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.description || '-'}
+                      {car.description || ''}
                     </span>
                   )}
                 </td>
@@ -582,7 +582,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     >
                       {car.checklist && car.checklist.length > 0
                         ? car.checklist.join(', ')
-                        : '-'}
+                        : ''}
                     </span>
                   )}
                 </td>
@@ -639,7 +639,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.location || '-'}
+                      {car.location || ''}
                     </span>
                   )}
                 </td>
@@ -696,7 +696,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.status || '-'}
+                      {car.status || ''}
                     </span>
                   )}
                 </td>
@@ -736,7 +736,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                   >
                     {car.next && car.next.length > 0
                       ? car.next.map(entry => entry.location).join(', ')
-                      : '-'}
+                      : ''}
                   </span>
                 </td>
                 <td
