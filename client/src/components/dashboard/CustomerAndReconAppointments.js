@@ -14,25 +14,24 @@ const CustomerAndReconAppointments = () => {
     const dayTimeLower = dayTime.toLowerCase().trim();
     const now = new Date();
     const today = new Date(now);
-    today.setHours(0, 0, 0, 0); // Start of today: June 19, 2025, 00:00:00
+    today.setHours(0, 0, 0, 0); // Start of today
 
-    // Map of weekday names to their dates relative to today (Thursday, June 19, 2025)
+    // Dynamically generate weekdayMap based on today's date
+    const todayDay = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const weekdayMap = {
-      'thu': 0, // Thursday (June 19, 2025)
-      'thursday': 0,
-      'thurs': 0, // Added for "Thur" abbreviation
-      'fri': 1, // Friday (June 20, 2025)
-      'friday': 1,
-      'sat': 2, // Saturday (June 21, 2025)
-      'saturday': 2,
-      'sun': 3, // Sunday (June 22, 2025)
-      'sunday': 3,
-      'mon': 4, // Monday (June 23, 2025)
-      'monday': 4,
-      'tue': 5, // Tuesday (June 24, 2025)
-      'tuesday': 5,
-      'wed': 6, // Wednesday (June 25, 2025)
-      'wednesday': 6,
+      [todayDay]: 0, // Today
+      [new Date(today.setDate(today.getDate() + 1)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 1, // Tomorrow
+      [new Date(today.setDate(today.getDate() + 1)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 2, // Day after tomorrow
+      [new Date(today.setDate(today.getDate() + 2)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 3,
+      [new Date(today.setDate(today.getDate() + 3)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 4,
+      [new Date(today.setDate(today.getDate() + 4)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 5,
+      [new Date(today.setDate(today.getDate() + 5)).toLowerCase()]: 6,
+    };
+
+    // Map common abbreviations to full names
+    const abbreviationMap = {
+      'thu': 'thursday', 'thurs': 'thursday', 'fri': 'friday', 'sat': 'saturday',
+      'sun': 'sunday', 'mon': 'monday', 'tue': 'tuesday', 'wed': 'wednesday'
     };
 
     // Check for "today" or phrases like "Could be today"
@@ -59,9 +58,9 @@ const CustomerAndReconAppointments = () => {
     // Check for weekday names (e.g., "Thur", "Fri", "Friday 12pm", "friday a.m.")
     const weekdayMatch = dayTimeLower.match(/^(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|thurs)(?:\s*(\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?)?)$/i);
     if (weekdayMatch) {
-      const dayName = weekdayMatch[1].toLowerCase();
+      const dayName = abbreviationMap[weekdayMatch[1].toLowerCase()] || weekdayMatch[1].toLowerCase();
       const timeStr = weekdayMatch[2];
-      const daysFromToday = weekdayMap[dayName];
+      const daysFromToday = weekdayMap[dayName] !== undefined ? weekdayMap[dayName] : 0; // Default to today if not found
       const date = new Date(today);
       date.setDate(today.getDate() + daysFromToday);
 
@@ -172,7 +171,7 @@ const CustomerAndReconAppointments = () => {
       });
 
       // Define today and tomorrow
-      const now = new Date(); // Current date and time: June 19, 2025, 04:52 PM AEST
+      const now = new Date(); // Current date and time: June 19, 2025, 04:58 PM AEST
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0); // Start of today: June 19, 2025, 00:00:00
       const todayEnd = new Date(now);
@@ -194,9 +193,13 @@ const CustomerAndReconAppointments = () => {
         const color = getAppointmentRowColor(app.dayTime);
         return (appDate && appDate >= todayStart && appDate <= tomorrowEnd) || color === '#e6f4ea' || color === '#fff4e6';
       }).sort((a, b) => {
+        const aColor = getAppointmentRowColor(a.dayTime);
+        const bColor = getAppointmentRowColor(b.dayTime);
+        if (aColor === '#e6f4ea' && bColor !== '#e6f4ea') return -1; // Green first
+        if (aColor !== '#e6f4ea' && bColor === '#e6f4ea') return 1;  // Green first
         const aDate = parseDayTime(a.dayTime) || new Date(0);
         const bDate = parseDayTime(b.dayTime) || new Date(0);
-        return aDate - bDate; // Sort by date, today (green) before tomorrow (yellow)
+        return aDate - bDate; // Secondary sort by date within same color
       });
 
       setCustomerAppointments(filteredCustomerApps);
