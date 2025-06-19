@@ -264,40 +264,37 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
   };
 
   const saveEdit = async (carId) => {
-  if (!editingField) return;
-
-  // Build payload that ALWAYS contains the field being edited
-  const payload = {};
-
-  if (editingField.field === 'checklist') {
-    // convert comma list -> []
-    payload.checklist = editValue
-      .split(',')
-      .map(item => item.trim())
-      .filter(Boolean);           // [] if blank
-  } else {
-    payload[editingField.field] = editValue.trim(); // can be ''
-  }
-
-  // Special rule: change of location clears status
-  if (editingField.field === 'location') {
-    payload.status = '';
-  }
-
-  try {
-    await axios.put(`${apiUrl}/api/cars/${carId}`, payload, {
-      headers: { 'Content-Type': 'application/json' },
-    });
-    await fetchCars();            // refresh table
-  } catch (err) {
-    console.error('Error updating car:', err);
-    alert('Failed to update car: ' + (err.response?.data?.message || err.message));
-  } finally {
-    setEditingField(null);
-    setEditValue('');
-  }
-};
-
+    if (!editingField) return;
+    const payload = {};
+    if (editingField.field === 'checklist') {
+      payload.checklist = editValue.split(',').map(item => item.trim()).filter(Boolean);
+    } else {
+      payload[editingField.field] = editValue.trim();
+    }
+    if (editingField.field === 'location') {
+      payload.status = '';
+    }
+    // Client-side validation for rego
+    if (editingField.field === 'rego') {
+      const regoPattern = /^[a-zA-Z0-9]{1,6}$/;
+      if (!regoPattern.test(payload.rego)) {
+        alert('Rego must be 1-6 alphanumeric characters');
+        return;
+      }
+    }
+    try {
+      await axios.put(`${apiUrl}/api/cars/${carId}`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      await fetchCars();
+    } catch (err) {
+      console.error('Error updating car:', err);
+      alert('Failed to update car: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setEditingField(null);
+      setEditValue('');
+    }
+  };
 
   const cancelEdit = () => {
     setEditingField(null);

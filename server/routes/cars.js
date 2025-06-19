@@ -134,10 +134,9 @@ router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
   if (!make || !model || !rego) {
     return res.status(400).json({ message: 'Make, model, and rego are required' });
   }
-  // Sanitize rego: keep only first 6 alphanumeric characters
-  const sanitizedRego = rego.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
-  if (!sanitizedRego) {
-    return res.status(400).json({ message: 'Rego must contain at least one letter or number' });
+  const sanitizedRego = rego.replace(/[^a-zA-Z0-9]/g, '');
+  if (sanitizedRego.length < 1 || sanitizedRego.length > 6) {
+    return res.status(400).json({ message: 'Rego must be 1-6 alphanumeric characters' });
   }
 
   let photoUrls = [];
@@ -225,10 +224,9 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
   }
 
   if (updateData.rego) {
-    // Sanitize rego: keep only first 6 alphanumeric characters
-    const sanitizedRego = updateData.rego.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
-    if (!sanitizedRego) {
-      return res.status(400).json({ message: 'Rego must contain at least one letter or number' });
+    const sanitizedRego = updateData.rego.replace(/[^a-zA-Z0-9]/g, '');
+    if (sanitizedRego.length < 1 || sanitizedRego.length > 6) {
+      return res.status(400).json({ message: 'Rego must be 1-6 alphanumeric characters' });
     }
     updateData.rego = sanitizedRego;
   }
@@ -259,7 +257,6 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
   );
   console.log(chalk.green(`Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`));
   res.json(updatedCar);
-
 }));
 
 router.post('/:id/next', asyncHandler(async (req, res) => {

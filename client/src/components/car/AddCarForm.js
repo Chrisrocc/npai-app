@@ -116,7 +116,17 @@ const AddCarForm = ({ onAdd, onClose, initialValues = {} }) => {
       <form onSubmit={handleSubmit} style={{ maxWidth: '600px', margin: '0 auto' }}>
         <div style={{ marginBottom: '10px' }}>
           <label>Rego: </label>
-          <input type="text" name="rego" value={formData.rego} onChange={handleChange} required style={{ width: '100%', padding: '5px' }} />
+          <input
+            type="text"
+            name="rego"
+            value={formData.rego}
+            onChange={handleChange}
+            required
+            pattern="[a-zA-Z0-9]{1,6}"
+            title="Rego must be 1-6 alphanumeric characters"
+            maxLength={6}
+            style={{ width: '100%', padding: '5px' }}
+          />
         </div>
         <div style={{ marginBottom: '10px' }}>
           <label>Make: </label>

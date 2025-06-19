@@ -391,6 +391,9 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                       onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
+                      pattern="[a-zA-Z0-9]{1,6}"
+                      title="Rego must be 1-6 alphanumeric characters"
+                      maxLength={6}
                       style={{
                         width: '100%',
                         padding: '4px',
