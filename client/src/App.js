@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   Routes,
   Route,
   Navigate,
@@ -17,12 +17,10 @@ import Dashboard from './components/dashboard/Dashboard';
 import Notes from './components/notes/Notes';
 import Admin from './components/admin/Admin';
 import CarArchive from './components/car/CarArchive';
-import { AuthContext, AuthProvider } from './context/AuthContext'; // Placeholder, we'll adjust below
+import { AuthContext, AuthProvider } from './context/AuthContext';
 
-// Simple 404 Component
 const NotFound = () => <div>Page Not Found</div>;
 
-// ProtectedRoute Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -34,7 +32,7 @@ const ProtectedRoute = ({ children }) => {
   }, [isAuthenticated, navigate]);
 
   if (isAuthenticated === null) {
-    return <div>Loading...</div>; // still checking auth
+    return <div>Loading...</div>;
   }
 
   return isAuthenticated ? children : null;
@@ -132,16 +130,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Handle Render's /index.html rewrite */}
-          <Route
-            path="/index.html"
-            element={<Navigate to="/" replace />}
-          />
-          {/* Catch-all for truly unmatched routes */}
-          <Route
-            path="*"
-            element={<NotFound />}
-          />
+          {/* Catch-all route */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>
