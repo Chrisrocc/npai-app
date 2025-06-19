@@ -38,7 +38,7 @@ const CustomerAndReconAppointments = () => {
     // Check for "today" or phrases like "Could be today"
     if (dayTimeLower === 'today' || dayTimeLower.startsWith('could be today')) {
       const date = new Date(today);
-      const timeMatch = dayTimeLower.match(/(\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?)$/i); // Updated to handle a.m./p.m.
+      const timeMatch = dayTimeLower.match(/(\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?)$/i);
       if (timeMatch) {
         const timeStr = timeMatch[1];
         let hours, minutes = 0;
@@ -57,7 +57,7 @@ const CustomerAndReconAppointments = () => {
     }
 
     // Check for weekday names (e.g., "Thur", "Fri", "Friday 12pm", "friday a.m.")
-    const weekdayMatch = dayTimeLower.match(/^(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|thurs)(?:\s+(\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?))?$/i);
+    const weekdayMatch = dayTimeLower.match(/^(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|thurs)(?:\s*(\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?)?)$/i);
     if (weekdayMatch) {
       const dayName = weekdayMatch[1].toLowerCase();
       const timeStr = weekdayMatch[2];
@@ -172,7 +172,7 @@ const CustomerAndReconAppointments = () => {
       });
 
       // Define today and tomorrow
-      const now = new Date(); // Current date and time: June 19, 2025, 04:47 PM AEST
+      const now = new Date(); // Current date and time: June 19, 2025, 04:50 PM AEST
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0); // Start of today: June 19, 2025, 00:00:00
       const todayEnd = new Date(now);
@@ -185,14 +185,14 @@ const CustomerAndReconAppointments = () => {
       // Filter Customer Appointments for today and tomorrow
       const filteredCustomerApps = customerApps.filter(app => {
         const appDate = parseDayTime(app.dayTime);
-        if (!appDate) return false;
-        return (appDate >= todayStart && appDate <= tomorrowEnd);
+        return appDate ? (appDate >= todayStart && appDate <= tomorrowEnd) : false;
       });
 
-      // Ensure recon appointments are also filtered by today/tomorrow
+      // Filter Recon Appointments for today and tomorrow, fallback to color logic if parsing fails
       reconApps = reconApps.filter(app => {
         const appDate = parseDayTime(app.dayTime);
-        return appDate && (appDate >= todayStart && appDate <= tomorrowEnd);
+        const color = getAppointmentRowColor(app.dayTime);
+        return (appDate && appDate >= todayStart && appDate <= tomorrowEnd) || color === '#e6f4ea' || color === '#fff4e6';
       });
 
       setCustomerAppointments(filteredCustomerApps);
