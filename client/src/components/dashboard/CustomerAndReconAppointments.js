@@ -172,7 +172,7 @@ const CustomerAndReconAppointments = () => {
       });
 
       // Define today and tomorrow
-      const now = new Date(); // Current date and time: June 19, 2025, 04:50 PM AEST
+      const now = new Date(); // Current date and time: June 19, 2025, 04:52 PM AEST
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0); // Start of today: June 19, 2025, 00:00:00
       const todayEnd = new Date(now);
@@ -188,11 +188,15 @@ const CustomerAndReconAppointments = () => {
         return appDate ? (appDate >= todayStart && appDate <= tomorrowEnd) : false;
       });
 
-      // Filter Recon Appointments for today and tomorrow, fallback to color logic if parsing fails
+      // Filter and sort Recon Appointments
       reconApps = reconApps.filter(app => {
         const appDate = parseDayTime(app.dayTime);
         const color = getAppointmentRowColor(app.dayTime);
         return (appDate && appDate >= todayStart && appDate <= tomorrowEnd) || color === '#e6f4ea' || color === '#fff4e6';
+      }).sort((a, b) => {
+        const aDate = parseDayTime(a.dayTime) || new Date(0);
+        const bDate = parseDayTime(b.dayTime) || new Date(0);
+        return aDate - bDate; // Sort by date, today (green) before tomorrow (yellow)
       });
 
       setCustomerAppointments(filteredCustomerApps);
