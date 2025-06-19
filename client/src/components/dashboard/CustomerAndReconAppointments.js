@@ -14,30 +14,29 @@ const CustomerAndReconAppointments = () => {
     const dayTimeLower = dayTime.toLowerCase().trim();
     const now = new Date();
     const today = new Date(now);
-    today.setHours(0, 0, 0, 0); // Start of today: June 07, 2025, 00:00:00
+    today.setHours(0, 0, 0, 0); // Start of today: June 19, 2025, 00:00:00
 
-    // Map of weekday names to their dates relative to today (Saturday, June 07, 2025)
+    // Map of weekday names to their dates relative to today (Thursday, June 19, 2025)
     const weekdayMap = {
-      'sat': 0, // Saturday (June 07, 2025)
-      'saturday': 0,
-      'sun': 1, // Sunday (June 08, 2025)
-      'sunday': 1,
-      'mon': 2, // Monday (June 09, 2025)
-      'monday': 2,
-      'tue': 3, // Tuesday (June 10, 2025)
-      'tuesday': 3,
-      'wed': 4, // Wednesday (June 11, 2025)
-      'wednesday': 4,
-      'thu': 5, // Thursday (June 12, 2025)
-      'thursday': 5,
-      'fri': 6, // Friday (June 13, 2025)
-      'friday': 6,
+      'thu': 0, // Thursday (June 19, 2025)
+      'thursday': 0,
+      'fri': 1, // Friday (June 20, 2025)
+      'friday': 1,
+      'sat': 2, // Saturday (June 21, 2025)
+      'saturday': 2,
+      'sun': 3, // Sunday (June 22, 2025)
+      'sunday': 3,
+      'mon': 4, // Monday (June 23, 2025)
+      'monday': 4,
+      'tue': 5, // Tuesday (June 24, 2025)
+      'tuesday': 5,
+      'wed': 6, // Wednesday (June 25, 2025)
+      'wednesday': 6,
     };
 
     // Check for "today" or phrases like "Could be today"
     if (dayTimeLower === 'today' || dayTimeLower.startsWith('could be today')) {
       const date = new Date(today);
-      // Check for a time (e.g., "Could be today 11:30")
       const timeMatch = dayTimeLower.match(/(\d{1,2}(?::\d{2})?(?:am|pm)?)$/i);
       if (timeMatch) {
         const timeStr = timeMatch[1];
@@ -51,12 +50,12 @@ const CustomerAndReconAppointments = () => {
         if (isAM && hours === 12) hours = 0;
         date.setHours(hours, minutes, 0, 0);
       } else {
-        date.setHours(0, 0, 0, 0); // Default to start of day if no time specified
+        date.setHours(0, 0, 0, 0);
       }
       return date;
     }
 
-    // Check for weekday names (e.g., "Mon", "Wed", "Wednesday 12pm")
+    // Check for weekday names (e.g., "Thu", "Fri", "Friday 12pm")
     const weekdayMatch = dayTimeLower.match(/^(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday)(\s+(\d{1,2}(?::\d{2})?(?:am|pm)?))?$/i);
     if (weekdayMatch) {
       const dayName = weekdayMatch[1].toLowerCase();
@@ -76,7 +75,7 @@ const CustomerAndReconAppointments = () => {
         if (isAM && hours === 12) hours = 0;
         date.setHours(hours, minutes, 0, 0);
       } else {
-        date.setHours(0, 0, 0, 0); // Default to start of day if no time specified
+        date.setHours(0, 0, 0, 0);
       }
       return date;
     }
@@ -112,6 +111,49 @@ const CustomerAndReconAppointments = () => {
     return '-';
   };
 
+  // Color logic from ReconAppointments
+  const getAppointmentRowColor = (dayTime) => {
+    if (!dayTime) return 'transparent';
+    const dayTimeLower = dayTime.toLowerCase();
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const todayDayFull = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const todayDayShort = today.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+    const tomorrowDayFull = tomorrow.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const tomorrowDayShort = tomorrow.toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase();
+
+    const todayDateStr = `${todayDayShort} ${today.getDate()}${getOrdinalSuffix(today.getDate())}`.toLowerCase();
+    const tomorrowDateStr = `${tomorrowDayShort} ${tomorrow.getDate()}${getOrdinalSuffix(tomorrow.getDate())}`.toLowerCase();
+
+    const hasToday = dayTimeLower.includes('today');
+    const isTodayDay = dayTimeLower.includes(todayDayFull) || dayTimeLower.includes(todayDayShort);
+    const isTodayDate = dayTimeLower.includes(todayDateStr);
+    const isTimeOnly = /^(?:\d{1,2}(?::\d{2})?(?:pm|am)?)$/i.test(dayTimeLower);
+
+    if (hasToday || isTodayDay || isTodayDate || isTimeOnly) {
+      return '#e6f4ea';
+    }
+
+    const hasTomorrow = dayTimeLower.includes('tomorrow');
+    const isTomorrowDay = dayTimeLower.includes(tomorrowDayFull) || dayTimeLower.includes(tomorrowDayShort);
+    const isTomorrowDate = dayTimeLower.includes(tomorrowDateStr);
+
+    if (hasTomorrow || isTomorrowDay || isTomorrowDate) {
+      return '#fff4e6';
+    }
+
+    return 'transparent';
+  };
+
+  const getOrdinalSuffix = (day) => {
+    if (day % 10 === 1 && day !== 11) return 'st';
+    if (day % 10 === 2 && day !== 12) return 'nd';
+    if (day % 10 === 3 && day !== 13) return 'rd';
+    return 'th';
+  };
+
   const fetchAppointments = useCallback(async () => {
     try {
       // Fetch Customer Appointments
@@ -120,18 +162,24 @@ const CustomerAndReconAppointments = () => {
 
       // Fetch Reconditioning Appointments
       const reconResponse = await axios.get('/api/reconappointments');
-      const reconApps = reconResponse.data;
+      let reconApps = reconResponse.data;
+
+      // Filter Reconditioner Appointments for green (#e6f4ea) or yellow (#fff4e6)
+      reconApps = reconApps.filter(app => {
+        const color = getAppointmentRowColor(app.dayTime);
+        return color === '#e6f4ea' || color === '#fff4e6';
+      });
 
       // Define today and tomorrow
-      const now = new Date();  // Current date and time: June 07, 2025, 09:15 AM AEST
+      const now = new Date();  // Current date and time: June 19, 2025, 04:37 PM AEST
       const todayStart = new Date(now);
-      todayStart.setHours(0, 0, 0, 0); // Start of today: June 07, 2025, 00:00:00
+      todayStart.setHours(0, 0, 0, 0); // Start of today: June 19, 2025, 00:00:00
       const todayEnd = new Date(now);
-      todayEnd.setHours(23, 59, 59, 999); // End of today: June 07, 2025, 23:59:59
+      todayEnd.setHours(23, 59, 59, 999); // End of today: June 19, 2025, 23:59:59
       const tomorrowStart = new Date(todayStart);
-      tomorrowStart.setDate(todayStart.getDate() + 1); // Start of tomorrow: June 08, 2025, 00:00:00
+      tomorrowStart.setDate(todayStart.getDate() + 1); // Start of tomorrow: June 20, 2025, 00:00:00
       const tomorrowEnd = new Date(tomorrowStart);
-      tomorrowEnd.setHours(23, 59, 59, 999); // End of tomorrow: June 08, 2025, 23:59:59
+      tomorrowEnd.setHours(23, 59, 59, 999); // End of tomorrow: June 20, 2025, 23:59:59
 
       // Filter Customer Appointments for today and tomorrow
       const filteredCustomerApps = customerApps.filter(app => {
@@ -140,15 +188,8 @@ const CustomerAndReconAppointments = () => {
         return (appDate >= todayStart && appDate <= tomorrowEnd);
       });
 
-      // Filter Reconditioning Appointments for today and tomorrow
-      const filteredReconApps = reconApps.filter(app => {
-        const appDate = parseDayTime(app.dayTime);
-        if (!appDate) return false;
-        return (appDate >= todayStart && appDate <= tomorrowEnd);
-      });
-
       setCustomerAppointments(filteredCustomerApps);
-      setReconAppointments(filteredReconApps);
+      setReconAppointments(reconApps);
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch appointments: ' + err.message);
@@ -197,7 +238,7 @@ const CustomerAndReconAppointments = () => {
                   </thead>
                   <tbody>
                     {customerAppointments.map(app => (
-                      <tr key={app._id} style={{ height: '50px' }}>
+                      <tr key={app._id} style={{ height: '50px', backgroundColor: getAppointmentRowColor(app.dayTime) }}>
                         <td style={{ padding: '6px', border: '1px solid #dee2e6', verticalAlign: 'middle' }}>
                           {app.name || '-'}
                         </td>
@@ -245,7 +286,7 @@ const CustomerAndReconAppointments = () => {
                   </thead>
                   <tbody>
                     {reconAppointments.map(app => (
-                      <tr key={app._id} style={{ height: '50px' }}>
+                      <tr key={app._id} style={{ height: '50px', backgroundColor: getAppointmentRowColor(app.dayTime) }}>
                         <td style={{ padding: '6px', border: '1px solid #dee2e6', verticalAlign: 'middle' }}>
                           {app.category || '-'}
                         </td>
