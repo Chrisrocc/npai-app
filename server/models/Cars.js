@@ -31,9 +31,11 @@ const carSchema = new mongoose.Schema({
     dateLeft: Date
   }],
   pendingLocationUpdate: {
-    type: String,
-    default: null
+  location: String,
+  scheduledAt: Date,
+  message: String
   },
+
   archived: { type: Boolean, default: false },
   archivedAt: Date,
   series: String,
