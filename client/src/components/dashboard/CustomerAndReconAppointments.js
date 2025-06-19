@@ -20,6 +20,7 @@ const CustomerAndReconAppointments = () => {
     const weekdayMap = {
       'thu': 0, // Thursday (June 19, 2025)
       'thursday': 0,
+      'thurs': 0, // Added for "Thur" abbreviation
       'fri': 1, // Friday (June 20, 2025)
       'friday': 1,
       'sat': 2, // Saturday (June 21, 2025)
@@ -37,15 +38,15 @@ const CustomerAndReconAppointments = () => {
     // Check for "today" or phrases like "Could be today"
     if (dayTimeLower === 'today' || dayTimeLower.startsWith('could be today')) {
       const date = new Date(today);
-      const timeMatch = dayTimeLower.match(/(\d{1,2}(?::\d{2})?(?:am|pm)?)$/i);
+      const timeMatch = dayTimeLower.match(/(\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?)$/i); // Updated to handle a.m./p.m.
       if (timeMatch) {
         const timeStr = timeMatch[1];
         let hours, minutes = 0;
-        const isPM = timeStr.toLowerCase().includes('pm');
-        const isAM = timeStr.toLowerCase().includes('am');
-        const timeParts = timeStr.replace(/(am|pm)/i, '').split(':');
-        hours = parseInt(timeParts[0], 10);
-        if (timeParts[1]) minutes = parseInt(timeParts[1], 10);
+        const isPM = timeStr.toLowerCase().includes('pm') || timeStr.toLowerCase().includes('p.m.');
+        const isAM = timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('a.m.');
+        const timeParts = timeStr.replace(/(am|pm|a\.m\.|p\.m\.)/i, '').split(':');
+        hours = parseInt(timeParts[0], 10) || 0;
+        if (timeParts[1]) minutes = parseInt(timeParts[1], 10) || 0;
         if (isPM && hours !== 12) hours += 12;
         if (isAM && hours === 12) hours = 0;
         date.setHours(hours, minutes, 0, 0);
@@ -55,22 +56,22 @@ const CustomerAndReconAppointments = () => {
       return date;
     }
 
-    // Check for weekday names (e.g., "Thu", "Fri", "Friday 12pm")
-    const weekdayMatch = dayTimeLower.match(/^(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday)(\s+(\d{1,2}(?::\d{2})?(?:am|pm)?))?$/i);
+    // Check for weekday names (e.g., "Thur", "Fri", "Friday 12pm", "friday a.m.")
+    const weekdayMatch = dayTimeLower.match(/^(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|thurs)(?:\s+(\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?))?$/i);
     if (weekdayMatch) {
       const dayName = weekdayMatch[1].toLowerCase();
-      const timeStr = weekdayMatch[3];
+      const timeStr = weekdayMatch[2];
       const daysFromToday = weekdayMap[dayName];
       const date = new Date(today);
       date.setDate(today.getDate() + daysFromToday);
 
       if (timeStr) {
         let hours, minutes = 0;
-        const isPM = timeStr.toLowerCase().includes('pm');
-        const isAM = timeStr.toLowerCase().includes('am');
-        const timeParts = timeStr.replace(/(am|pm)/i, '').split(':');
-        hours = parseInt(timeParts[0], 10);
-        if (timeParts[1]) minutes = parseInt(timeParts[1], 10);
+        const isPM = timeStr.toLowerCase().includes('pm') || timeStr.toLowerCase().includes('p.m.');
+        const isAM = timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('a.m.');
+        const timeParts = timeStr.replace(/(am|pm|a\.m\.|p\.m\.)/i, '').split(':');
+        hours = parseInt(timeParts[0], 10) || 0;
+        if (timeParts[1]) minutes = parseInt(timeParts[1], 10) || 0;
         if (isPM && hours !== 12) hours += 12;
         if (isAM && hours === 12) hours = 0;
         date.setHours(hours, minutes, 0, 0);
@@ -130,7 +131,7 @@ const CustomerAndReconAppointments = () => {
     const hasToday = dayTimeLower.includes('today');
     const isTodayDay = dayTimeLower.includes(todayDayFull) || dayTimeLower.includes(todayDayShort);
     const isTodayDate = dayTimeLower.includes(todayDateStr);
-    const isTimeOnly = /^(?:\d{1,2}(?::\d{2})?(?:pm|am)?)$/i.test(dayTimeLower);
+    const isTimeOnly = /^(?:\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?)$/i.test(dayTimeLower);
 
     if (hasToday || isTodayDay || isTodayDate || isTimeOnly) {
       return '#e6f4ea';
@@ -171,7 +172,7 @@ const CustomerAndReconAppointments = () => {
       });
 
       // Define today and tomorrow
-      const now = new Date();  // Current date and time: June 19, 2025, 04:37 PM AEST
+      const now = new Date(); // Current date and time: June 19, 2025, 04:47 PM AEST
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0); // Start of today: June 19, 2025, 00:00:00
       const todayEnd = new Date(now);
@@ -186,6 +187,12 @@ const CustomerAndReconAppointments = () => {
         const appDate = parseDayTime(app.dayTime);
         if (!appDate) return false;
         return (appDate >= todayStart && appDate <= tomorrowEnd);
+      });
+
+      // Ensure recon appointments are also filtered by today/tomorrow
+      reconApps = reconApps.filter(app => {
+        const appDate = parseDayTime(app.dayTime);
+        return appDate && (appDate >= todayStart && appDate <= tomorrowEnd);
       });
 
       setCustomerAppointments(filteredCustomerApps);
