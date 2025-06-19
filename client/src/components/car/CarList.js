@@ -273,7 +273,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
         make: updatedCar.make || '',
         model: updatedCar.model || '',
         badge: updatedCar.badge || '',
-        rego: updatedCar.rego || '', // Required, but allow blank for editing
+        rego: updatedCar.rego || '', // Required, but allow blank for editing (schema enforces)
         location: updatedCar.location || '',
         status: updatedCar.status || '',
         checklist: updatedCar.checklist || [],
@@ -295,9 +295,9 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
           .split(',')
           .map((item) => item.trim())
           .filter((item) => item);
-        updateData.checklist = checklistArray;
+        updateData.checklist = checklistArray.length > 0 ? checklistArray : [];
       } else {
-        updateData[editingField.field] = editValue.trim() || ''; // Allow blank
+        updateData[editingField.field] = editValue.trim() || ''; // Explicitly allow blank
       }
 
       const response = await axios.put(`${apiUrl}/api/cars/${carId}`, updateData, {
