@@ -273,7 +273,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
         make: updatedCar.make || '',
         model: updatedCar.model || '',
         badge: updatedCar.badge || '',
-        rego: updatedCar.rego || '',
+        rego: updatedCar.rego || '', // Required, but allow blank for editing
         location: updatedCar.location || '',
         status: updatedCar.status || '',
         checklist: updatedCar.checklist || [],
@@ -284,16 +284,12 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
       if (editingField.field === 'location') {
         const oldLocation = updatedCar.location || '';
         const newLocation = editValue.trim();
-        if (!newLocation) {
-          alert('Location cannot be empty');
-          return;
-        }
-        updateData.location = newLocation;
+        updateData.location = newLocation; // Allow blank
         if (oldLocation !== newLocation) {
           updateData.status = '';
         }
       } else if (editingField.field === 'status') {
-        updateData.status = editValue.trim() || '';
+        updateData.status = editValue.trim(); // Allow blank
       } else if (editingField.field === 'checklist') {
         const checklistArray = editValue
           .split(',')
@@ -301,7 +297,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
           .filter((item) => item);
         updateData.checklist = checklistArray;
       } else {
-        updateData[editingField.field] = editValue.trim() || '';
+        updateData[editingField.field] = editValue.trim() || ''; // Allow blank
       }
 
       const response = await axios.put(`${apiUrl}/api/cars/${carId}`, updateData, {
