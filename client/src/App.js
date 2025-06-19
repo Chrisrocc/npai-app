@@ -1,9 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from 'react-router-dom';
 import CarList from './components/car/CarList';
 import CustomerAppointments from './components/appointments/CustomerAppointments';
@@ -16,7 +17,7 @@ import Dashboard from './components/dashboard/Dashboard';
 import Notes from './components/notes/Notes';
 import Admin from './components/admin/Admin';
 import CarArchive from './components/car/CarArchive';
-import { AuthContext, AuthProvider } from './context/AuthContext';
+import { AuthContext, AuthProvider } from './context/AuthContext'; // Placeholder, we'll adjust below
 
 // Simple 404 Component
 const NotFound = () => <div>Page Not Found</div>;
@@ -24,12 +25,19 @@ const NotFound = () => <div>Page Not Found</div>;
 // ProtectedRoute Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
 
   if (isAuthenticated === null) {
     return <div>Loading...</div>; // still checking auth
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  return isAuthenticated ? children : null;
 };
 
 function App() {
