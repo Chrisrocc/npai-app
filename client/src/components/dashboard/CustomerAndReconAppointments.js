@@ -16,24 +16,6 @@ const CustomerAndReconAppointments = () => {
     const today = new Date(now);
     today.setHours(0, 0, 0, 0); // Start of today
 
-    // Dynamically generate weekdayMap based on today's date
-    const todayDay = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const weekdayMap = {
-      [todayDay]: 0, // Today
-      [new Date(today.setDate(today.getDate() + 1)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 1, // Tomorrow
-      [new Date(today.setDate(today.getDate() + 1)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 2, // Day after tomorrow
-      [new Date(today.setDate(today.getDate() + 2)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 3,
-      [new Date(today.setDate(today.getDate() + 3)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 4,
-      [new Date(today.setDate(today.getDate() + 4)).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: 5,
-      [new Date(today.setDate(today.getDate() + 5)).toLowerCase()]: 6,
-    };
-
-    // Map common abbreviations to full names
-    const abbreviationMap = {
-      'thu': 'thursday', 'thurs': 'thursday', 'fri': 'friday', 'sat': 'saturday',
-      'sun': 'sunday', 'mon': 'monday', 'tue': 'tuesday', 'wed': 'wednesday'
-    };
-
     // Check for "today" or phrases like "Could be today"
     if (dayTimeLower === 'today' || dayTimeLower.startsWith('could be today')) {
       const date = new Date(today);
@@ -58,9 +40,13 @@ const CustomerAndReconAppointments = () => {
     // Check for weekday names (e.g., "Thur", "Fri", "Friday 12pm", "friday a.m.")
     const weekdayMatch = dayTimeLower.match(/^(mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|thurs)(?:\s*(\d{1,2}(?::\d{2})?(?:am|pm|a\.m\.|p\.m\.)?)?)$/i);
     if (weekdayMatch) {
-      const dayName = abbreviationMap[weekdayMatch[1].toLowerCase()] || weekdayMatch[1].toLowerCase();
+      const dayName = weekdayMatch[1].toLowerCase();
       const timeStr = weekdayMatch[2];
-      const daysFromToday = weekdayMap[dayName] !== undefined ? weekdayMap[dayName] : 0; // Default to today if not found
+      const daysFromToday = {
+        'thursday': 0, 'thurs': 0, 'friday': 1, 'saturday': 2, 'sunday': 3,
+        'monday': 4, 'tuesday': 5, 'wednesday': 6, 'mon': 4, 'tue': 5,
+        'wed': 6, 'thu': 0, 'fri': 1, 'sat': 2, 'sun': 3
+      }[dayName] || 0;
       const date = new Date(today);
       date.setDate(today.getDate() + daysFromToday);
 
@@ -171,7 +157,7 @@ const CustomerAndReconAppointments = () => {
       });
 
       // Define today and tomorrow
-      const now = new Date(); // Current date and time: June 19, 2025, 04:58 PM AEST
+      const now = new Date(); // Current date and time: June 19, 2025, 05:05 PM AEST
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0); // Start of today: June 19, 2025, 00:00:00
       const todayEnd = new Date(now);
@@ -195,11 +181,9 @@ const CustomerAndReconAppointments = () => {
       }).sort((a, b) => {
         const aColor = getAppointmentRowColor(a.dayTime);
         const bColor = getAppointmentRowColor(b.dayTime);
-        if (aColor === '#e6f4ea' && bColor !== '#e6f4ea') return -1; // Green first
-        if (aColor !== '#e6f4ea' && bColor === '#e6f4ea') return 1;  // Green first
-        const aDate = parseDayTime(a.dayTime) || new Date(0);
-        const bDate = parseDayTime(b.dayTime) || new Date(0);
-        return aDate - bDate; // Secondary sort by date within same color
+        if (aColor === '#e6f4ea' && bColor === '#fff4e6') return -1; // Green before yellow
+        if (aColor === '#fff4e6' && bColor === '#e6f4ea') return 1;  // Yellow after green
+        return 0; // Same color, maintain original order
       });
 
       setCustomerAppointments(filteredCustomerApps);
