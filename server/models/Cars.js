@@ -1,19 +1,18 @@
 const mongoose = require('mongoose');
 
 const carSchema = new mongoose.Schema({
-  make: { type: String, required: true },
-  model: { type: String, required: true },
-  badge: String,
+  make: { type: String },        // removed `required: true`
+  model: { type: String },       // removed `required: true`
   rego: {
     type: String,
-    required: true,
     validate: {
       validator: function(v) {
-        return /^[a-zA-Z0-9]{1,6}$/.test(v); // Restrict to 1-6 alphanumeric characters
+        return !v || /^[a-zA-Z0-9]{1,6}$/.test(v); // Allow blank too
       },
-      message: props => `${props.value} is not a valid rego! Must be 1-6 letters/numbers only.`
+      message: props => `${props.value} is not a valid rego!`
     }
   },
+
   year: Number,
   description: String,
   location: String,
