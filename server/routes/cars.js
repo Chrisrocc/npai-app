@@ -240,25 +240,26 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
   }
 
   // Ensure all required fields are present or use defaults
-  const finalUpdateData = {
-    make: updateData.make || car.make,
-    model: updateData.model || car.model,
-    badge: updateData.badge || car.badge,
-    rego: updateData.rego || car.rego,
-    year: updateData.year || car.year,
-    description: updateData.description || car.description,
-    location: updateData.location || car.location,
-    status: updateData.status || car.status,
-    next: updateData.next || car.next,
-    checklist: updateData.checklist || car.checklist,
-    notes: updateData.notes || car.notes,
-    photos: updateData.photos || car.photos,
-    stage: updateData.stage || car.stage,
-  };
+  // Only update fields that were actually sent (even if blank)
+  const finalUpdateData = {};
+  [
+    'make', 'model', 'badge', 'rego', 'year',
+    'description', 'location', 'status', 'next',
+    'checklist', 'notes', 'photos', 'stage'
+  ].forEach(field => {
+    if (Object.prototype.hasOwnProperty.call(updateData, field)) {
+      finalUpdateData[field] = updateData[field];
+    }
+  });
 
-  const updatedCar = await Car.findByIdAndUpdate(carId, finalUpdateData, { new: true, runValidators: true });
+  const updatedCar = await Car.findByIdAndUpdate(
+    carId,
+    { $set: finalUpdateData },
+    { new: true, runValidators: true }
+  );
   console.log(chalk.green(`Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`));
   res.json(updatedCar);
+
 }));
 
 router.post('/:id/next', asyncHandler(async (req, res) => {

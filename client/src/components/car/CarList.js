@@ -264,53 +264,40 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
   };
 
   const saveEdit = async (carId) => {
-    if (!editingField) return;
-    try {
-      const updatedCar = cars.find(car => car._id === editingField.carId);
-      if (!updatedCar) throw new Error('Car not found in local state');
+  if (!editingField) return;
 
-      let updateData = {
-        make: updatedCar.make || '',
-        model: updatedCar.model || '',
-        badge: updatedCar.badge || '',
-        rego: updatedCar.rego || '', // Required, but allow blank for editing (schema enforces)
-        location: updatedCar.location || '',
-        status: updatedCar.status || '',
-        checklist: updatedCar.checklist || [],
-        next: updatedCar.next || [],
-        stage: updatedCar.stage || 'In Works',
-      };
+  // Build payload that ALWAYS contains the field being edited
+  const payload = {};
 
-      if (editingField.field === 'location') {
-        const oldLocation = updatedCar.location || '';
-        const newLocation = editValue.trim();
-        updateData.location = newLocation; // Allow blank
-        if (oldLocation !== newLocation) {
-          updateData.status = '';
-        }
-      } else if (editingField.field === 'status') {
-        updateData.status = editValue.trim(); // Allow blank
-      } else if (editingField.field === 'checklist') {
-        const checklistArray = editValue
-          .split(',')
-          .map((item) => item.trim())
-          .filter((item) => item);
-        updateData.checklist = checklistArray.length > 0 ? checklistArray : [];
-      } else {
-        updateData[editingField.field] = editValue.trim() || ''; // Explicitly allow blank
-      }
+  if (editingField.field === 'checklist') {
+    // convert comma list -> []
+    payload.checklist = editValue
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);           // [] if blank
+  } else {
+    payload[editingField.field] = editValue.trim(); // can be ''
+  }
 
-      const response = await axios.put(`${apiUrl}/api/cars/${carId}`, updateData, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      fetchCars();
-      setEditingField(null);
-      setEditValue('');
-    } catch (err) {
-      console.error('Error updating car:', err.response?.data || err.message);
-      alert('Failed to update car: ' + (err.response?.data?.message || err.message));
-    }
-  };
+  // Special rule: change of location clears status
+  if (editingField.field === 'location') {
+    payload.status = '';
+  }
+
+  try {
+    await axios.put(`${apiUrl}/api/cars/${carId}`, payload, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await fetchCars();            // refresh table
+  } catch (err) {
+    console.error('Error updating car:', err);
+    alert('Failed to update car: ' + (err.response?.data?.message || err.message));
+  } finally {
+    setEditingField(null);
+    setEditValue('');
+  }
+};
+
 
   const cancelEdit = () => {
     setEditingField(null);
