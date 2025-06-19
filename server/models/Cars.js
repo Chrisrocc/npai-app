@@ -8,12 +8,16 @@ const carSchema = new mongoose.Schema(
     model:       { type: String, default: '' },            // now optional
     badge:       { type: String, default: '' },            // optional
     rego: {
-      type: String,
-      validate: {
-        validator: v => !v || /^[a-zA-Z0-9]{1,6}$/.test(v), // allow blank OR 1-6 alphanum
-        message:   props => `${props.value} is not a valid rego!`,
+    type: String,
+    required: true,
+    validate: {
+      validator: function (v) {
+        return /^[a-zA-Z0-9]{1,6}$/.test(v);  // must be 1–6 alphanumeric
       },
+      message: props => `${props.value} is not a valid rego! Must be 1–6 letters/numbers only.`,
     },
+  },
+
     year:        Number,
     description: String,
 
