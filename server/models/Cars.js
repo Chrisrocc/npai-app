@@ -1,44 +1,64 @@
+// server/models/Cars.js
 const mongoose = require('mongoose');
 
-const carSchema = new mongoose.Schema({
-  make: { type: String },        // removed `required: true`
-  model: { type: String },       // removed `required: true`
-  rego: {
-    type: String,
-    validate: {
-      validator: function(v) {
-        return !v || /^[a-zA-Z0-9]{1,6}$/.test(v); // Allow blank too
+const carSchema = new mongoose.Schema(
+  {
+    // Basic details
+    make:        { type: String, default: '' },            // now optional
+    model:       { type: String, default: '' },            // now optional
+    badge:       { type: String, default: '' },            // optional
+    rego: {
+      type: String,
+      validate: {
+        validator: v => !v || /^[a-zA-Z0-9]{1,6}$/.test(v), // allow blank OR 1-6 alphanum
+        message:   props => `${props.value} is not a valid rego!`,
       },
-      message: props => `${props.value} is not a valid rego!`
-    }
-  },
+    },
+    year:        Number,
+    description: String,
 
-  year: Number,
-  description: String,
-  location: String,
-  status: String, // Readiness status (e.g., empty, ready)
-  next: [{
+    // Workflow / status
     location: String,
-    created: { type: Date, default: Date.now }
-  }],
-  checklist: [String],
-  notes: String,
-  photos: [String],
-  history: [{
-    location: String,
-    dateAdded: { type: Date, default: Date.now },
-    dateLeft: Date
-  }],
-  pendingLocationUpdate: {
-    location: String,
-    scheduledAt: Date,
-    message: String
+    status:   String, // e.g. “ready”, “not ready”, etc.
+    stage:    { type: String, default: 'In Works' }, // In Works / Online / Sold …
+
+    // Logistics
+    next: [
+      {
+        location: String,
+        created:  { type: Date, default: Date.now },
+      },
+    ],
+    checklist: [String], // to-do items
+    notes:     String,
+
+    // Photos
+    photos: [String],
+
+    // History log
+    history: [
+      {
+        location:  String,
+        dateAdded: { type: Date, default: Date.now },
+        dateLeft:  Date,
+      },
+    ],
+
+    // Pending location updates (from Telegram plans, etc.)
+    pendingLocationUpdate: {
+      location:    String,
+      scheduledAt: Date,
+      message:     String,
+    },
+
+    // Archival
+    archived:   { type: Boolean, default: false },
+    archivedAt: Date,
+
+    // Misc
+    series: String,
   },
-  archived: { type: Boolean, default: false },
-  archivedAt: Date,
-  series: String,
-  stage: { type: String, default: 'In Works' }, // Default stage to "In Works"
-  __v: Number
-});
+  { timestamps: true } // adds createdAt / updatedAt
+);
 
 module.exports = mongoose.model('Car', carSchema);
