@@ -267,13 +267,15 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
     if (!editingField) return;
     try {
       const updatedCar = cars.find(car => car._id === editingField.carId);
+      if (!updatedCar) throw new Error('Car not found in local state');
+
       let updateData = {
-        make: updatedCar.make,
-        model: updatedCar.model,
-        badge: updatedCar.badge,
-        rego: updatedCar.rego,
-        location: updatedCar.location,
-        status: updatedCar.status,
+        make: updatedCar.make || '',
+        model: updatedCar.model || '',
+        badge: updatedCar.badge || '',
+        rego: updatedCar.rego || '',
+        location: updatedCar.location || '',
+        status: updatedCar.status || '',
         checklist: updatedCar.checklist || [],
         next: updatedCar.next || [],
         stage: updatedCar.stage || 'In Works',
@@ -281,13 +283,17 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
       if (editingField.field === 'location') {
         const oldLocation = updatedCar.location || '';
-        const newLocation = editValue || '';
+        const newLocation = editValue.trim();
+        if (!newLocation) {
+          alert('Location cannot be empty');
+          return;
+        }
         updateData.location = newLocation;
         if (oldLocation !== newLocation) {
           updateData.status = '';
         }
       } else if (editingField.field === 'status') {
-        updateData.status = editValue;
+        updateData.status = editValue.trim() || '';
       } else if (editingField.field === 'checklist') {
         const checklistArray = editValue
           .split(',')
@@ -295,16 +301,18 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
           .filter((item) => item);
         updateData.checklist = checklistArray;
       } else {
-        updateData[editingField.field] = editValue;
+        updateData[editingField.field] = editValue.trim() || '';
       }
 
-      await axios.put(`${apiUrl}/api/cars/${carId}`, updateData);
+      const response = await axios.put(`${apiUrl}/api/cars/${carId}`, updateData, {
+        headers: { 'Content-Type': 'application/json' },
+      });
       fetchCars();
       setEditingField(null);
       setEditValue('');
     } catch (err) {
-      console.error('Error updating car:', err);
-      alert('Failed to update car');
+      console.error('Error updating car:', err.response?.data || err.message);
+      alert('Failed to update car: ' + (err.response?.data?.message || err.message));
     }
   };
 

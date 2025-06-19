@@ -192,7 +192,7 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
   const car = await Car.findById(carId);
   if (!car) return res.status(404).json({ message: 'Car not found' });
 
-  const updateData = req.body;
+  const updateData = { ...req.body }; // Create a copy to avoid modifying the original
   let newPhotoUrls = [];
 
   if (req.files && req.files.length > 0) {
@@ -236,10 +236,27 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
   if (updateData.location && updateData.location !== car.location) {
     const historyUpdated = await updateCarHistory(carId, updateData.location, 'Location update via PUT');
     if (!historyUpdated) return res.status(500).json({ message: 'Failed to schedule history update' });
-    delete updateData.location;
+    // Keep location in updateData to ensure it’s saved
   }
 
-  const updatedCar = await Car.findByIdAndUpdate(carId, updateData, { new: true, runValidators: true });
+  // Ensure all required fields are present or use defaults
+  const finalUpdateData = {
+    make: updateData.make || car.make,
+    model: updateData.model || car.model,
+    badge: updateData.badge || car.badge,
+    rego: updateData.rego || car.rego,
+    year: updateData.year || car.year,
+    description: updateData.description || car.description,
+    location: updateData.location || car.location,
+    status: updateData.status || car.status,
+    next: updateData.next || car.next,
+    checklist: updateData.checklist || car.checklist,
+    notes: updateData.notes || car.notes,
+    photos: updateData.photos || car.photos,
+    stage: updateData.stage || car.stage,
+  };
+
+  const updatedCar = await Car.findByIdAndUpdate(carId, finalUpdateData, { new: true, runValidators: true });
   console.log(chalk.green(`Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`));
   res.json(updatedCar);
 }));
