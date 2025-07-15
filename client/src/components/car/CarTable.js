@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { getRowBackgroundColor } from '../../utils/carListUtils';
 import './CarTable.css';
 import NextDestinationsEditor from './NextDestinationsEditor';
+import ChecklistEditor from './ChecklistEditor';
 import axios from '../../utils/axiosConfig';
 
 const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sortConfig, handleSort, startEditing, editingField, editValue, handleEditChange, saveEdit, cancelEdit, handleOpenProfile, handleDelete, showPhotos }) => {
   const [editingNextCarId, setEditingNextCarId] = useState(null);
+  const [editingChecklistCarId, setEditingChecklistCarId] = useState(null);
   const [cars, setCars] = useState(tableCars);
 
   useEffect(() => {
@@ -62,6 +64,15 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
           onCancel={() => setEditingNextCarId(null)}
           fetchCars={fetchCarsWithoutRefresh}
           onSetCurrentLocation={(newLocation, index) => handleSetCurrentLocation(editingNextCarId, newLocation, index)}
+        />
+      )}
+      {editingChecklistCarId && (
+        <ChecklistEditor
+          carId={editingChecklistCarId}
+          checklist={cars.find(car => car._id === editingChecklistCarId).checklist}
+          onSave={() => setEditingChecklistCarId(null)}
+          onCancel={() => setEditingChecklistCarId(null)}
+          fetchCars={fetchCarsWithoutRefresh}
         />
       )}
       <table
@@ -545,49 +556,24 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                       : 'none',
                     boxSizing: 'border-box',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'checklist', car.checklist, e)
-                  }
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setEditingChecklistCarId(car._id);
+                  }}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'checklist' ? (
-                    <textarea
-                      value={editValue}
-                      onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
-                      onClick={(e) => e.stopPropagation()}
-                      autoFocus
-                      style={{
-                        width: '100%',
-                        padding: '4px',
-                        fontSize: '12px',
-                        height: '40px',
-                        resize: 'none',
-                        border: '1px solid #ced4da',
-                        borderRadius: '4px',
-                        boxSizing: 'border-box',
-                      }}
-                    />
-                  ) : (
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        color: '#495057',
-                        whiteSpace: 'normal',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {car.checklist && car.checklist.length > 0
-                        ? car.checklist.join(', ')
-                        : ''}
-                    </span>
-                  )}
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: '#495057',
+                      whiteSpace: 'normal',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {car.checklist && car.checklist.length > 0
+                      ? car.checklist.join(', ')
+                      : ''}
+                  </span>
                 </td>
                 <td
                   style={{

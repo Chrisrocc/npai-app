@@ -17,10 +17,10 @@ client = OpenAI(
 
 # Helper Functions
 def analyze_with_grok(prompt):
-    """Send a prompt to Grok and return the response."""
+    """Send a prompt to Grok 3 and return the response."""
     try:
         response = client.chat.completions.create(
-            model="grok-2-latest",
+            model="grok-3-latest",
             messages=[
                 {
                     "role": "system",
@@ -38,7 +38,7 @@ def analyze_with_grok(prompt):
     except Exception as e:
         print(f"Error communicating with Grok: {e}", file=sys.stderr)
         return "Error processing message"
-
+        
 def download_image(url):
     """Download an image from a URL to a temporary file."""
     try:

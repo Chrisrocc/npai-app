@@ -10,6 +10,7 @@ import AddCarModal from './AddCarModal';
 import CarTable from './CarTable';
 import CarSelectTable from '../shared/CarSelectTable';
 import NextDestinationsEditor from './NextDestinationsEditor';
+import ChecklistEditor from './ChecklistEditor';
 import { sortCars, filterCars } from '../../utils/carListUtils';
 import './CarList.css';
 
@@ -20,6 +21,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
   const [editingField, setEditingField] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [editingNextCarId, setEditingNextCarId] = useState(null);
+  const [editingChecklistCarId, setEditingChecklistCarId] = useState(null);
   const [selectedStages, setSelectedStages] = useState(['In Works', 'In Works/Online', 'Online', 'Sold']);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [searchTerm, setSearchTerm] = useState('');
@@ -249,13 +251,11 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
     event.stopPropagation();
     if (field === 'next') {
       setEditingNextCarId(carId);
+    } else if (field === 'checklist') {
+      setEditingChecklistCarId(carId);
     } else {
       setEditingField({ carId, field });
-      if (field === 'checklist') {
-        setEditValue(value && value.length > 0 ? value.join(', ') : '');
-      } else {
-        setEditValue(value || '');
-      }
+      setEditValue(value || '');
     }
   };
 
@@ -266,11 +266,7 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
   const saveEdit = async (carId) => {
     if (!editingField) return;
     const payload = {};
-    if (editingField.field === 'checklist') {
-      payload.checklist = editValue.split(',').map(item => item.trim()).filter(Boolean);
-    } else {
-      payload[editingField.field] = editValue.trim();
-    }
+    payload[editingField.field] = editValue.trim();
     if (editingField.field === 'location') {
       payload.status = '';
     }
@@ -303,6 +299,10 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
 
   const handleCloseNextEditor = () => {
     setEditingNextCarId(null);
+  };
+
+  const handleCloseChecklistEditor = () => {
+    setEditingChecklistCarId(null);
   };
 
   const handleStageFilter = (stage) => {
@@ -362,7 +362,6 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
   });
 
   const rightTableCarsWithSold = [...sortedSoldCars, ...rightTableCars];
-  const allCars = [...sortedNonSoldCars, ...sortedSoldCars];
   const combinedCarsForMobile = [...leftTableCars, ...rightTableCarsWithSold];
 
   const getPrePopulateSearch = (plan) => {
@@ -527,6 +526,19 @@ const CarList = ({ onSelectCar, singleTable = false, prePopulateSearch = '' }) =
                   setEditingNextCarId(null);
                 }}
                 onCancel={handleCloseNextEditor}
+                fetchCars={fetchCars}
+              />
+            )}
+
+            {editingChecklistCarId && (
+              <ChecklistEditor
+                carId={editingChecklistCarId}
+                checklist={cars.find(car => car._id === editingChecklistCarId).checklist}
+                onSave={() => {
+                  fetchCars();
+                  setEditingChecklistCarId(null);
+                }}
+                onCancel={handleCloseChecklistEditor}
                 fetchCars={fetchCars}
               />
             )}
