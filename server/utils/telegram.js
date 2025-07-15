@@ -2,9 +2,8 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const chalk = require('chalk');
+const { log } = require('../logger');
 const { updateDatabaseFromPipeline } = require('../services/databaseUpdate');
-const telegramLogger = require('../telegramLogger');
 
 let messageBatch = [];
 let mediaGroups = new Map();
@@ -13,9 +12,13 @@ const BATCH_WINDOW = 5 * 1000;
 const processedUpdates = new Set();
 const processedPhotoPaths = new Set();
 
+const telegramLogger = (message, type = 'telegram') => {
+  log(type, `[Telegram] ${message}`);
+};
+
 const downloadTelegramPhoto = async (fileId) => {
   try {
-    const uploadsDir = path.join(__dirname, '../uploads');
+    const uploadsDir = path.join(__dirname, '../Uploads');
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
@@ -70,18 +73,20 @@ const analyzePhoto = async (photoPath) => {
         output += data.toString();
       });
       pythonProcess.stderr.on('data', (errData) => {
-        const errStr = errData.toString();
+        const errStr = errData.toString().trim();
         if (errStr.includes('Raw input received') || errStr.includes('Photo analysis result')) {
-          telegramLogger(`Python debug: ${errStr.trim()}`, 'filter');
+          telegramLogger(`Python debug: ${errStr}`, 'debug');
         } else {
-          telegramLogger(`Python error: ${errStr.trim()}`, 'error');
+          telegramLogger(`Python error: ${errStr}`, 'error');
         }
       });
       pythonProcess.on('close', () => resolve());
     });
 
     const result = JSON.parse(output);
-    return result.photo_analysis || 'Photo Analysis: Car';
+    const photoAnalysis = result.photo_analysis || 'Photo Analysis: Car';
+    telegramLogger(`Photo analysis: ${photoAnalysis}`, 'telegram');
+    return photoAnalysis;
   } catch (e) {
     telegramLogger(`Error parsing photo analysis output: ${e.message}`, 'error');
     return 'Photo Analysis: Car';
@@ -145,7 +150,7 @@ const processBatch = async (batch, chatId, isPlan = false) => {
   }
 
   finalMessages.forEach(msg => {
-    telegramLogger(`- ${msg.text}`, 'new_message', isPlan ? 'Plan' : msg.isFromPhoto ? 'Photo' : 'General', msg.list);
+    telegramLogger(`Message: ${msg.text}`, 'telegram');
   });
 
   const pyScript = path.join(__dirname, '../npai.py');
@@ -157,11 +162,11 @@ const processBatch = async (batch, chatId, isPlan = false) => {
   });
 
   pythonProcess.stderr.on('data', (errData) => {
-    const errStr = errData.toString();
+    const errStr = errData.toString().trim();
     if (errStr.includes('Raw input received') || errStr.includes('Photo analysis result') || errStr.includes('Prompt') || errStr.includes('Processing line') || errStr.includes('Photo messages to compare')) {
-      telegramLogger(`Python debug: ${errStr.trim()}`, 'filter');
+      telegramLogger(`Python debug: ${errStr}`, 'debug');
     } else {
-      telegramLogger(`Python error: ${errStr.trim()}`, 'error');
+      telegramLogger(`Python error: ${errStr}`, 'error');
     }
   });
 
@@ -172,6 +177,11 @@ const processBatch = async (batch, chatId, isPlan = false) => {
         throw new Error('No valid JSON found in npai.py output');
       }
       const result = JSON.parse(jsonMatch[0]);
+
+      // Log prompts
+      if (result.prompt1) telegramLogger(`Prompt 1 output: ${result.prompt1}`, 'telegram');
+      if (result.prompt2) telegramLogger(`Prompt 2 output: ${result.prompt2}`, 'telegram');
+      if (result.prompt3) telegramLogger(`Prompt 3 output: ${result.prompt3}`, 'telegram');
 
       result.photoRegos = photoRegos;
       result.isPlan = isPlan;
@@ -215,6 +225,8 @@ const telegramWebhook = async (req, res) => {
       const receivedTime = new Date(message.date * 1000);
       const messageText = message.text || (message.caption ? message.caption : '');
 
+      telegramLogger(`Incoming message from ${sender}: ${messageText}`, 'telegram');
+
       const mediaGroupId = message.media_group_id;
 
       if (messageText && /^plan\s/i.test(messageText) && !/^planning\s/i.test(messageText.toLowerCase())) {
@@ -250,9 +262,8 @@ const telegramWebhook = async (req, res) => {
               mediaGroups.forEach((group, groupId) => {
                 mediaGroupBatch.push(...group);
               });
-              // Include messageBatch to capture any text messages that arrived during the delay
               processBatch([...messageBatch, ...mediaGroupBatch], chatId);
-            }, 5000); // Increased to 5 seconds to capture subsequent text messages
+            }, 5000);
           } else {
             messageBatch.push({ type: 'photo', path: photoPath, chatId, sender });
             if (message.caption) {
@@ -265,7 +276,6 @@ const telegramWebhook = async (req, res) => {
           }
         } else if (message.text) {
           messageBatch.push({ type: 'text', content: message.text, isCaption: false, sender });
-          // If a media group is pending, extend the timeout to include this text message
           if (mediaGroups.size > 0) {
             if (batchTimeout) {
               clearTimeout(batchTimeout);

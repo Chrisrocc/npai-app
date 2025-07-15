@@ -6,7 +6,7 @@ const Task = require('../models/Tasks');
 const Note = require('../models/Note');
 const { identifyUniqueCar } = require('../utils/carIdentification');
 const { updateCarHistory, determineReconditionerCategory } = require('../utils/helpers');
-const telegramLogger = require('../telegramLogger');
+const { log } = require('../logger');
 const fs = require('fs');
 const path = require('path');
 
@@ -24,19 +24,24 @@ const readPlans = () => {
     const data = fs.readFileSync(plansFilePath, 'utf8');
     return JSON.parse(data);
   } catch (err) {
+    log('error', `Error reading plans file: ${err.message}`);
     return [];
   }
 };
 
 // Function to write plans
 const writePlans = (plans) => {
-  fs.writeFileSync(plansFilePath, JSON.stringify(plans, null, 2));
+  try {
+    fs.writeFileSync(plansFilePath, JSON.stringify(plans, null, 2));
+  } catch (err) {
+    log('error', `Error writing plans file: ${err.message}`);
+  }
 };
 
 // Update MongoDB based on pipeline output
 const updateDatabaseFromPipeline = async (pipelineOutput) => {
   if (pipelineOutput.error) {
-    telegramLogger(`Error: ${pipelineOutput.error}`, 'error');
+    log('error', `Pipeline error: ${pipelineOutput.error}`);
     return;
   }
 
@@ -55,12 +60,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const readyStatus = data[6] || '';
       const notes = data[7] || '';
 
-      telegramLogger(
-        `- Ready: [${[make, model, badge, description, rego, currentLocation, readyStatus, notes]
-          .map(item => item || '')
-          .join(', ')}]`,
-        'category'
-      );
+      log('telegram', `Processing Ready: [${[make, model, badge, description, rego, currentLocation, readyStatus, notes].map(item => item || '').join(', ')}]`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -72,9 +72,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       let carToUpdate;
       if (result.status === 'found') {
         carToUpdate = result.car;
-        telegramLogger(`- Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`, 'action');
+        log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
       } else if (rego) {
-        telegramLogger(`- Car with rego ${rego} not found, creating new car`, 'action');
+        log('telegram', `Car with rego ${rego} not found, creating new car`);
         const newCar = new Car({
           make,
           model,
@@ -93,7 +93,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         });
         await newCar.save();
         carToUpdate = newCar;
-        telegramLogger(`- Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`, 'action');
+        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
       } else {
         const manualEntry = new ManualVerification({
           message: cleanedMessage,
@@ -101,14 +101,14 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           data: [make, model, badge, description, rego, currentLocation, readyStatus, notes]
         });
         await manualEntry.save();
-        telegramLogger(`- Sent to manual verification`, 'action');
+        log('telegram', `Sent to manual verification`);
         continue;
       }
 
       try {
         const updateData = {
-          location: currentLocation || carToUpdate.location, // Set location only if provided, otherwise keep existing
-          status: readyStatus || carToUpdate.status, // Set status only if provided, otherwise keep existing
+          location: currentLocation || carToUpdate.location,
+          status: readyStatus || carToUpdate.status,
           description: description || carToUpdate.description,
           notes: notes ? (carToUpdate.notes ? `${carToUpdate.notes}; ${notes}` : notes) : carToUpdate.notes,
         };
@@ -118,23 +118,23 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           if (!historyUpdated) {
             throw new Error('Failed to schedule history update');
           }
+          log('telegram', `Scheduled location update to ${currentLocation} for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } else {
           await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
+          log('telegram', `Updated car status to ${updateData.status} at ${updateData.location}`);
         }
-
-        telegramLogger(`- Updated car status to ${updateData.status} at ${updateData.location}`, 'action');
       } catch (e) {
-        telegramLogger(`- Error updating car: ${e.message}`, 'action');
+        log('error', `Error updating car: ${e.message}`);
       }
     } catch (e) {
-      telegramLogger(`- Error processing Ready entry: ${e.message}`, 'action');
+      log('error', `Error processing Ready entry: ${e.message}`);
       if (e.name === 'ValidationError') {
-        telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'action');
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
     }
   }
 
-  // Process Drop Off (convert to Location Update if part of a plan)
+  // Process Drop Off
   for (const entry of categories['Drop Off']) {
     try {
       const data = entry.data || [];
@@ -147,12 +147,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const nextLocation = data[6] || '';
       const notes = data[7] || '';
 
-      telegramLogger(
-        `- Drop Off: [${[make, model, badge, description, rego, currentLocation, nextLocation, notes]
-          .map(item => item || '')
-          .join(', ')}]`,
-        'category'
-      );
+      log('telegram', `Processing Drop Off: [${[make, model, badge, description, rego, currentLocation, nextLocation, notes].map(item => item || '').join(', ')}]`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -164,9 +159,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       let carToUpdate;
       if (result.status === 'found') {
         carToUpdate = result.car;
-        telegramLogger(`- Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`, 'action');
+        log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
       } else if (rego) {
-        telegramLogger(`- Car with rego ${rego} not found, creating new car`, 'action');
+        log('telegram', `Car with rego ${rego} not found, creating new car`);
         const newCar = new Car({
           make,
           model,
@@ -184,7 +179,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         });
         await newCar.save();
         carToUpdate = newCar;
-        telegramLogger(`- Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`, 'action');
+        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
       } else if (isPlan) {
         const plans = readPlans();
         const planId = Date.now() + Math.random().toString(36).substr(2, 9);
@@ -199,7 +194,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         };
         plans.push(planEntry);
         writePlans(plans);
-        telegramLogger(`- Added to Plan tab for approval (Drop Off converted to Location Update, car not identified)`, 'action');
+        log('telegram', `Added to Plan tab for approval (Drop Off converted to Location Update, car not identified)`);
         continue;
       } else {
         const manualEntry = new ManualVerification({
@@ -208,7 +203,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           data: [make, model, badge, description, rego, currentLocation, nextLocation, notes]
         });
         await manualEntry.save();
-        telegramLogger(`- Sent to manual verification`, 'action');
+        log('telegram', `Sent to manual verification`);
 
         try {
           const carItem = {
@@ -228,9 +223,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: [carItem]
           });
           await taskEntry.save();
-          telegramLogger(`- Created drop off task with car details`, 'action');
+          log('telegram', `Created drop off task with car details`);
         } catch (e) {
-          telegramLogger(`- Error creating task for Drop Off: ${e.message}`, 'action');
+          log('error', `Error creating task for Drop Off: ${e.message}`);
         }
         continue;
       }
@@ -255,10 +250,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         };
         plans.push(planEntry);
         writePlans(plans);
-        telegramLogger(`- Added to Plan tab for approval (Drop Off converted to Location Update)`, 'action');
+        log('telegram', `Added to Plan tab for approval (Drop Off converted to Location Update)`);
       } else {
         try {
-          // Append the new destination to the existing next list
           const updatedNext = nextLocation
             ? [...(carToUpdate.next || []), { location: nextLocation, created: new Date() }]
             : carToUpdate.next;
@@ -275,11 +269,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             if (!historyUpdated) {
               throw new Error('Failed to schedule history update');
             }
+            log('telegram', `Scheduled location update to ${currentLocation} for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
           } else {
             await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
+            log('telegram', `Updated car location to ${updateData.location}, next location set to ${updateData.next.map(entry => entry.location).join(', ')}`);
           }
-
-          telegramLogger(`- Updated car location to ${updateData.location}, next location set to ${updateData.next.map(entry => entry.location).join(', ')}`, 'action');
 
           const carItem = {
             car: carToUpdate._id,
@@ -298,15 +292,15 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: [carItem]
           });
           await taskEntry.save();
-          telegramLogger(`- Created drop off task`, 'action');
+          log('telegram', `Created drop off task`);
         } catch (e) {
-          telegramLogger(`- Error updating car for Drop Off: ${e.message}`, 'action');
+          log('error', `Error updating car for Drop Off: ${e.message}`);
         }
       }
     } catch (e) {
-      telegramLogger(`- Error processing Drop Off entry: ${e.message}`, 'action');
+      log('error', `Error processing Drop Off entry: ${e.message}`);
       if (e.name === 'ValidationError') {
-        telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'action');
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
     }
   }
@@ -326,12 +320,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const notes = data[8] || '';
       const delivery = data[9] || '';
 
-      telegramLogger(
-        `- Customer Appointment: [${[make, model, badge, description, rego, customerName, day, time, notes, delivery]
-          .map(item => item || '')
-          .join(', ')}]`,
-        'category'
-      );
+      log('telegram', `Processing Customer Appointment: [${[make, model, badge, description, rego, customerName, day, time, notes, delivery].map(item => item || '').join(', ')}]`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -352,7 +341,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             reason: `Car stage "${carStage}" not allowed for customer appointment`
           });
           await manualEntry.save();
-          telegramLogger(`- Sent to manual verification due to car stage "${carStage}"`, 'action');
+          log('telegram', `Sent to manual verification due to car stage "${carStage}"`);
           continue;
         }
 
@@ -364,8 +353,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           description: result.car.description,
           rego: result.car.rego
         };
+        log('telegram', `Car found: ${result.car.make} ${result.car.model} ${result.car.rego}`);
       } else if (rego) {
-        telegramLogger(`- Car with rego ${rego} not found, creating new car`, 'action');
+        log('telegram', `Car with rego ${rego} not found, creating new car`);
         const newCar = new Car({
           make,
           model,
@@ -382,7 +372,6 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           stage: 'In Works'
         });
         await newCar.save();
-        telegramLogger(`- Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`, 'action');
         carDetails = {
           id: newCar._id,
           make: newCar.make,
@@ -391,6 +380,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           description: newCar.description,
           rego: newCar.rego
         };
+        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
       } else {
         carDetails = {
           id: null,
@@ -419,14 +409,14 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           delivery: delivery === 'delivery'
         });
         await appointment.save();
-        telegramLogger(carDetails.id ? `- Added customer appointment` : `- Added customer appointment with car details`, 'action');
+        log('telegram', carDetails.id ? `Added customer appointment for ${carDetails.make} ${carDetails.model} ${carDetails.rego}` : `Added customer appointment with car details`);
       } catch (e) {
-        telegramLogger(carDetails.id ? `- Error saving customer appointment: ${e.message}` : `- Error saving customer appointment with car details: ${e.message}`, 'action');
+        log('error', carDetails.id ? `Error saving customer appointment: ${e.message}` : `Error saving customer appointment with car details: ${e.message}`);
       }
     } catch (e) {
-      telegramLogger(`- Error processing Customer Appointment entry: ${e.message}`, 'action');
+      log('error', `Error processing Customer Appointment entry: ${e.message}`);
       if (e.name === 'ValidationError') {
-        telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'action');
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
     }
   }
@@ -445,12 +435,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const time = data[7] || '';
       const notes = data[8] || '';
 
-      telegramLogger(
-        `- Reconditioning Appointment: [${[make, model, badge, description, rego, reconditionerName, day, time, notes]
-          .map(item => item || '')
-          .join(', ')}]`,
-        'category'
-      );
+      log('telegram', `Processing Reconditioning Appointment: [${[make, model, badge, description, rego, reconditionerName, day, time, notes].map(item => item || '').join(', ')}]`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -472,9 +457,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           },
           comment: notes || ''
         };
-        telegramLogger(`- Car found: ${result.car.make} ${result.car.model} ${result.car.rego}`, 'action');
+        log('telegram', `Car found: ${result.car.make} ${result.car.model} ${result.car.rego}`);
       } else if (rego) {
-        telegramLogger(`- Car with rego ${rego} not found, creating new car`, 'action');
+        log('telegram', `Car with rego ${rego} not found, creating new car`);
         const newCar = new Car({
           make,
           model,
@@ -491,7 +476,6 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           stage: 'In Works'
         });
         await newCar.save();
-        telegramLogger(`- Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`, 'action');
         carItem = {
           car: newCar._id,
           carDetails: {
@@ -503,6 +487,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           },
           comment: notes || ''
         };
+        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
       } else {
         carItem = {
           car: null,
@@ -527,14 +512,14 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           category: reconditionerCategory
         });
         await appointment.save();
-        telegramLogger(`- Added reconditioning appointment`, 'action');
+        log('telegram', `Added reconditioning appointment for ${make} ${model} ${rego || ''}`);
       } catch (e) {
-        telegramLogger(`- Error saving reconditioning appointment: ${e.message}`, 'action');
+        log('error', `Error saving reconditioning appointment: ${e.message}`);
       }
     } catch (e) {
-      telegramLogger(`- Error processing Reconditioning Appointment entry: ${e.message}`, 'action');
+      log('error', `Error processing Reconditioning Appointment entry: ${e.message}`);
       if (e.name === 'ValidationError') {
-        telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'action');
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
     }
   }
@@ -551,12 +536,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const repairTask = data[5] || '';
       const notes = data[6] || '';
 
-      telegramLogger(
-        `- Car Repairs: [${[make, model, badge, description, rego, repairTask, notes]
-          .map(item => item || '')
-          .join(', ')}]`,
-        'category'
-      );
+      log('telegram', `Processing Car Repairs: [${[make, model, badge, description, rego, repairTask, notes].map(item => item || '').join(', ')}]`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -568,10 +548,12 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       let carToUpdate;
       if (result.status === 'found') {
         carToUpdate = result.car;
-        telegramLogger(`- Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`, 'action');
-        telegramLogger(`- Current checklist: ${JSON.stringify(carToUpdate.checklist)}`, 'debug');
+        log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
+        if (process.env.DEBUG_MODE === 'true') {
+          log('debug', `Current checklist: ${JSON.stringify(carToUpdate.checklist)}`);
+        }
       } else if (rego) {
-        telegramLogger(`- Car with rego ${rego} not found, creating new car`, 'action');
+        log('telegram', `Car with rego ${rego} not found, creating new car`);
         const newCar = new Car({
           make,
           model,
@@ -589,7 +571,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         });
         await newCar.save();
         carToUpdate = newCar;
-        telegramLogger(`- Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`, 'action');
+        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
       } else {
         const manualEntry = new ManualVerification({
           message: cleanedMessage,
@@ -597,7 +579,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           data: [make, model, badge, description, rego, repairTask, notes]
         });
         await manualEntry.save();
-        telegramLogger(`- Sent to manual verification`, 'action');
+        log('telegram', `Sent to manual verification`);
         continue;
       }
 
@@ -607,33 +589,37 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           description: description || carToUpdate.description,
           notes: notes ? (carToUpdate.notes ? `${carToUpdate.notes}; ${notes}` : notes) : carToUpdate.notes,
         };
-        telegramLogger(`- Attempting to update with checklist: ${JSON.stringify(updateData.checklist)}`, 'debug');
+        if (process.env.DEBUG_MODE === 'true') {
+          log('debug', `Attempting to update with checklist: ${JSON.stringify(updateData.checklist)}`);
+        }
 
-        const updatedCar = await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true, runValidators: true});
+        const updatedCar = await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true, runValidators: true });
 
         if (!updatedCar) {
-          telegramLogger(`- Failed to update car: Document not found`, 'error');
+          log('error', `Failed to update car: Document not found`);
           continue;
         }
 
         if (repairTask && updatedCar.checklist.includes(repairTask)) {
-          telegramLogger(`- Successfully updated car checklist with repair task`, 'action');
+          log('telegram', `Successfully updated car checklist with repair task: ${repairTask}`);
         } else if (repairTask) {
-          telegramLogger(`- Failed to update car checklist: Repair task "${repairTask}" not added`, 'error');
-          telegramLogger(`- Updated checklist: ${JSON.stringify(updatedCar.checklist)}`, 'debug');
+          log('error', `Failed to update car checklist: Repair task "${repairTask}" not added`);
+          if (process.env.DEBUG_MODE === 'true') {
+            log('debug', `Updated checklist: ${JSON.stringify(updatedCar.checklist)}`);
+          }
         } else {
-          telegramLogger(`- No repair task to add, checklist unchanged`, 'action');
+          log('telegram', `No repair task to add, checklist unchanged`);
         }
       } catch (e) {
-        telegramLogger(`- Error updating car for Car Repairs: ${e.message}`, 'error');
+        log('error', `Error updating car for Car Repairs: ${e.message}`);
         if (e.name === 'ValidationError') {
-          telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'error');
+          log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
         }
       }
     } catch (e) {
-      telegramLogger(`- Error processing Car Repairs entry: ${e.message}`, 'error');
+      log('error', `Error processing Car Repairs entry: ${e.message}`);
       if (e.name === 'ValidationError') {
-        telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'error');
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
     }
   }
@@ -651,12 +637,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const newLocation = data[6] || '';
       const notes = data[7] || '';
 
-      telegramLogger(
-        `- Location Update: [${[make, model, badge, description, rego, oldLocation, newLocation, notes]
-          .map(item => item || '')
-          .join(', ')}]`,
-        'category'
-      );
+      log('telegram', `Processing Location Update: [${[make, model, badge, description, rego, oldLocation, newLocation, notes].map(item => item || '').join(', ')}]`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -668,9 +649,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       let carToUpdate;
       if (result.status === 'found') {
         carToUpdate = result.car;
-        telegramLogger(`- Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`, 'action');
+        log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
       } else if (rego) {
-        telegramLogger(`- Car with rego ${rego} not found, creating new car`, 'action');
+        log('telegram', `Car with rego ${rego} not found, creating new car`);
         const newCar = new Car({
           make,
           model,
@@ -688,7 +669,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         });
         await newCar.save();
         carToUpdate = newCar;
-        telegramLogger(`- Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`, 'action');
+        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
       } else if (isPlan) {
         const plans = readPlans();
         const planId = Date.now() + Math.random().toString(36).substr(2, 9);
@@ -696,14 +677,14 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           id: planId,
           message: cleanedMessage,
           category: 'Location Update',
-          data: entry.data,
+          data: [make, model, badge, description, rego, oldLocation, newLocation, notes],
           fromPhoto: entry.fromPhoto,
           identifiedCar: null,
           status: 'pending',
         };
         plans.push(planEntry);
         writePlans(plans);
-        telegramLogger(`- Added to Plan tab for approval (car not identified)`, 'action');
+        log('telegram', `Added to Plan tab for approval (car not identified)`);
         continue;
       } else {
         const manualEntry = new ManualVerification({
@@ -712,7 +693,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           data: [make, model, badge, description, rego, oldLocation, newLocation, notes]
         });
         await manualEntry.save();
-        telegramLogger(`- Sent to manual verification`, 'action');
+        log('telegram', `Sent to manual verification`);
 
         try {
           const carItem = {
@@ -730,9 +711,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: [carItem]
           });
           await noteEntry.save();
-          telegramLogger(`- Created location update note with car details`, 'action');
+          log('telegram', `Created location update note with car details`);
         } catch (e) {
-          telegramLogger(`- Error creating note for Location Update: ${e.message}`, 'action');
+          log('error', `Error creating note for Location Update: ${e.message}`);
         }
         continue;
       }
@@ -744,7 +725,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           id: planId,
           message: cleanedMessage,
           category: 'Location Update',
-          data: entry.data,
+          data: [make, model, badge, description, rego, oldLocation, newLocation, notes],
           fromPhoto: entry.fromPhoto,
           identifiedCar: {
             id: carToUpdate._id,
@@ -757,10 +738,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         };
         plans.push(planEntry);
         writePlans(plans);
-        telegramLogger(`- Added to Plan tab for approval`, 'action');
+        log('telegram', `Added to Plan tab for approval`);
       } else {
         try {
-          // Remove any next destination that matches the new location
           const updatedNext = (carToUpdate.next || []).filter(
             entry => entry.location !== newLocation
           );
@@ -771,18 +751,16 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             notes: notes ? (carToUpdate.notes ? `${carToUpdate.notes}; ${notes}` : notes) : carToUpdate.notes,
           };
 
-          // Schedule the delayed location update
           if (newLocation && newLocation !== carToUpdate.location) {
             const historyUpdated = await updateCarHistory(carToUpdate._id, newLocation, cleanedMessage);
             if (!historyUpdated) {
               throw new Error('Failed to schedule history update');
             }
+            log('telegram', `Scheduled location update to ${newLocation} for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
           }
 
-          // Apply other updates immediately
           await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
-
-          telegramLogger(`- Scheduled location update to ${newLocation}, next locations: ${updateData.next.map(entry => entry.location).join(', ')}`, 'action');
+          log('telegram', `Updated car, next locations: ${updateData.next.map(entry => entry.location).join(', ')}`);
 
           const carItem = {
             car: carToUpdate._id,
@@ -799,15 +777,15 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: [carItem]
           });
           await noteEntry.save();
-          telegramLogger(`- Created location update note`, 'action');
+          log('telegram', `Created location update note`);
         } catch (e) {
-          telegramLogger(`- Error updating car for Location Update: ${e.message}`, 'action');
+          log('error', `Error updating car for Location Update: ${e.message}`);
         }
       }
     } catch (e) {
-      telegramLogger(`- Error processing Location Update entry: ${e.message}`, 'action');
+      log('error', `Error processing Location Update entry: ${e.message}`);
       if (e.name === 'ValidationError') {
-        telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'action');
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
     }
   }
@@ -823,12 +801,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const rego = data[4] || '';
       const task = data[5] || '';
 
-      telegramLogger(
-        `- To Do: [${[make, model, badge, description, rego, task]
-          .map(item => item || '')
-          .join(', ')}]`,
-        'category'
-      );
+      log('telegram', `Processing To Do: [${[make, model, badge, description, rego, task].map(item => item || '').join(', ')}]`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -840,9 +813,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         let carToUpdate;
         if (result.status === 'found') {
           carToUpdate = result.car;
-          telegramLogger(`- Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`, 'action');
+          log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } else if (rego) {
-          telegramLogger(`- Car with rego ${rego} not found, creating new car`, 'action');
+          log('telegram', `Car with rego ${rego} not found, creating new car`);
           const newCar = new Car({
             make,
             model,
@@ -860,7 +833,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           });
           await newCar.save();
           carToUpdate = newCar;
-          telegramLogger(`- Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`, 'action');
+          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
         } else {
           try {
             const carItem = {
@@ -880,9 +853,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
               carItems: [carItem]
             });
             await taskEntry.save();
-            telegramLogger(`- Created to do task with car details`, 'action');
+            log('telegram', `Created to do task with car details`);
           } catch (e) {
-            telegramLogger(`- Error creating to do task with car details: ${e.message}`, 'action');
+            log('error', `Error creating to do task with car details: ${e.message}`);
           }
           continue;
         }
@@ -911,9 +884,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: [carItem]
           });
           await taskEntry.save();
-          telegramLogger(`- Created to do task`, 'action');
+          log('telegram', `Created to do task for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } catch (e) {
-          telegramLogger(`- Error processing To Do for car: ${e.message}`, 'action');
+          log('error', `Error processing To Do for car: ${e.message}`);
         }
       } else {
         try {
@@ -923,15 +896,15 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: []
           });
           await taskEntry.save();
-          telegramLogger(`- Created to do task without car`, 'action');
+          log('telegram', `Created to do task without car: ${cleanedMessage}`);
         } catch (e) {
-          telegramLogger(`- Error creating to do task without car: ${e.message}`, 'action');
+          log('error', `Error creating to do task without car: ${e.message}`);
         }
       }
     } catch (e) {
-      telegramLogger(`- Error processing To Do entry: ${e.message}`, 'action');
+      log('error', `Error processing To Do entry: ${e.message}`);
       if (e.name === 'ValidationError') {
-        telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'action');
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
     }
   }
@@ -947,12 +920,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const rego = data[4] || '';
       const notes = data[5] || '';
 
-      telegramLogger(
-        `- Notes: [${[make, model, badge, description, rego, notes]
-          .map(item => item || '')
-          .join(', ')}]`,
-        'category'
-      );
+      log('telegram', `Processing Notes: [${[make, model, badge, description, rego, notes].map(item => item || '').join(', ')}]`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -964,9 +932,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         let carToUpdate;
         if (result.status === 'found') {
           carToUpdate = result.car;
-          telegramLogger(`- Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`, 'action');
+          log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } else if (rego) {
-          telegramLogger(`- Car with rego ${rego} not found, creating new car`, 'action');
+          log('telegram', `Car with rego ${rego} not found, creating new car`);
           const newCar = new Car({
             make,
             model,
@@ -984,7 +952,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           });
           await newCar.save();
           carToUpdate = newCar;
-          telegramLogger(`- Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`, 'action');
+          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
         } else {
           try {
             const carItem = {
@@ -1002,9 +970,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
               carItems: [carItem]
             });
             await noteEntry.save();
-            telegramLogger(`- Created note with car details`, 'action');
+            log('telegram', `Created note with car details`);
           } catch (e) {
-            telegramLogger(`- Error creating note with car details: ${e.message}`, 'action');
+            log('error', `Error creating note with car details: ${e.message}`);
           }
           continue;
         }
@@ -1025,9 +993,9 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: [carItem]
           });
           await noteEntry.save();
-          telegramLogger(`- Created note`, 'action');
+          log('telegram', `Created note for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } catch (e) {
-          telegramLogger(`- Error creating note for car: ${e.message}`, 'action');
+          log('error', `Error creating note for car: ${e.message}`);
         }
       } else {
         try {
@@ -1036,15 +1004,15 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: []
           });
           await noteEntry.save();
-          telegramLogger(`- Created note without car`, 'action');
+          log('telegram', `Created note without car: ${cleanedMessage}`);
         } catch (e) {
-          telegramLogger(`- Error creating note without car: ${e.message}`, 'action');
+          log('error', `Error creating note without car: ${e.message}`);
         }
       }
     } catch (e) {
-      telegramLogger(`- Error processing Notes entry: ${e.message}`, 'action');
+      log('error', `Error processing Notes entry: ${e.message}`);
       if (e.name === 'ValidationError') {
-        telegramLogger(`- Validation error details: ${JSON.stringify(e.errors)}`, 'action');
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
     }
   }
