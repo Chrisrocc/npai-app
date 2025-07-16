@@ -39,7 +39,6 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
         next: updatedNext,
       });
 
-      // Update local state without refreshing
       await fetchCarsWithoutRefresh();
     } catch (err) {
       console.error('Error setting current location:', err);
@@ -147,6 +146,13 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                 (cars[index + 1] &&
                   (cars[index + 1].stage || 'In Works') !== 'Sold'));
 
+            // Debug photo URLs
+            if (showPhotos && car.photos && car.photos.length > 0) {
+              console.log(`Car ${car.rego} photo URL: ${process.env.REACT_APP_API_URL}/${car.photos[0]}`);
+            } else {
+              console.log(`Car ${car.rego} has no photos or photos array is empty`);
+            }
+
             return (
               <tr
                 key={car._id}
@@ -191,13 +197,20 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                           verticalAlign: 'middle',
                           borderRadius: '4px',
                         }}
-                        onError={(e) => (e.target.style.display = 'none')}
+                        onError={(e) => {
+                          console.error(`Failed to load image for car ${car.rego}: ${process.env.REACT_APP_API_URL}/${car.photos[0]}`);
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'inline';
+                        }}
                       />
                     ) : (
                       <span style={{ fontSize: '12px', color: '#6c757d' }}>
-                        -
+                        No Photo
                       </span>
                     )}
+                    <span style={{ display: 'none', fontSize: '12px', color: '#6c757d' }}>
+                      No Photo
+                    </span>
                   </td>
                 )}
                 <td
