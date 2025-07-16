@@ -13,15 +13,15 @@ const Car = require('./models/Cars');
 const { updateDatabaseFromPipeline } = require('./services/databaseUpdate');
 const connectDB = require('./config/db');
 const { processPendingLocationUpdates } = require('./utils/helpers');
+const { telegramWebhook } = require('./utils/telegram');
 
 // Import routes
 const carRoutes = require('./routes/cars');
 const customerAppointmentRoutes = require('./routes/customerAppointments');
-const reconAppointmentRoutes = require('./routes/reconappointments'); // Corrected to lowercase
+const reconAppointmentRoutes = require('./routes/reconappointments');
 const manualVerificationRoutes = require('./routes/manualVerifications');
 const taskRoutes = require('./routes/tasks');
 const noteRoutes = require('./routes/notes');
-const telegramRoutes = require('./routes/telegram');
 
 // Register models
 log('info', 'Registering models...');
@@ -85,7 +85,7 @@ app.use('/api/reconappointments', authenticateToken, reconAppointmentRoutes);
 app.use('/api/manualverifications', authenticateToken, manualVerificationRoutes);
 app.use('/api/tasks', authenticateToken, taskRoutes);
 app.use('/api/notes', authenticateToken, noteRoutes);
-app.use('/api/telegram', telegramRoutes);
+app.post('/telegram-webhook', telegramWebhook);
 
 // Reject invalid S3 URL requests
 app.use((req, res, next) => {
