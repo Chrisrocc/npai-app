@@ -30,7 +30,10 @@ const ReconAppointmentSchema = new mongoose.Schema({
       'Tint',
       'Touch Up',
       'wheels',
-      'other'
+      'other',
+      'Mechanic',
+      'Body',
+      'Interior Major'
     ],
     default: 'other'
   }

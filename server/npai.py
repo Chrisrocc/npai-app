@@ -36,7 +36,8 @@ def analyze_with_grok(prompt):
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"Error communicating with Grok: {e}", file=sys.stderr)
+        if os.getenv('DEBUG_MODE') == 'true':
+            print(f"Error communicating with Grok: {e}", file=sys.stderr)
         return "Error processing message"
         
 def download_image(url):
@@ -49,13 +50,15 @@ def download_image(url):
             f.write(response.content)
         return temp_path
     except Exception as e:
-        print(f"Failed to download image from {url}: {e}", file=sys.stderr)
+        if os.getenv('DEBUG_MODE') == 'true':
+            print(f"Failed to download image from {url}: {e}", file=sys.stderr)
         return None
 
 def analyze_photo(photo_path: str) -> str:
     """Analyze a photo using Gemini and return a description."""
     if not photo_path or not os.path.exists(photo_path):
-        print("Photo file not found or not provided", file=sys.stderr)
+        if os.getenv('DEBUG_MODE') == 'true':
+            print("Photo file not found or not provided", file=sys.stderr)
         return "Photo Analysis: Car (file not found)"
 
     try:
@@ -88,7 +91,8 @@ def analyze_photo(photo_path: str) -> str:
         response = model.generate_content([prompt, {"inline_data": image}])
         return response.text.strip()
     except Exception as e:
-        print(f"Photo analysis error: {e}", file=sys.stderr)
+        if os.getenv('DEBUG_MODE') == 'true':
+            print(f"Photo analysis error: {e}", file=sys.stderr)
         return "Photo Analysis: Car"
 
 # Prompt Definitions
@@ -532,13 +536,14 @@ Rule 1: If there is a list within the car for example in the notes index "tonnea
 def prompt_car_repairs(sub_message):
     """Prompt for Car Repairs category"""
     prompt = f"""
-For each line create a list. Lists will then be used to update our internal car repair list.
+For each line create a list. Lists will then be used to update our internal car repair list and create reconditioner appointments.
 Index 1 - Make (ford, holden, toyota)
 Index 2 - Model (civic, Landcruiser Prado, Megane)
 Index 3 - Badge (GLX, RS, GTI)
 Index 4 - Description (Blue, Bullbar, Canopy)
 Index 5 - Registration (1HU4SH)
 Index 6 - Repair Task: The specific repair job to be done internally (e.g., "Fix AC", "Replace front bumper", "Check oil leak", "Check tyre damage")
+Index 7 - Notes: Any additional notes
 
 Output Format 
 - Message : List
@@ -548,15 +553,77 @@ Example:
 Output:
 - Christian: Fix the AC on the Volkswagen GTI : [Volkswagen, GTI, , , , Fix AC, ]
 
-Rule 1: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
+Rule 1: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 Example 
-- Christian: Black Ford Ranger XLT tonneau cover is too small : [Ford, Ranger, , Black, ,Tonneau cover too small]
+- Christian: Black Ford Ranger XLT tonneau cover is too small : [Ford, Ranger, XLT, Black, , Tonneau cover too small, ]
 
 PLEASE ENSURE ALL INDEXES ARE CORRECT 
 
 {sub_message}
 """
     return analyze_with_grok(prompt)
+
+def prompt_reconditioner_category(repair_task):
+    """Prompt to classify a repair task into a reconditioner category and assign a reconditioner"""
+    prompt = f"""
+You are analyzing a car repair task to determine the appropriate reconditioner category and assign a reconditioner. The task is: "{repair_task}".
+
+Available reconditioner categories and their associated reconditioners:
+- interior minor: Rick
+- dents: Ermin
+- auto electrical: Jan, Jian, Gian, Gan
+- battery: Brad Floyd
+- A/C: Peter Mode, Goren
+- Windscreen: National, Billie
+- Tint: Richo
+- Touch Up: Browny, Darrel
+- wheels: Keith, Chinamen, Jack
+- Mechanic: Technician
+- Body: Technician
+- Interior Major: Technician
+- other: Technician
+
+Rules:
+1. Analyze the repair task and match it to the most appropriate category based on keywords:
+   - "seat", "upholstery", "interior clean" -> interior minor
+   - "dent", "panel", "bodywork" -> dents
+   - "electrical", "wiring", "brake lights", "indicator", "relay" -> auto electrical
+   - "battery" -> battery
+   - "AC", "air conditioning", "compressor", "regas" -> A/C
+   - "windscreen", "windshield" -> Windscreen
+   - "tint", "window tint" -> Tint
+   - "paint", "touch up", "scratch" -> Touch Up
+   - "wheel", "rim", "tyre damage" -> wheels
+   - "engine", "transmission", "suspension", "wheel bearing" -> Mechanic
+   - "bumper", "panel replacement", "body repair" -> Body
+   - "dashboard", "seat replacement", "major interior" -> Interior Major
+   - Any other task -> other
+2. If the task matches a category with multiple reconditioners, select the first one listed (e.g., for auto electrical, select "Jan").
+3. Return a list with the category and reconditioner name.
+
+Output Format:
+[<category>, <reconditioner_name>]
+
+Example:
+Task: "Fix AC on Volkswagen GTI"
+Output: [A/C, Peter Mode]
+
+Task: "Repair dent on Toyota Corolla"
+Output: [dents, Ermin]
+
+Task: "Replace engine on Holden Colorado"
+Output: [Mechanic, Technician]
+
+Task: "Fix bumper on Ford Falcon"
+Output: [Body, Technician]
+
+Task: "Replace dashboard on Subaru Liberty"
+Output: [Interior Major, Technician]
+
+Now process:
+{repair_task}
+"""
+    return analyze_with_grok(prompt).strip('[]').split(', ')
 
 def prompt_location_update(sub_message):
     """Prompt for Location Update category"""
@@ -579,7 +646,7 @@ Rules
 - Ensure that descriptive features like 'with bullbar' are included in the Description field (index 4), not in the Registration field (index 5).
 - The Registration field (index 5) should only contain the actual rego (e.g., 1HU4SH), not descriptive words like 'bullbar'.
 - If messages says "back from <location>" make the new location "Northpoint" 
-Rule : If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
+Rule : If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 
 Example
 - Christian: James is taking the Holden Colorado to Al's
@@ -608,7 +675,6 @@ Index 6 - Task
 Output Format 
 - Message : List
 
-   
 Example 
 - Christian: Photograph the Alfa Romeo 
 - Sam: Follow up Jenny
@@ -616,12 +682,11 @@ Output
 - Christian: Photograph the Alfa Romeo : [Alfa Romeo, , , , , Photograph]
 - Sam: Follow up Jenny :  [, , , , , Follow up Jenny]
 
-Rule 1: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small and back seats need cleaning"
+Rule 1: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 Example
 - Christian: Black Ford Ranger XLT back seats need a clean
 Output 
 - Christian: Black Ford Ranger XLT back seats need a clean : [Ford, Ranger, XLT, Black, , Back seats need a clean]
-
 
 {sub_message}
 """
@@ -653,25 +718,22 @@ Output
 
 Rule 1: Don't be afraid to include a large notes section. Be as descriptive in the notes as necessary. 
 
-Rule 2: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so ""tonneau cover too small andback seats need cleaning"
+Rule 2: If there is a list within the car for example in the notes index "tonneau cover too small, back seats need cleaning" so it doesn't mess up the indexing use the word "and" so "tonneau cover too small and back seats need cleaning"
 
 Example 
  - Christian: Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own
 Output
  - Christian: Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own : [ , , , , , Let's not squeeze cars in anymore. We should set the yard up so that one person can get cars out on their own]
 
-
 {sub_message}
 """
     return analyze_with_grok(prompt)
 
 # Orchestration
-# Orchestration
-# Orchestration
-# Orchestration
 def run_pipeline(original_message: str, media_url: str = None) -> dict:
     """Process the incoming message through prompts and return structured JSON."""
-    print(f"Raw input received: {original_message}", file=sys.stderr)
+    if os.getenv('DEBUG_MODE') == 'true':
+        print(f"Raw input received: {original_message}", file=sys.stderr)
 
     # Track photo messages explicitly
     photo_messages = []
@@ -680,7 +742,8 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
         if photo_path:
             photo_analysis = analyze_photo(photo_path)
             os.remove(photo_path)
-            print(f"Photo analysis result: {photo_analysis}", file=sys.stderr)
+            if os.getenv('DEBUG_MODE') == 'true':
+                print(f"Photo analysis result: {photo_analysis}", file=sys.stderr)
             # Prepend photo analysis with sender from the message, with [PHOTO] marker
             first_sender = original_message.split(": ", 1)[0] if ": " in original_message else "Unknown"
             photo_message = f"[PHOTO] {first_sender}: {photo_analysis}"
@@ -693,11 +756,14 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
 
     # Run initial three prompts
     output_prompt1 = prompt_1(original_message) if original_message.strip() else ""
-    print(f"Prompt 1 output: {output_prompt1}", file=sys.stderr)
+    if os.getenv('DEBUG_MODE') == 'true':
+        print(f"Prompt 1 output: {output_prompt1}", file=sys.stderr)
     output_prompt2 = prompt_2(output_prompt1) if output_prompt1.strip() else ""
-    print(f"Prompt 2 output: {output_prompt2}", file=sys.stderr)
+    if os.getenv('DEBUG_MODE') == 'true':
+        print(f"Prompt 2 output: {output_prompt2}", file=sys.stderr)
     output_prompt3 = prompt_3(output_prompt2) if output_prompt2.strip() else ""
-    print(f"Prompt 3 output: {output_prompt3}", file=sys.stderr)
+    if os.getenv('DEBUG_MODE') == 'true':
+        print(f"Prompt 3 output: {output_prompt3}", file=sys.stderr)
 
     # Process category-specific prompts
     category_outputs = {
@@ -728,51 +794,75 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
                         category = category.strip()
                         # Construct sub_message without the leading dash
                         sub_message = f"{sender}: {summary}"
-                        print(f"Processing category: '{category}', sub_message: {sub_message}", file=sys.stderr)
+                        if os.getenv('DEBUG_MODE') == 'true':
+                            print(f"Processing category: '{category}', sub_message: {sub_message}", file=sys.stderr)
                         # Determine if this message corresponds to a photo message
                         summary_without_sender = summary.strip()
                         is_from_photo = any(summary_without_sender in pm.split(": ", 1)[1] for pm in photo_messages)
-                        print(f"Line {idx}: {line}, is_from_photo: {is_from_photo}, summary: {summary_without_sender}", file=sys.stderr)
-                        print(f"Photo messages to compare: {photo_messages}", file=sys.stderr)
+                        if os.getenv('DEBUG_MODE') == 'true':
+                            print(f"Line {idx}: {line}, is_from_photo: {is_from_photo}, summary: {summary_without_sender}", file=sys.stderr)
+                            print(f"Photo messages to compare: {photo_messages}", file=sys.stderr)
                         result = None
                         if category == "Ready":
-                            print(f"Calling prompt_ready with: {sub_message}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_ready with: {sub_message}", file=sys.stderr)
                             result = prompt_ready(sub_message)
                         elif category == "Drop Off":
-                            print(f"Calling prompt_drop_off with: {sub_message}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_drop_off with: {sub_message}", file=sys.stderr)
                             result = prompt_drop_off(sub_message)
                         elif category == "Customer Appointment":
-                            print(f"Calling prompt_customer_appointment with: {sub_message}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_customer_appointment with: {sub_message}", file=sys.stderr)
                             result = prompt_customer_appointment(sub_message)
                         elif category == "Reconditioning Appointment":
-                            print(f"Calling prompt_reconditioning_appointment with: {sub_message}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_reconditioning_appointment with: {sub_message}", file=sys.stderr)
                             result = prompt_reconditioning_appointment(sub_message)
                         elif category == "Car Repairs":
-                            print(f"Calling prompt_car_repairs with: {sub_message}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_car_repairs with: {sub_message}", file=sys.stderr)
                             result = prompt_car_repairs(sub_message)
+                            # Analyze repair task for reconditioner category
+                            repair_task = result.split(" : ")[1].strip().lstrip('[').rstrip(']').split(',')[5].strip()
+                            if repair_task:
+                                reconditioner_result = prompt_reconditioner_category(repair_task)
+                                if os.getenv('DEBUG_MODE') == 'true':
+                                    print(f"Reconditioner category result: {reconditioner_result}", file=sys.stderr)
+                                # Append reconditioner info to the result
+                                result = f"{result} : {reconditioner_result}"
                         elif category == "Location Update":
-                            print(f"Calling prompt_location_update with: {sub_message}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_location_update with: {sub_message}", file=sys.stderr)
                             result = prompt_location_update(sub_message)
                         elif category == "To Do":
-                            print(f"Calling prompt_to_do with: {sub_message}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_to_do with: {sub_message}", file=sys.stderr)
                             result = prompt_to_do(sub_message)
                         elif category == "Notes":
-                            print(f"Calling prompt_notes with: {sub_message}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_notes with: {sub_message}", file=sys.stderr)
                             result = prompt_notes(sub_message)
                         else:
-                            print(f"Unknown category: '{category}'", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Unknown category: '{category}'", file=sys.stderr)
                             continue
-                        print(f"Result from category prompt: {result}", file=sys.stderr)
+                        if os.getenv('DEBUG_MODE') == 'true':
+                            print(f"Result from category prompt: {result}", file=sys.stderr)
                         if result:
                             parsed_output = parse_category_output(result, is_from_photo)
-                            print(f"Parsed output for {category}: {parsed_output}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Parsed output for {category}: {parsed_output}", file=sys.stderr)
                             category_outputs[category].extend(parsed_output)
                         else:
-                            print(f"No result returned from category prompt for {category}", file=sys.stderr)
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"No result returned from category prompt for {category}", file=sys.stderr)
                     else:
-                        print(f"Malformed line: {line}", file=sys.stderr)
+                        if os.getenv('DEBUG_MODE') == 'true':
+                            print(f"Malformed line: {line}", file=sys.stderr)
                 except Exception as e:
-                    print(f"Failed to parse line: {line} - {str(e)}", file=sys.stderr)
+                    if os.getenv('DEBUG_MODE') == 'true':
+                        print(f"Failed to parse line: {line} - {str(e)}", file=sys.stderr)
                     continue
 
     # Prepare JSON output
@@ -786,22 +876,28 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
     if not output_prompt1.strip() and not output_prompt2.strip() and not output_prompt3.strip():
         output["error"] = "Unable to parse input"
 
-    print(f"Final category outputs: {category_outputs}", file=sys.stderr)
+    if os.getenv('DEBUG_MODE') == 'true':
+        print(f"Final category outputs: {category_outputs}", file=sys.stderr)
     return output
 
 def parse_category_output(output: str, is_from_photo: bool = False) -> list:
     """Parse category prompt output into a list of dictionaries, adding fromPhoto flag for rego."""
     results = []
     if not output.strip():
-        print("No output to parse", file=sys.stderr)
+        if os.getenv('DEBUG_MODE') == 'true':
+            print("No output to parse", file=sys.stderr)
         return results
 
     for line in output.split("\n"):
         if line.strip():
             try:
-                # Split the line into message and list parts
-                message, list_str = line.split(" : ", 1)
-                print(f"Parsing line: {line}", file=sys.stderr)
+                # Split the line into message, list, and optional reconditioner parts
+                parts = line.split(" : ")
+                message = parts[0]
+                list_str = parts[1]
+                reconditioner_info = parts[2].strip('[]').split(', ') if len(parts) > 2 else None
+                if os.getenv('DEBUG_MODE') == 'true':
+                    print(f"Parsing line: {line}", file=sys.stderr)
                 list_match = re.match(r'^\[(.*)\]$', list_str.strip())
                 if list_match:
                     # Parse the list items, handling potential empty or malformed entries
@@ -830,21 +926,31 @@ def parse_category_output(output: str, is_from_photo: bool = False) -> list:
                     # Only set fromPhoto to true if there is a rego and it came from a photo
                     rego = items[4] if len(items) > 4 else ""
                     from_photo_for_rego = is_from_photo and rego != ""
-                    # Log the parsed output
-                    print(f"Parsed category output: {message}, rego: {rego}, fromPhoto: {from_photo_for_rego}, items: {items}", file=sys.stderr)
-                    # Append the result
-                    results.append({
+                    # Create result object
+                    result_entry = {
                         "message": message,
                         "data": items,
                         "fromPhoto": from_photo_for_rego
-                    })
+                    }
+                    # Add reconditioner info for Car Repairs
+                    if reconditioner_info:
+                        result_entry["reconditioner"] = {
+                            "category": reconditioner_info[0],
+                            "reconditioner": reconditioner_info[1]
+                        }
+                    # Log the parsed output
+                    if os.getenv('DEBUG_MODE') == 'true':
+                        print(f"Parsed category output: {message}, rego: {rego}, fromPhoto: {from_photo_for_rego}, items: {items}, reconditioner: {reconditioner_info}", file=sys.stderr)
+                    # Append the result
+                    results.append(result_entry)
                 else:
-                    print(f"Invalid list format: {line}", file=sys.stderr)
+                    if os.getenv('DEBUG_MODE') == 'true':
+                        print(f"Invalid list format: {line}", file=sys.stderr)
             except Exception as e:
-                print(f"Error parsing category output: {line} - {str(e)}", file=sys.stderr)
+                if os.getenv('DEBUG_MODE') == 'true':
+                    print(f"Error parsing category output: {line} - {str(e)}", file=sys.stderr)
                 continue
     return results
-
 
 # Main Entry Point
 def main():

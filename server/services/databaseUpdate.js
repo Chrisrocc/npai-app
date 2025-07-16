@@ -535,8 +535,10 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const rego = data[4] || '';
       const repairTask = data[5] || '';
       const notes = data[6] || '';
+      const reconditionerInfo = entry.reconditioner || { category: 'other', reconditioner: 'Technician' };
 
       log('telegram', `Processing Car Repairs: [${[make, model, badge, description, rego, repairTask, notes].map(item => item || '').join(', ')}]`);
+      log('telegram', `Assigned reconditioner: ${reconditionerInfo.reconditioner} (Category: ${reconditionerInfo.category})`);
 
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
@@ -585,7 +587,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
 
       try {
         const updateData = {
-          checklist: repairTask ? [...carToUpdate.checklist, repairTask] : carToUpdate.checklist,
+          checklist: repairTask ? [...(carToUpdate.checklist || []), repairTask] : carToUpdate.checklist,
           description: description || carToUpdate.description,
           notes: notes ? (carToUpdate.notes ? `${carToUpdate.notes}; ${notes}` : notes) : carToUpdate.notes,
         };
@@ -610,8 +612,32 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         } else {
           log('telegram', `No repair task to add, checklist unchanged`);
         }
+
+        // Create reconditioner appointment
+        const carItem = {
+          car: carToUpdate._id,
+          carDetails: {
+            make: carToUpdate.make,
+            model: carToUpdate.model,
+            badge: carToUpdate.badge,
+            description: carToUpdate.description,
+            rego: carToUpdate.rego
+          },
+          comment: repairTask || ''
+        };
+
+        const appointment = new ReconAppointment({
+          reconditionerName: reconditionerInfo.reconditioner,
+          dayTime: 'Could be today', // Default since no specific time is provided
+          carItems: [carItem],
+          category: reconditionerInfo.category
+        });
+
+        await appointment.save();
+        log('telegram', `Created reconditioning appointment for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego} with ${reconditionerInfo.reconditioner} (Category: ${reconditionerInfo.category})`);
+
       } catch (e) {
-        log('error', `Error updating car for Car Repairs: ${e.message}`);
+        log('error', `Error updating car or creating reconditioning appointment for Car Repairs: ${e.message}`);
         if (e.name === 'ValidationError') {
           log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
         }

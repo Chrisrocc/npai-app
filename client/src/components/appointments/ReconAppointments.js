@@ -31,6 +31,9 @@ const ReconAppointments = () => {
     'Tint',
     'Touch Up',
     'wheels',
+    'Mechanic',
+    'Body',
+    'Interior Major',
     'other',
   ];
 
