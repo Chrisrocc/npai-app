@@ -9,16 +9,15 @@ const multer = require('multer');
 const { parse } = require('csv-parse');
 const fs = require('fs');
 const { log } = require('./logger');
-const Car = require('./models/Cars'); // Import Car model
+const Car = require('./models/Cars');
 const { updateDatabaseFromPipeline } = require('./services/databaseUpdate');
 const connectDB = require('./config/db');
 const { processPendingLocationUpdates } = require('./utils/helpers');
-const { startCronJobs } = require('./utils/cron-jobs');
 
 // Import routes
 const carRoutes = require('./routes/cars');
 const customerAppointmentRoutes = require('./routes/customerAppointments');
-const reconAppointmentRoutes = require('./routes/reconAppointments');
+const reconAppointmentRoutes = require('./routes/reconappointments'); // Corrected to lowercase
 const manualVerificationRoutes = require('./routes/manualVerifications');
 const taskRoutes = require('./routes/tasks');
 const noteRoutes = require('./routes/notes');
@@ -56,7 +55,7 @@ app.use((req, res, next) => {
 });
 
 // Serve static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'Uploads')));
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -237,8 +236,6 @@ connectDB().then(() => {
   const PORT = process.env.PORT || 5000;
   const server = app.listen(PORT, () => {
     log('info', `Server running on port ${PORT} in ${process.env.NODE_ENV} environment`);
-    startCronJobs();
-    log('info', 'Cron jobs started');
   });
   server.setTimeout(5 * 60 * 1000); // 5-minute timeout
 }).catch((err) => {
