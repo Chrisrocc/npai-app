@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const carItemSchema = new mongoose.Schema({
-  car: { type: mongoose.Schema.Types.ObjectId, ref: 'Car', default: null }, // Nullable car reference
-  carDetails: { // Store car details if car isn't found
+  car: { type: mongoose.Schema.Types.ObjectId, ref: 'Car', default: null },
+  carDetails: {
     make: { type: String, default: '' },
     model: { type: String, default: '' },
     badge: { type: String, default: '' },
@@ -10,13 +10,12 @@ const carItemSchema = new mongoose.Schema({
     rego: { type: String, default: '' }
   },
   comment: { type: String, default: '' }
-});
+}, { _id: true });
 
-const ReconAppointmentSchema = new mongoose.Schema({
-  reconditionerName: { type: String}, // Renamed from 'name'
-  dayTime: { type: String },
+const reconAppointmentSchema = new mongoose.Schema({
+  reconditionerName: { type: String, required: true },
+  dayTime: { type: String, default: '' },
   carItems: [carItemSchema],
-  dateCreated: { type: Date, default: Date.now },
   category: {
     type: String,
     required: true,
@@ -36,7 +35,8 @@ const ReconAppointmentSchema = new mongoose.Schema({
       'Interior Major'
     ],
     default: 'other'
-  }
+  },
+  dateCreated: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('ReconAppointment', ReconAppointmentSchema);
+module.exports = mongoose.model('ReconAppointment', reconAppointmentSchema);

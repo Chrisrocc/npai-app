@@ -630,7 +630,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           reconditionerName: reconditionerInfo.reconditioner,
           dayTime: 'Could be today', // Default since no specific time is provided
           carItems: [carItem],
-          category: reconditionerInfo.category
+          category: reconditionerInfo.category.replace(/['"]/g, '') // Strip quotes from category
         });
 
         await appointment.save();
