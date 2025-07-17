@@ -4,6 +4,7 @@ import './CarTable.css';
 import NextDestinationsEditor from './NextDestinationsEditor';
 import ChecklistEditor from './ChecklistEditor';
 import axios from '../../utils/axiosConfig';
+import placeholderImage from '../../assets/placeholder.jpg'; // Add a placeholder image in src/assets
 
 const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sortConfig, handleSort, startEditing, editingField, editValue, handleEditChange, saveEdit, cancelEdit, handleOpenProfile, handleDelete, showPhotos }) => {
   const [editingNextCarId, setEditingNextCarId] = useState(null);
@@ -147,10 +148,15 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                   (cars[index + 1].stage || 'In Works') !== 'Sold'));
 
             // Debug photo URLs
-            if (showPhotos && car.photos && car.photos.length > 0) {
-              console.log(`Car ${car.rego} photo URL: ${process.env.REACT_APP_API_URL}/${car.photos[0]}`);
-            } else {
-              console.log(`Car ${car.rego} has no photos or photos array is empty`);
+            if (showPhotos) {
+              if (car.photos && car.photos.length > 0) {
+                const photoUrl = car.photos[0].startsWith('http')
+                  ? car.photos[0]
+                  : `${process.env.REACT_APP_API_URL || ''}/uploads/${car.photos[0].replace(/^Uploads\//, '')}`;
+                console.log(`Car ${car.rego} photo URL: ${photoUrl}`);
+              } else {
+                console.log(`Car ${car.rego} has no photos or photos array is empty`);
+              }
             }
 
             return (
@@ -187,7 +193,11 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                   >
                     {car.photos && car.photos.length > 0 ? (
                       <img
-                        src={`${process.env.REACT_APP_API_URL}/${car.photos[0]}`}
+                        src={
+                          car.photos[0].startsWith('http')
+                            ? car.photos[0]
+                            : `${process.env.REACT_APP_API_URL || ''}/uploads/${car.photos[0].replace(/^Uploads\//, '')}`
+                        }
                         alt={`Car ${car.rego}`}
                         style={{
                           width: '100%',
@@ -198,21 +208,27 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                           borderRadius: '4px',
                         }}
                         onError={(e) => {
-                          console.error(`Failed to load image for car ${car.rego}: ${process.env.REACT_APP_API_URL}/${car.photos[0]}`);
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'inline';
+                          console.error(`Failed to load image for car ${car.rego}: ${e.target.src}`);
+                          e.target.src = placeholderImage;
                         }}
                       />
                     ) : (
-                      <span style={{ fontSize: '12px', color: '#6c757d' }}>
-                        No Photo
-                      </span>
+                      <img
+                        src={placeholderImage}
+                        alt="No Photo Available"
+                        style={{
+                          width: '100%',
+                          maxWidth: '34px',
+                          height: '30px',
+                          objectFit: 'cover',
+                          verticalAlign: 'middle',
+                          borderRadius: '4px',
+                        }}
+                      />
                     )}
-                    <span style={{ display: 'none', fontSize: '12px', color: '#6c757d' }}>
-                      No Photo
-                    </span>
                   </td>
                 )}
+                {/* Rest of the table cells remain unchanged */}
                 <td
                   style={{
                     border: '1px solid #dee2e6',
