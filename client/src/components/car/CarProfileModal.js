@@ -109,7 +109,7 @@ const EnlargedPhotoModal = ({ photoUrl, onClose }) => {
 };
 
 // Main CarProfileModal component
-const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true }) => {
+const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true, onPhotoUpdate }) => {
   const { id: routeCarId } = useParams();
   const navigate = useNavigate();
   const carId = propCarId || routeCarId;
@@ -167,6 +167,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
       setCar(carData);
       setExistingPhotos(carData.photos || []);
       if (fetchCars) fetchCars();
+      if (onPhotoUpdate) onPhotoUpdate(); // Trigger refresh in parent
     } catch (err) {
       console.error('Error fetching car:', err);
     }
@@ -478,7 +479,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   />
                 ) : (
                   <span onDoubleClick={() => startEditingModal('make', car.make)} style={{ fontSize: '14px', color: '#495057' }}>
-                    {car.make || 'N/A'}
+                    {car.make || ''}
                   </span>
                 )}
               </div>
@@ -497,7 +498,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   />
                 ) : (
                   <span onDoubleClick={() => startEditingModal('model', car.model)} style={{ fontSize: '14px', color: '#495057' }}>
-                    {car.model || 'N/A'}
+                    {car.model || ''}
                   </span>
                 )}
               </div>
@@ -516,7 +517,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   />
                 ) : (
                   <span onDoubleClick={() => startEditingModal('badge', car.badge)} style={{ fontSize: '14px', color: '#495057' }}>
-                    {car.badge || 'N/A'}
+                    {car.badge || ''}
                   </span>
                 )}
               </div>
@@ -535,7 +536,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   />
                 ) : (
                   <span onDoubleClick={() => startEditingModal('rego', car.rego)} style={{ fontSize: '14px', color: '#495057' }}>
-                    {car.rego || 'N/A'}
+                    {car.rego || '-'}
                   </span>
                 )}
               </div>
@@ -554,7 +555,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   />
                 ) : (
                   <span onDoubleClick={() => startEditingModal('year', car.year)} style={{ fontSize: '14px', color: '#495057' }}>
-                    {car.year || 'N/A'}
+                    {car.year || '-'}
                   </span>
                 )}
               </div>
@@ -573,7 +574,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   />
                 ) : (
                   <span onDoubleClick={() => startEditingModal('description', car.description)} style={{ fontSize: '14px', color: '#495057' }}>
-                    {car.description || 'N/A'}
+                    {car.description || '-'}
                   </span>
                 )}
               </div>
@@ -591,8 +592,8 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                     style={{ padding: '5px', width: '100%', border: '1px solid #ced4da', borderRadius: '4px' }}
                   />
                 ) : (
-                  <span onDoubleClick={() => startEditingModal('location', car.location || 'N/A')} style={{ fontSize: '14px', color: '#495057' }}>
-                    {car.location || 'N/A'}
+                  <span onDoubleClick={() => startEditingModal('location', car.location)} style={{ fontSize: '14px', color: '#495057' }}>
+                    {car.location || '-'}
                   </span>
                 )}
               </div>
@@ -611,7 +612,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   />
                 ) : (
                   <span onDoubleClick={() => startEditingModal('status', car.status)} style={{ fontSize: '14px', color: '#495057' }}>
-                    {car.status || 'N/A'}
+                    {car.status || '-'}
                   </span>
                 )}
               </div>
@@ -672,7 +673,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   {car.next.map((entry, index) => (
                     <tr key={index}>
                       <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>
-                        <span style={{ fontSize: '14px', color: '#495057' }}>{entry.location || 'N/A'}</span>
+                        <span style={{ fontSize: '14px', color: '#495057' }}>{entry.location || ''}</span>
                       </td>
                       <td style={{ border: '1px solid #dee2e6', padding: '8px' }}>
                         <span style={{ fontSize: '14px', color: '#495057' }}>
@@ -748,7 +749,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                 value={newChecklistItem}
                 onChange={(e) => setNewChecklistItem(e.target.value)}
                 placeholder="Add new task"
-                style={{ padding: '5px', flex: 1, border: '1px solid #ced4da', borderRadius: '4px' }}
+                style={{ padding: '5px', flex: '1', border: '1px solid #ced4da', borderRadius: '4px' }}
               />
               <button
                 type="button"
@@ -867,7 +868,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                             style={{ padding: '5px', width: '100%', border: '1px solid #ced4da', borderRadius: '4px' }}
                           />
                         ) : (
-                          <span style={{ fontSize: '14px', color: '#495057' }}>{entry.location || 'N/A'}</span>
+                          <span style={{ fontSize: '14px', color: '#495057' }}>{entry.location || ''}</span>
                         )}
                       </td>
                       <td
@@ -887,7 +888,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                           />
                         ) : (
                           <span style={{ fontSize: '14px', color: '#495057' }}>
-                            {entry.dateAdded ? new Date(entry.dateAdded).toLocaleDateString() : 'N/A'}
+                            {entry.dateAdded ? new Date(entry.dateAdded).toLocaleDateString() : ''}
                           </span>
                         )}
                       </td>
@@ -908,7 +909,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                           />
                         ) : (
                           <span style={{ fontSize: '14px', color: '#495057' }}>
-                            {entry.dateLeft ? new Date(entry.dateLeft).toLocaleDateString() : 'Still There'}
+                            {entry.dateLeft ? new Date(entry.dateLeft).toLocaleDateString() : ''}
                           </span>
                         )}
                       </td>
@@ -977,7 +978,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true 
                   whiteSpace: 'pre-wrap',
                 }}
               >
-                {car.notes || 'No Notes'}
+                {car.notes || ''}
               </div>
             )}
           </div>

@@ -222,7 +222,7 @@ const CarTable = ({
                         }}
                         onError={(e) => {
                           console.error(`Failed to load image for car ${car.rego}: ${e.target.src}`);
-                          e.target.style.display = 'none'; // Hide on error, leaving cell blank
+                          e.target.style.display = 'none'; // Hide on error, leaving cell blank or hyphen
                         }}
                       />
                     ) : (
