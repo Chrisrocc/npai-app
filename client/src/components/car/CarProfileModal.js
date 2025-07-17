@@ -109,7 +109,7 @@ const EnlargedPhotoModal = ({ photoUrl, onClose }) => {
 };
 
 // Main CarProfileModal component
-const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true, onPhotoUpdate }) => {
+const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true }) => {
   const { id: routeCarId } = useParams();
   const navigate = useNavigate();
   const carId = propCarId || routeCarId;
@@ -167,7 +167,6 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true,
       setCar(carData);
       setExistingPhotos(carData.photos || []);
       if (fetchCars) fetchCars();
-      if (onPhotoUpdate) onPhotoUpdate(); // Trigger refresh in parent
     } catch (err) {
       console.error('Error fetching car:', err);
     }
@@ -749,7 +748,7 @@ const CarProfileModal = ({ carId: propCarId, onClose, fetchCars, isModal = true,
                 value={newChecklistItem}
                 onChange={(e) => setNewChecklistItem(e.target.value)}
                 placeholder="Add new task"
-                style={{ padding: '5px', flex: '1', border: '1px solid #ced4da', borderRadius: '4px' }}
+                style={{ padding: '5px', flex: 1, border: '1px solid #ced4da', borderRadius: '4px' }}
               />
               <button
                 type="button"
