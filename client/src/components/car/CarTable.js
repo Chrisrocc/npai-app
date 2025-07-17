@@ -4,7 +4,6 @@ import './CarTable.css';
 import NextDestinationsEditor from './NextDestinationsEditor';
 import ChecklistEditor from './ChecklistEditor';
 import axios from '../../utils/axiosConfig';
-import placeholderImage from '../../assets/placeholder.jpg'; // Add a placeholder image in src/assets
 
 const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sortConfig, handleSort, startEditing, editingField, editValue, handleEditChange, saveEdit, cancelEdit, handleOpenProfile, handleDelete, showPhotos }) => {
   const [editingNextCarId, setEditingNextCarId] = useState(null);
@@ -209,22 +208,22 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         }}
                         onError={(e) => {
                           console.error(`Failed to load image for car ${car.rego}: ${e.target.src}`);
-                          e.target.src = placeholderImage;
+                          e.target.style.display = 'none'; // Hide broken image
                         }}
                       />
                     ) : (
-                      <img
-                        src={placeholderImage}
-                        alt="No Photo Available"
+                      <span
                         style={{
+                          fontSize: '12px',
+                          color: '#6c757d',
+                          display: 'inline-block',
                           width: '100%',
                           maxWidth: '34px',
-                          height: '30px',
-                          objectFit: 'cover',
-                          verticalAlign: 'middle',
-                          borderRadius: '4px',
+                          textAlign: 'center',
                         }}
-                      />
+                      >
+                        No Photo
+                      </span>
                     )}
                   </td>
                 )}
