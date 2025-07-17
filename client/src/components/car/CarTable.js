@@ -5,19 +5,38 @@ import NextDestinationsEditor from './NextDestinationsEditor';
 import ChecklistEditor from './ChecklistEditor';
 import axios from '../../utils/axiosConfig';
 
-const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sortConfig, handleSort, startEditing, editingField, editValue, handleEditChange, saveEdit, cancelEdit, handleOpenProfile, handleDelete, showPhotos }) => {
+const CarTable = ({
+  tableCars = [],
+  tableSide,
+  isRightTable = false,
+  onSelectCar,
+  sortConfig = { key: null, direction: 'asc' },
+  handleSort,
+  startEditing,
+  editingField,
+  editValue,
+  handleEditChange,
+  saveEdit,
+  cancelEdit,
+  handleOpenProfile,
+  handleDelete,
+  showPhotos = false,
+  refreshTrigger, // New prop to trigger refresh
+}) => {
   const [editingNextCarId, setEditingNextCarId] = useState(null);
   const [editingChecklistCarId, setEditingChecklistCarId] = useState(null);
   const [cars, setCars] = useState(tableCars);
 
   useEffect(() => {
-    setCars(tableCars);
-  }, [tableCars]);
+    console.log('CarTable useEffect, tableCars:', tableCars);
+    setCars(tableCars || []);
+  }, [tableCars, refreshTrigger]); // Refresh on trigger
 
   const fetchCarsWithoutRefresh = async () => {
     try {
       const response = await axios.get('/api/cars');
-      setCars(response.data);
+      console.log('Fetched cars data:', response.data);
+      setCars(response.data || []);
     } catch (err) {
       console.error('Error fetching cars:', err);
     }
@@ -26,25 +45,25 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
   const handleSetCurrentLocation = async (carId, newLocation, indexToRemove) => {
     try {
       const car = cars.find(c => c._id === carId);
-      if (!car) {
-        throw new Error('Car not found');
-      }
-
+      if (!car) throw new Error('Car not found');
       const updatedNext = [...(car.next || [])];
       updatedNext.splice(indexToRemove, 1);
-
       await axios.post(`/api/cars/${carId}/set-location`, {
         location: newLocation,
         message: `Set as current location from next list`,
         next: updatedNext,
       });
-
       await fetchCarsWithoutRefresh();
     } catch (err) {
       console.error('Error setting current location:', err);
       alert('Failed to set current location');
     }
   };
+
+  if (!Array.isArray(cars)) {
+    console.error('CarTable error: cars is not an array', cars);
+    return <div>Error: Invalid car data</div>;
+  }
 
   return (
     <div
@@ -58,7 +77,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
       {editingNextCarId && (
         <NextDestinationsEditor
           carId={editingNextCarId}
-          nextDestinations={cars.find(car => car._id === editingNextCarId).next}
+          nextDestinations={cars.find(car => car._id === editingNextCarId)?.next || []}
           onSave={() => setEditingNextCarId(null)}
           onCancel={() => setEditingNextCarId(null)}
           fetchCars={fetchCarsWithoutRefresh}
@@ -68,13 +87,14 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
       {editingChecklistCarId && (
         <ChecklistEditor
           carId={editingChecklistCarId}
-          checklist={cars.find(car => car._id === editingChecklistCarId).checklist}
+          checklist={cars.find(car => car._id === editingChecklistCarId)?.checklist || []}
           onSave={() => setEditingChecklistCarId(null)}
           onCancel={() => setEditingChecklistCarId(null)}
           fetchCars={fetchCarsWithoutRefresh}
         />
       )}
       <table
+        className="CarTable"
         style={{
           width: '100%',
           minWidth: '100%',
@@ -121,7 +141,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                   boxSizing: 'border-box',
                   whiteSpace: 'nowrap',
                 }}
-                onClick={() => key !== 'actions' && handleSort(key)}
+                onClick={() => key !== 'actions' && handleSort?.(key)}
               >
                 {label}{' '}
                 {sortConfig.key === key
@@ -142,17 +162,14 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
             const isLastSold =
               isRightTable &&
               isSold &&
-              (index === cars.length - 1 ||
-                (cars[index + 1] &&
-                  (cars[index + 1].stage || 'In Works') !== 'Sold'));
+              (index === cars.length - 1 || (cars[index + 1] && (cars[index + 1].stage || 'In Works') !== 'Sold'));
 
-            // Debug photo URLs
             if (showPhotos) {
               if (car.photos && car.photos.length > 0) {
                 const photoUrl = car.photos[0].startsWith('http')
                   ? car.photos[0]
-                  : `${process.env.REACT_APP_API_URL || ''}/uploads/${car.photos[0].replace(/^Uploads\//, '')}`;
-                console.log(`Car ${car.rego} photo URL: ${photoUrl}`);
+                  : `${process.env.REACT_APP_API_URL || ''}/uploads/${car.photos[0].startsWith('Uploads/') ? car.photos[0] : 'Uploads/' + car.photos[0]}`;
+                console.log(`Car ${car.rego} first photo URL: ${photoUrl}, Photos array: ${JSON.stringify(car.photos)}`);
               } else {
                 console.log(`Car ${car.rego} has no photos or photos array is empty`);
               }
@@ -167,7 +184,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                   transition: 'background-color 0.2s',
                   cursor: onSelectCar ? 'pointer' : 'default',
                 }}
-                onClick={() => onSelectCar && onSelectCar(car._id)}
+                onClick={() => onSelectCar?.(car._id)}
               >
                 {showPhotos && (
                   <td
@@ -178,13 +195,10 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                       verticalAlign: 'middle',
                       position: 'relative',
                       boxShadow: isSold ? 'inset 2px 0 0 0 #343a40' : 'none',
-                      ...(isFirstSold
-                        ? { boxShadow: 'inset 2px 2px 0 0 #343a40' }
-                        : {}),
+                      ...(isFirstSold ? { boxShadow: 'inset 2px 2px 0 0 #343a40' } : {}),
                       ...(isLastSold
                         ? {
-                            boxShadow:
-                              'inset 2px 0 0 0 #343a40, inset 0 -2px 0 0 #343a40',
+                            boxShadow: 'inset 2px 0 0 0 #343a40, inset 0 -2px 0 0 #343a40',
                           }
                         : {}),
                       boxSizing: 'border-box',
@@ -195,7 +209,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         src={
                           car.photos[0].startsWith('http')
                             ? car.photos[0]
-                            : `${process.env.REACT_APP_API_URL || ''}/uploads/${car.photos[0].replace(/^Uploads\//, '')}`
+                            : `${process.env.REACT_APP_API_URL || ''}/uploads/${car.photos[0].startsWith('Uploads/') ? car.photos[0] : 'Uploads/' + car.photos[0]}`
                         }
                         alt={`Car ${car.rego}`}
                         style={{
@@ -208,26 +222,25 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         }}
                         onError={(e) => {
                           console.error(`Failed to load image for car ${car.rego}: ${e.target.src}`);
-                          e.target.style.display = 'none'; // Hide broken image
+                          e.target.style.display = 'none'; // Hide on error, leaving cell blank
                         }}
                       />
                     ) : (
                       <span
                         style={{
                           fontSize: '12px',
-                          color: '#6c757d',
+                          color: '#495057',
                           display: 'inline-block',
                           width: '100%',
                           maxWidth: '34px',
                           textAlign: 'center',
                         }}
                       >
-                        No Photo
+                        -
                       </span>
                     )}
                   </td>
                 )}
-                {/* Rest of the table cells remain unchanged */}
                 <td
                   style={{
                     border: '1px solid #dee2e6',
@@ -235,30 +248,20 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                     whiteSpace: 'nowrap',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'make', car.make, e)
-                  }
+                  onDoubleClick={(e) => startEditing?.(car._id, 'make', car.make, e)}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'make' ? (
+                  {editingField && editingField.carId === car._id && editingField.field === 'make' ? (
                     <input
                       type="text"
-                      value={editValue}
+                      value={editValue || ''}
                       onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
+                      onBlur={() => saveEdit?.(car._id)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit?.(car._id)}
+                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit?.()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       style={{
@@ -281,7 +284,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.make || ''}
+                      {car.make || '-'}
                     </span>
                   )}
                 </td>
@@ -292,30 +295,20 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                     whiteSpace: 'nowrap',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'model', car.model, e)
-                  }
+                  onDoubleClick={(e) => startEditing?.(car._id, 'model', car.model, e)}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'model' ? (
+                  {editingField && editingField.carId === car._id && editingField.field === 'model' ? (
                     <input
                       type="text"
-                      value={editValue}
+                      value={editValue || ''}
                       onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
+                      onBlur={() => saveEdit?.(car._id)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit?.(car._id)}
+                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit?.()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       style={{
@@ -338,7 +331,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.model || ''}
+                      {car.model || '-'}
                     </span>
                   )}
                 </td>
@@ -351,29 +344,19 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'badge', car.badge, e)
-                  }
+                  onDoubleClick={(e) => startEditing?.(car._id, 'badge', car.badge, e)}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'badge' ? (
+                  {editingField && editingField.carId === car._id && editingField.field === 'badge' ? (
                     <input
                       type="text"
-                      value={editValue}
+                      value={editValue || ''}
                       onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
+                      onBlur={() => saveEdit?.(car._id)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit?.(car._id)}
+                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit?.()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       style={{
@@ -393,7 +376,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         color: '#495057',
                       }}
                     >
-                      {car.badge || ''}
+                      {car.badge || '-'}
                     </span>
                   )}
                 </td>
@@ -404,30 +387,20 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                     whiteSpace: 'nowrap',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'rego', car.rego, e)
-                  }
+                  onDoubleClick={(e) => startEditing?.(car._id, 'rego', car.rego, e)}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'rego' ? (
+                  {editingField && editingField.carId === car._id && editingField.field === 'rego' ? (
                     <input
                       type="text"
-                      value={editValue}
+                      value={editValue || ''}
                       onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
+                      onBlur={() => saveEdit?.(car._id)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit?.(car._id)}
+                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit?.()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       pattern="[a-zA-Z0-9]{1,6}"
@@ -464,30 +437,20 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                     whiteSpace: 'nowrap',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'year', car.year, e)
-                  }
+                  onDoubleClick={(e) => startEditing?.(car._id, 'year', car.year, e)}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'year' ? (
+                  {editingField && editingField.carId === car._id && editingField.field === 'year' ? (
                     <input
                       type="number"
-                      value={editValue}
+                      value={editValue || ''}
                       onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
+                      onBlur={() => saveEdit?.(car._id)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit?.(car._id)}
+                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit?.()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       style={{
@@ -510,7 +473,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.year || ''}
+                      {car.year || '-'}
                     </span>
                   )}
                 </td>
@@ -521,28 +484,18 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'description', car.description, e)
-                  }
+                  onDoubleClick={(e) => startEditing?.(car._id, 'description', car.description, e)}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'description' ? (
+                  {editingField && editingField.carId === car._id && editingField.field === 'description' ? (
                     <textarea
-                      value={editValue}
+                      value={editValue || ''}
                       onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
+                      onBlur={() => saveEdit?.(car._id)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit?.(car._id)}
+                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit?.()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       style={{
@@ -566,7 +519,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.description || ''}
+                      {car.description || '-'}
                     </span>
                   )}
                 </td>
@@ -577,11 +530,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                   }}
                   onDoubleClick={(e) => {
@@ -598,9 +547,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                       textOverflow: 'ellipsis',
                     }}
                   >
-                    {car.checklist && car.checklist.length > 0
-                      ? car.checklist.join(', ')
-                      : ''}
+                    {car.checklist && car.checklist.length > 0 ? car.checklist.join(', ') : '-'}
                   </span>
                 </td>
                 <td
@@ -610,30 +557,20 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                     whiteSpace: 'nowrap',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'location', car.location, e)
-                  }
+                  onDoubleClick={(e) => startEditing?.(car._id, 'location', car.location, e)}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'location' ? (
+                  {editingField && editingField.carId === car._id && editingField.field === 'location' ? (
                     <input
                       type="text"
-                      value={editValue}
+                      value={editValue || ''}
                       onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
+                      onBlur={() => saveEdit?.(car._id)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit?.(car._id)}
+                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit?.()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       style={{
@@ -656,7 +593,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.location || ''}
+                      {car.location || '-'}
                     </span>
                   )}
                 </td>
@@ -667,30 +604,20 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     height: '30px',
                     verticalAlign: 'middle',
                     position: 'relative',
-                    boxShadow: isFirstSold
-                      ? 'inset 0 2px 0 0 #343a40'
-                      : isLastSold
-                      ? 'inset 0 -2px 0 0 #343a40'
-                      : 'none',
+                    boxShadow: isFirstSold ? 'inset 0 2px 0 0 #343a40' : isLastSold ? 'inset 0 -2px 0 0 #343a40' : 'none',
                     boxSizing: 'border-box',
                     whiteSpace: 'nowrap',
                   }}
-                  onDoubleClick={(e) =>
-                    startEditing(car._id, 'status', car.status, e)
-                  }
+                  onDoubleClick={(e) => startEditing?.(car._id, 'status', car.status, e)}
                 >
-                  {editingField &&
-                  editingField.carId === car._id &&
-                  editingField.field === 'status' ? (
+                  {editingField && editingField.carId === car._id && editingField.field === 'status' ? (
                     <input
                       type="text"
-                      value={editValue}
+                      value={editValue || ''}
                       onChange={handleEditChange}
-                      onBlur={() => saveEdit(car._id)}
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' && saveEdit(car._id)
-                      }
-                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit()}
+                      onBlur={() => saveEdit?.(car._id)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit?.(car._id)}
+                      onKeyDown={(e) => e.key === 'Escape' && cancelEdit?.()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       style={{
@@ -713,7 +640,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {car.status || ''}
+                      {car.status || '-'}
                     </span>
                   )}
                 </td>
@@ -725,13 +652,10 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     verticalAlign: 'middle',
                     position: 'relative',
                     boxShadow: isSold ? 'inset -2px 0 0 0 #343a40' : 'none',
-                    ...(isFirstSold
-                      ? { boxShadow: 'inset -2px 2px 0 0 #343a40' }
-                      : {}),
+                    ...(isFirstSold ? { boxShadow: 'inset -2px 2px 0 0 #343a40' } : {}),
                     ...(isLastSold
                       ? {
-                          boxShadow:
-                            'inset -2px 0 0 0 #343a40, inset 0 -2px 0 0 #343a40',
+                          boxShadow: 'inset -2px 0 0 0 #343a40, inset 0 -2px 0 0 #343a40',
                         }
                       : {}),
                     boxSizing: 'border-box',
@@ -751,9 +675,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                       textOverflow: 'ellipsis',
                     }}
                   >
-                    {car.next && car.next.length > 0
-                      ? car.next.map(entry => entry.location).join(', ')
-                      : ''}
+                    {car.next && car.next.length > 0 ? car.next.map(entry => entry.location).join(', ') : '-'}
                   </span>
                 </td>
                 <td
@@ -764,13 +686,10 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                     verticalAlign: 'middle',
                     position: 'relative',
                     boxShadow: isSold ? 'inset -2px 0 0 0 #343a40' : 'none',
-                    ...(isFirstSold
-                      ? { boxShadow: 'inset -2px 2px 0 0 #343a40' }
-                      : {}),
+                    ...(isFirstSold ? { boxShadow: 'inset -2px 2px 0 0 #343a40' } : {}),
                     ...(isLastSold
                       ? {
-                          boxShadow:
-                            'inset -2px 0 0 0 #343a40, inset 0 -2px 0 0 #343a40',
+                          boxShadow: 'inset -2px 0 0 0 #343a40, inset 0 -2px 0 0 #343a40',
                         }
                       : {}),
                     boxSizing: 'border-box',
@@ -789,7 +708,7 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleOpenProfile(car._id);
+                            handleOpenProfile?.(car._id);
                           }}
                           style={{
                             background: 'none',
@@ -799,19 +718,15 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                             color: '#007bff',
                             transition: 'color 0.2s',
                           }}
-                          onMouseEnter={(e) =>
-                            (e.target.style.color = '#0056b3')
-                          }
-                          onMouseLeave={(e) =>
-                            (e.target.style.color = '#007bff')
-                          }
+                          onMouseEnter={(e) => (e.target.style.color = '#0056b3')}
+                          onMouseLeave={(e) => (e.target.style.color = '#007bff')}
                         >
                           ⋮
                         </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete(car._id);
+                            handleDelete?.(car._id);
                           }}
                           style={{
                             background: 'none',
@@ -821,12 +736,8 @@ const CarTable = ({ tableCars, tableSide, isRightTable = false, onSelectCar, sor
                             color: '#dc3545',
                             transition: 'color 0.2s',
                           }}
-                          onMouseEnter={(e) =>
-                            (e.target.style.color = '#b02a37')
-                          }
-                          onMouseLeave={(e) =>
-                            (e.target.style.color = '#dc3545')
-                          }
+                          onMouseEnter={(e) => (e.target.style.color = '#b02a37')}
+                          onMouseLeave={(e) => (e.target.style.color = '#dc3545')}
                         >
                           🗑️
                         </button>
