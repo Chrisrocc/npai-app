@@ -10,15 +10,22 @@ const logLevels = {
   info: chalk.blue,
   warn: chalk.yellow,
   error: chalk.red,
-  telegram: chalk.green, // New level for Telegram-related logs
+  telegram: chalk.green,
 };
 
 const log = (level, message) => {
-  const colorFn = logLevels[level] || chalk.white;
-  const timestamp = new Date().toISOString();
-  const logMessage = `${timestamp} - [${level.toUpperCase()}] ${message}\n`;
-  console.log(colorFn(logMessage.trim()));
-  fs.appendFileSync(logFilePath, logMessage);
+  // Filter logs: only allow [TELEGRAM] or specific [INFO] logs
+  if (
+    level === 'telegram' ||
+    (level === 'info' &&
+      (message.includes('Incoming request') || message.includes('Middleware called')))
+  ) {
+    const colorFn = logLevels[level] || chalk.white;
+    const timestamp = new Date().toISOString();
+    const logMessage = `${timestamp} - [${level.toUpperCase()}] ${message}\n`;
+    console.log(colorFn(logMessage.trim()));
+    fs.appendFileSync(logFilePath, logMessage);
+  }
 };
 
 const logRequest = (req, res, next) => {

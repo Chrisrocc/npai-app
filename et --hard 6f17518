@@ -1,0 +1,93 @@
+[33mf0547a3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m feat: live log streaming + logging tweaks
+[33m6f17518[m Enforce strict 6-character rego limit without trimming
+[33m02dc299[m Add strict rego validator: max 6 alphanumeric characters
+[33m5765246[m Fix blank value saving in car editor and backend update logic
+[33mdd31a1c[m Update Car schema to allow blank fields
+[33m1bc9e79[m Allow blank values for car fields by removing required constraints
+[33mf6d6387[m Enable setting table cells to blank when editing
+[33m3079d67[m Allow blank cells when editing by removing empty value restrictions
+[33md70b6ba[m Display blank cells instead of hyphens for all fields except rego
+[33m82fb22b[m Restrict rego to 6 characters, allow blank cells, set stage to In Works and status as readiness
+[33m47bf040[m Simplify sorting to place green appointments before yellow in CustomerAndReconAppointments
+[33m87e1341[m Dynamically sort reconditioner appointments with today (green) before tomorrow (yellow) in CustomerAndReconAppointments
+[33mac9eb1a[m Sort reconditioner appointments with green (today) before yellow (tomorrow) in CustomerAndReconAppointments
+[33maf6c340[m Fix filtering to show all green and yellow reconditioner appointments in CustomerAndReconAppointments
+[33m59df8ef[m Fix reconditioner appointments filtering for green and yellow in CustomerAndReconAppointments
+[33m3412ae8[m Add green and yellow reconditioner appointments to CustomerAndReconAppointments with consistent coloring
+[33mc411022[m fix(dashboard): show only green/yellow (today/tomorrow) recon appointments
+[33me84e653[m Fix: updated pendingLocationUpdate schema to object to prevent 500 errors
+[33mf309aaa[m Fix 500 error on location edit by ensuring valid updateData and backend logic
+[33mc53b5a1[m Switch to HashRouter to fix refresh 404 on Render
+[33mded3908[m Fix static.json with route array for Render
+[33mbfd8781[m Add static.json for SPA routing on Render and new AuthContext.js
+[33me2e598e[m Add AuthContext, update Login and Signup with context, refine /index.html redirect
+[33mc4ad7e9[m Fix useLocation error by removing hook and simplifying /index.html redirect
+[33m6aa2f0e[m Update App.js with dynamic /index.html redirect to fix /cars refresh
+[33m75e29e9[m Revert to full App.js with refined /index.html redirect
+[33m4a9cd83[m Adjust ProtectedRoute to fix refresh redirect issue
+[33mcf37f4e[m Update App.js to preserve valid routes on /index.html redirect
+[33m6307a4d[m Fix useLocation error by removing it from ProtectedRoute and ensuring router context
+[33md4d210c[m Update App.js with NotFound route to fix refresh redirect
+[33m7037be1[m Commit updated App.js, App.test.js, and index.js for React Router fix
+[33m728e369[m Update package.json with homepage and rebuild client
+[33m321cdcd[m Add updated client build for SPA refresh fix
+[33maa52345[m Update server/index.js with safe SPA fallback excluding API routes
+[33m91631ec[m Fix SPA refresh 404 with safe fallback excluding API routes
+[33m488d5eb[m Update Cars.js with rego validation, routes/cars.js with rego sanitization, and add fix-duplicates.js and fix-regos.js
+[33m8b84c64[m Increase photo upload limit to 30
+[33m14bde04[m Update fix-photos.js to clear photos, switch to diskStorage for multer, stream S3 uploads, increase timeouts, and fix ENOENT errors
+[33m87d24fd[m Fix S3 partSize to 5MB and enhance error alerts
+[33mc42e12c[m Enhance mobile uploads with 90s timeout, 5 retries, and 2MB S3 chunks
+[33m4abd6fb[m Finalize multipart S3 uploads, frontend retry logic, and MongoDB photo URL updates
+[33m716e195[m Update CarProfileModal to use raw S3 URLs and enhance fix-photos script
+[33m4fe0f49[m Fix S3 uploads, disable local uploads route, add photo fix script
+[33m168ce3d[m Refactor cars route to use AWS S3 and keep all features
+[33mba56ac9[m Move s3.js to correct location
+[33m3b94310[m Fix s3 module path and add s3.js
+[33m59074b1[m Add S3 upload + archive routes
+[33m82c8a88[m Fix photo upload handling and increase limits
+[33m16270cd[m Increase file upload limits and revert iPhone photo upload tweak
+[33m029acf7[m Increase Multer file size limit to support larger photo uploads
+[33meccbc12[m Increase Multer fileSize limit to 1000MB
+[33mc26830c[m Increase photo upload limit to 20 for both add and update
+[33me3179ef[m Increase upload limits and support HEIC files
+[33m290081a[m Move AuthContext.js to correct folder for build
+[33m6095c8e[m Increase photo upload limit to 100MB and add Multer error handling for file size
+[33m8bb4702[m Fix: Replace wildcard route to avoid path-to-regexp crash on Render
+[33m4ec4104[m Sanitize photo filenames to prevent path errors
+[33me551554[m Fix logger middleware and improve logging structure
+[33mdef6cc5[m Increase upload file size limit for iPhone photos and update App.js routes
+[33m8051f48[m Fix image upload paths and file type limits
+[33m4df6c54[m Fix static image serving: added /uploads to API URL
+[33m53d6fd2[m Fix image path to include /uploads in CarProfileModal
+[33m909f37c[m chore: local/remote MONGO_URI toggle
+[33mb786310[m Updated CarList.js with REACT_APP_API_URL for local testing
+[33m41b2d4f[m Fixed Ready category to correctly update location and status separately
+[33md38f3e3[m Fixed Ready category to always update location and status
+[33m0ef782e[m Removed detailed car list logs from GET /api/cars
+[33m21bb6f1[m Updated carIdentification.js to use $regex instead of $where for MongoDB Atlas compatibility
+[33mdffbc45[m Reverted to working local code for deployment
+[33ma9bbdaa[m Updated backend files to fix $where issue, aligned description with color/features, and ensured MongoDB compatibility
+[33m761fd02[m Added build.sh to install Python dependencies
+[33m4bfbbea[m Force rebuild with updated requirements.txt
+[33m4b886db[m Added requirements.txt for Python dependencies
+[33m81810d5[m Fixed image URL paths in CarProfileModal
+[33m46db2db[m Fixed image URL paths in CarProfileModal
+[33ma85bbf2[m Fix ESLint import/export error and improve CarProfileModal.js
+[33mc8512a2[m Fix photo display and upload issues in CarProfileModal.js
+[33m3b899ca[m Fix photo upload and reduce polling frequency
+[33m39f4a6f[m Fix PUT route initialization error and photo merging logic
+[33mf267057[m Update PUT /api/cars/:id to merge existing and new photos
+[33m5554464[m Fix multiple photo upload issue in AddCarForm.js
+[33m31bc148[m Fix photo upload issue by creating Uploads/ directory dynamically and aligning paths
+[33m7db2f33[m Fix hardcoded localhost:5000 URLs in CustomerAndReconAppointments.js, Notes.js, Tasks.js, ManualVerification.js; confirm AddCarForm.js and AddCarModal.js
+[33m39014c3[m Fix hardcoded localhost:5000 URLs in Admin.js, ReconAppointments.js, CarArchive.js, CarProfileModal.js, CarTable.js, NextDestinationsEditor.js, and axiosConfig.js
+[33m05357d7[m Fix hardcoded localhost:5000 URL in AddCarForm.js
+[33mce03064[m Fix hardcoded localhost:5000 URLs in CustomerAppointments.js, CarList.js, and CarSelectTable.js
+[33m9d8346d[m Add detailed debug logging to auth routes
+[33md07febb[m Fix hardcoded URLs, enforce authentication, and add token handling
+[33md798c65[m Remove hardcoded localhost:5000 URLs and use relative paths for axios requests
+[33m04f451f[m Update axiosConfig.js to use REACT_APP_API_URL for baseURL
+[33m77c9ab2[m Merge branch 'main' of https://github.com/Chrisrocc/npai-app
+[33meaa2f8a[m Initial commit of NPAI app code
+[33m6799937[m Initial commit

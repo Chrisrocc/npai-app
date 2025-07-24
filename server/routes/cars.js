@@ -3,10 +3,10 @@ const router = express.Router();
 const Car = require('../models/Cars');
 const multer = require('multer');
 const path = require('path');
-const chalk = require('chalk');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const AWS = require('aws-sdk');
+const { log } = require('../logger'); // Import logger.js
 const { updateCarHistory, processPendingLocationUpdates } = require('../utils/helpers');
 
 AWS.config.update({
@@ -34,7 +34,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB per file
+  limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const fileTypes = /jpeg|jpg|png|heic/;
     const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
@@ -55,19 +55,19 @@ const uploadToS3 = async (filePath, fileName, mimetype) => {
     CacheControl: 'public, max-age=31536000',
   };
   try {
-    console.log(chalk.blue(`Uploading to S3: ${key}`));
+    log('info', `Uploading to S3: ${key}`); // Will be filtered out
     const result = await s3.upload(params, {
-      partSize: 5 * 1024 * 1024, // 5MB chunks
-      queueSize: 4, // Concurrent uploads
+      partSize: 5 * 1024 * 1024,
+      queueSize: 4,
     }).promise();
-    console.log(chalk.green(`S3 upload successful: ${key}`));
+    log('info', `S3 upload successful: ${key}`); // Will be filtered out
     return `https://${bucketName}.s3.ap-southeast-2.amazonaws.com/${key}`;
   } catch (error) {
-    console.error(chalk.red(`S3 upload error for ${key}:`, error.message));
+    log('error', `S3 upload error for ${key}: ${error.message}`);
     throw new Error(`Failed to upload to S3: ${error.message}`);
   } finally {
     fs.unlink(filePath, (err) => {
-      if (err) console.error(chalk.red(`Error deleting temp file ${filePath}:`, err.message));
+      if (err) log('error', `Error deleting temp file ${filePath}: ${err.message}`);
     });
   }
 };
@@ -77,15 +77,15 @@ const deleteFromS3 = async (url) => {
     const key = url.split(`${bucketName}.s3.ap-southeast-2.amazonaws.com/`)[1];
     if (!key) return;
     await s3.deleteObject({ Bucket: bucketName, Key: key }).promise();
-    console.log(chalk.green(`Deleted from S3: ${key}`));
+    log('info', `Deleted from S3: ${key}`); // Will be filtered out
   } catch (error) {
-    console.error(chalk.red(`S3 delete error for ${url}:`, error.message));
+    log('error', `S3 delete error for ${url}: ${error.message}`);
   }
 };
 
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch((err) => {
-    console.error(chalk.red(`Route error: ${req.method} ${req.path}`, err.message, err.stack));
+    log('error', `Route error: ${req.method} ${req.path} ${err.message}`);
     res.status(500).json({
       message: 'Server error',
       error: err.message,
@@ -94,7 +94,7 @@ const asyncHandler = (fn) => (req, res, next) =>
   });
 
 router.use(asyncHandler(async (req, res, next) => {
-  console.log(chalk.blue(`Processing middleware for ${req.method} ${req.path}, User: ${req.user ? req.user.id : 'Not authenticated'}`));
+  log('info', `Processing middleware for ${req.method} ${req.path}, User: ${req.user ? req.user.id : 'Not authenticated'}`);
   await processPendingLocationUpdates();
   next();
 }));
@@ -175,7 +175,7 @@ router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
 
   try {
     await car.save();
-    console.log(chalk.green(`Created new car: ${car.make} ${car.model}, Location: ${car.location}`));
+    log('info', `Created new car: ${car.make} ${car.model}, Location: ${car.location}`); // Will be filtered out
     res.status(201).json(car);
   } catch (error) {
     if (error.code === 11000) {
@@ -187,11 +187,11 @@ router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
 
 router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => {
   const carId = req.params.id;
-  console.log('PUT /api/cars/:id body:', req.body, 'files:', req.files ? req.files.length : 0);
+  log('info', `PUT /api/cars/:id body: ${JSON.stringify(req.body)}, files: ${req.files ? req.files.length : 0}`); // Will be filtered out
   const car = await Car.findById(carId);
   if (!car) return res.status(404).json({ message: 'Car not found' });
 
-  const updateData = { ...req.body }; // Create a copy to avoid modifying the original
+  const updateData = { ...req.body };
   let newPhotoUrls = [];
 
   if (req.files && req.files.length > 0) {
@@ -234,11 +234,8 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
   if (updateData.location && updateData.location !== car.location) {
     const historyUpdated = await updateCarHistory(carId, updateData.location, 'Location update via PUT');
     if (!historyUpdated) return res.status(500).json({ message: 'Failed to schedule history update' });
-    // Keep location in updateData to ensure it’s saved
   }
 
-  // Ensure all required fields are present or use defaults
-  // Only update fields that were actually sent (even if blank)
   const finalUpdateData = {};
   [
     'make', 'model', 'badge', 'rego', 'year',
@@ -255,7 +252,7 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
     { $set: finalUpdateData },
     { new: true, runValidators: true }
   );
-  console.log(chalk.green(`Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`));
+  log('info', `Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`); // Will be filtered out
   res.json(updatedCar);
 }));
 
