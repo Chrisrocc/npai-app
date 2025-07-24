@@ -1,107 +1,49 @@
-const express = require('express');
-const router = express.Router();
-const ReconAppointment = require('../models/ReconAppointment');
-const { log, logRequest } = require('../logger');
+const fs = require('fs');
+const path = require('path');
+const chalk = require('chalk');
 
-router.use(logRequest);
+const logFilePath = path.join(__dirname, 'npai.log');
 
-router.get('/', async (req, res) => {
-  try {
-    log('info', 'Handling GET /api/reconappointments');
-    const appointments = await ReconAppointment.find().populate('carItems.car');
-    res.json(appointments);
-  } catch (err) {
-    log('error', `Error fetching recon appointments: ${err.message}`);
-    res.status(500).json({ message: 'Server error' });
+// Simple log levels with chalk colors
+const logLevels = {
+  debug: chalk.gray,
+  info: chalk.blue,
+  warn: chalk.yellow,
+  error: chalk.red,
+  telegram: chalk.green,
+};
+
+const log = (level, message) => {
+  // Strictly filter logs: only [TELEGRAM] or exact [INFO] phrases
+  if (
+    level === 'telegram' ||
+    (level === 'info' && 
+     (message === 'Incoming request: GET /api/reconappointments - Body: {}' ||
+      message.startsWith('Middleware called for: /api/reconappointments')))
+  ) {
+    const colorFn = logLevels[level] || chalk.white;
+    const timestamp = new Date().toISOString();
+    const logMessage = `${timestamp} - [${level.toUpperCase()}] ${message}\n`;
+    console.log(colorFn(logMessage.trim()));
+    fs.appendFileSync(logFilePath, logMessage);
   }
-});
+};
 
-router.get('/:id', async (req, res) => {
-  try {
-    log('info', `Handling GET /api/reconappointments/${req.params.id}`);
-    const appointment = await ReconAppointment.findById(req.params.id).populate('carItems.car');
-    if (!appointment) {
-      log('error', `Recon appointment not found with ID: ${req.params.id}`);
-      return res.status(404).json({ message: 'Recon appointment not found' });
-    }
-    res.json(appointment);
-  } catch (err) {
-    log('error', `Error fetching recon appointment with ID ${req.params.id}: ${err.message}`);
-    res.status(500).json({ message: 'Server error' });
+const logRequest = (req, res, next) => {
+  const skippedPaths = ['/api/cars', '/api/plans', '/api/manualverifications'];
+  if (skippedPaths.includes(req.path)) {
+    return next();
   }
-});
 
-router.post('/', async (req, res) => {
   try {
-    log('info', 'Handling POST /api/reconappointments');
-    const { reconditionerName, dayTime, carItems, category } = req.body;
-
-    if (!category) {
-      log('error', 'Validation failed: category is required');
-      return res.status(400).json({ message: 'Category is required' });
-    }
-
-    const appointment = new ReconAppointment({
-      reconditionerName: reconditionerName || '',
-      dayTime: dayTime || '',
-      carItems: carItems.map(item => ({
-        car: item.carId || item.car || null,
-        carDetails: item.carDetails || {},
-        comment: item.comment || ''
-      })),
-      category: category || 'other'
-    });
-
-    const savedAppointment = await appointment.save();
-    const populatedAppointment = await ReconAppointment.findById(savedAppointment._id).populate('carItems.car');
-    res.status(201).json(populatedAppointment);
+    const method = req?.method || 'UNKNOWN_METHOD';
+    const url = req?.url || 'UNKNOWN_URL';
+    const body = JSON.stringify(req?.body || {});
+    log('info', `Incoming request: ${method} ${url} - Body: ${body}`);
   } catch (err) {
-    log('error', `Error creating recon appointment: ${err.message}`);
-    res.status(400).json({ message: 'Failed to create recon appointment', error: err.message });
+    log('error', `Error logging request: ${err.message}`);
   }
-});
+  next();
+};
 
-router.put('/:id', async (req, res) => {
-  try {
-    log('info', `Handling PUT /api/reconappointments/${req.params.id}`);
-    const { reconditionerName, dayTime, carItems, category } = req.body;
-
-    const updateData = {
-      reconditionerName: reconditionerName !== undefined ? reconditionerName : '',
-      dayTime: dayTime !== undefined ? dayTime : '',
-      carItems: carItems.map(item => ({
-        car: item.carId || item.car || null,
-        carDetails: item.carDetails || {},
-        comment: item.comment || ''
-      })),
-      category: category || 'other'
-    };
-
-    const updatedAppointment = await ReconAppointment.findByIdAndUpdate(req.params.id, updateData, { new: true }).populate('carItems.car');
-    if (!updatedAppointment) {
-      log('error', `Recon appointment not found with ID: ${req.params.id}`);
-      return res.status(404).json({ message: 'Recon appointment not found' });
-    }
-    res.json(updatedAppointment);
-  } catch (err) {
-    log('error', `Error updating recon appointment with ID ${req.params.id}: ${err.message}`);
-    res.status(400).json({ message: 'Failed to update recon appointment', error: err.message });
-  }
-});
-
-router.delete('/:id', async (req, res) => {
-  try {
-    log('info', `Handling DELETE /api/reconappointments/${req.params.id}`);
-    const appointment = await ReconAppointment.findByIdAndDelete(req.params.id);
-    if (!appointment) {
-      log('error', `Recon appointment not found with ID: ${req.params.id}`);
-      return res.status(404).json({ message: 'Recon appointment not found' });
-    }
-    res.json({ message: 'Recon appointment deleted' });
-  } catch (err) {
-    log('error', `Error deleting recon appointment with ID ${req.params.id}: ${err.message}`);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-module.exports = router;
+module.exports = { log, logRequest };
