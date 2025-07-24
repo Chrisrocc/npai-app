@@ -95,7 +95,7 @@ const asyncHandler = (fn) => (req, res, next) =>
 
 router.use(asyncHandler(async (req, res, next) => {
   log('info', `Processing middleware for ${req.method} ${req.path}, User: ${req.user ? req.user.id : 'Not authenticated'}`);
-  await processPendingLocationUpdates();
+  await processPendingLocationUpdates().catch(err => log('error', `Error processing location updates: ${err.message}`));
   next();
 }));
 
