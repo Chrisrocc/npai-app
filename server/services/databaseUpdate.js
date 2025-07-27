@@ -79,7 +79,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         carToUpdate = result.car;
         log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
       } else if (rego) {
-        log('telegram', `Car with rego ${rego} not found, creating new car`);
+        log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
         const newCar = new Car({
           make,
           model,
@@ -96,9 +96,17 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           photos: [],
           stage: 'In Works'
         });
-        await newCar.save();
-        carToUpdate = newCar;
-        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        try {
+          await newCar.save();
+          carToUpdate = newCar;
+          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        } catch (e) {
+          log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
+          continue;
+        }
       } else {
         const manualEntry = new ManualVerification({
           message: cleanedMessage,
@@ -174,7 +182,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         carToUpdate = result.car;
         log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
       } else if (rego) {
-        log('telegram', `Car with rego ${rego} not found, creating new car`);
+        log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
         const newCar = new Car({
           make,
           model,
@@ -190,9 +198,17 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           photos: [],
           stage: 'In Works'
         });
-        await newCar.save();
-        carToUpdate = newCar;
-        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        try {
+          await newCar.save();
+          carToUpdate = newCar;
+          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        } catch (e) {
+          log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
+          continue;
+        }
       } else if (isPlan) {
         const plans = readPlans();
         const planId = Date.now() + Math.random().toString(36).substr(2, 9);
@@ -376,7 +392,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         };
         log('telegram', `Car found: ${result.car.make} ${result.car.model} ${result.car.rego}`);
       } else if (rego) {
-        log('telegram', `Car with rego ${rego} not found, creating new car`);
+        log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
         const newCar = new Car({
           make,
           model,
@@ -392,16 +408,24 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           photos: [],
           stage: 'In Works'
         });
-        await newCar.save();
-        carDetails = {
-          id: newCar._id,
-          make: newCar.make,
-          model: newCar.model,
-          badge: newCar.badge,
-          description: newCar.description,
-          rego: newCar.rego
-        };
-        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        try {
+          await newCar.save();
+          carDetails = {
+            id: newCar._id,
+            make: newCar.make,
+            model: newCar.model,
+            badge: newCar.badge,
+            description: newCar.description,
+            rego: newCar.rego
+          };
+          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        } catch (e) {
+          log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
+          continue;
+        }
       } else {
         carDetails = {
           id: null,
@@ -488,7 +512,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         };
         log('telegram', `Car found: ${result.car.make} ${result.car.model} ${result.car.rego}`);
       } else if (rego) {
-        log('telegram', `Car with rego ${rego} not found, creating new car`);
+        log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
         const newCar = new Car({
           make,
           model,
@@ -504,19 +528,27 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           photos: [],
           stage: 'In Works'
         });
-        await newCar.save();
-        carItem = {
-          car: newCar._id,
-          carDetails: {
-            make: newCar.make,
-            model: newCar.model,
-            badge: newCar.badge,
-            description: newCar.description,
-            rego: newCar.rego
-          },
-          comment: notes || ''
-        };
-        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        try {
+          await newCar.save();
+          carItem = {
+            car: newCar._id,
+            carDetails: {
+              make: newCar.make,
+              model: newCar.model,
+              badge: newCar.badge,
+              description: newCar.description,
+              rego: newCar.rego
+            },
+            comment: notes || ''
+          };
+          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        } catch (e) {
+          log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
+          continue;
+        }
       } else {
         carItem = {
           car: null,
@@ -592,7 +624,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           log('debug', `Current checklist: ${JSON.stringify(carToUpdate.checklist)}`);
         }
       } else if (rego) {
-        log('telegram', `Car with rego ${rego} not found, creating new car`);
+        log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
         const newCar = new Car({
           make,
           model,
@@ -608,9 +640,17 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           photos: [],
           stage: 'In Works'
         });
-        await newCar.save();
-        carToUpdate = newCar;
-        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        try {
+          await newCar.save();
+          carToUpdate = newCar;
+          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        } catch (e) {
+          log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
+          continue;
+        }
       } else {
         const manualEntry = new ManualVerification({
           message: cleanedMessage,
@@ -717,7 +757,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         carToUpdate = result.car;
         log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
       } else if (rego) {
-        log('telegram', `Car with rego ${rego} not found, creating new car`);
+        log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
         const newCar = new Car({
           make,
           model,
@@ -733,9 +773,17 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           photos: [],
           stage: 'In Works'
         });
-        await newCar.save();
-        carToUpdate = newCar;
-        log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        try {
+          await newCar.save();
+          carToUpdate = newCar;
+          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        } catch (e) {
+          log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
+          continue;
+        }
       } else if (isPlan) {
         const plans = readPlans();
         const planId = Date.now() + Math.random().toString(36).substr(2, 9);
@@ -889,7 +937,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           carToUpdate = result.car;
           log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } else if (rego) {
-          log('telegram', `Car with rego ${rego} not found, creating new car`);
+          log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
           const newCar = new Car({
             make,
             model,
@@ -905,9 +953,17 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             photos: [],
             stage: 'In Works'
           });
-          await newCar.save();
-          carToUpdate = newCar;
-          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+          try {
+            await newCar.save();
+            carToUpdate = newCar;
+            log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+          } catch (e) {
+            log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+            if (e.name === 'ValidationError') {
+              log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+            }
+            continue;
+          }
         } else {
           try {
             const carItem = {
@@ -1016,7 +1072,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           carToUpdate = result.car;
           log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } else if (rego) {
-          log('telegram', `Car with rego ${rego} not found, creating new car`);
+          log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
           const newCar = new Car({
             make,
             model,
@@ -1032,9 +1088,17 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             photos: [],
             stage: 'In Works'
           });
-          await newCar.save();
-          carToUpdate = newCar;
-          log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+          try {
+            await newCar.save();
+            carToUpdate = newCar;
+            log('telegram', `Created new car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+          } catch (e) {
+            log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+            if (e.name === 'ValidationError') {
+              log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+            }
+            continue;
+          }
         } else {
           try {
             const carItem = {
