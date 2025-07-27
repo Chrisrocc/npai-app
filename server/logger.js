@@ -14,11 +14,12 @@ const logLevels = {
 };
 
 const log = (level, message) => {
-  // Filter logs: only allow [TELEGRAM] or specific [INFO] logs
+  // Temporarily log all errors and desired info/telegram logs
   if (
     level === 'telegram' ||
-    (level === 'info' &&
-      (message.includes('Incoming request') || message.includes('Middleware called')))
+    (level === 'info' && 
+     (message.includes('Incoming request') || message.includes('Middleware called'))) ||
+    level === 'error'
   ) {
     const colorFn = logLevels[level] || chalk.white;
     const timestamp = new Date().toISOString();
@@ -29,10 +30,9 @@ const log = (level, message) => {
 };
 
 const logRequest = (req, res, next) => {
-  // Skip logging for frequent endpoints to reduce clutter
   const skippedPaths = ['/api/cars', '/api/plans', '/api/manualverifications'];
   if (skippedPaths.includes(req.path)) {
-    return next(); // Skip logging
+    return next();
   }
 
   try {

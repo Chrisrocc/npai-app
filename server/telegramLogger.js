@@ -7,11 +7,13 @@ const telegramLogger = (message, type = 'info') => {
   switch (type.toLowerCase()) {
     case 'new_message':
       logMessage = `New Message\n${message}`;
+      log('telegram', `Processing new message: ${message}`);
       break;
     case 'category':
     case 'identification':
     case 'action':
       logMessage = message;
+      log('telegram', `Processing ${type}: ${message}`);
       break;
     case 'spacer':
       logMessage = '';
