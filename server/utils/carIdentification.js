@@ -1,11 +1,10 @@
 const Car = require('../models/Cars');
-const chalk = require('chalk');
-const telegramLogger = require('../telegramLogger');
+const { log } = require('../logger');
 
 // Normalize strings
 const normalizeString = (str) => {
   if (!str) return '';
-  return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return str.toUpperCase().replace(/[^A-Z0-9]/g, '');
 };
 
 // Identify a unique car
@@ -14,7 +13,7 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
   const normalizedModel = normalizeString(model);
   const normalizedBadge = normalizeString(badge);
   const normalizedRego = normalizeString(rego);
-  const normalizedDescription = description ? description.toLowerCase().split(' ').filter(kw => kw).map(normalizeString) : [];
+  const normalizedDescription = description ? description.toUpperCase().split(' ').filter(kw => kw).map(normalizeString) : [];
   const normalizedLocation = normalizeString(location);
 
   // Step 1: Check by rego
@@ -24,15 +23,15 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithRego.length === 1) {
       const car = carsWithRego[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 1 (rego match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 1 (rego match)`);
       return { car, status: 'found' };
     }
     if (carsWithRego.length > 1) {
-      telegramLogger(`- Car not identified - multiple cars with rego ${normalizedRego} at stage 1`, 'identification');
+      log('telegram', `- Car not identified - multiple cars with rego ${normalizedRego} at stage 1`);
       return { car: null, status: 'multiple_found' };
     }
     if (!isGeminiRego) {
-      telegramLogger(`- Car not identified - rego ${normalizedRego} does not match at stage 1`, 'identification');
+      log('telegram', `- Car not identified - rego ${normalizedRego} does not match at stage 1`);
       return { car: null, status: 'not_found' };
     }
   }
@@ -44,11 +43,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithMake.length === 1) {
       const car = carsWithMake[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 2 (make match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 2 (make match)`);
       return { car, status: 'found' };
     }
     if (carsWithMake.length === 0) {
-      telegramLogger(`- Car not identified - no cars found with make ${normalizedMake} at stage 2`, 'identification');
+      log('telegram', `- Car not identified - no cars found with make ${normalizedMake} at stage 2`);
       return { car: null, status: 'not_found' };
     }
   }
@@ -63,12 +62,12 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithMakeAndModel.length === 1) {
       const car = carsWithMakeAndModel[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3 (make and model match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3 (make and model match)`);
       return { car, status: 'found' };
     }
     if (carsWithMakeAndModel.length === 0) {
-      telegramLogger(`- Car not identified - no cars found with make ${normalizedMake} and model ${normalizedModel} at stage 3`, 'identification');
-      return { car: null, status: 'not_found' };
+      log('telegram', `- Car not identified - no cars found with make ${normalizedMake} and model ${normalizedModel} at stage 3`);
+      return { car, status: 'not_found' };
     }
     if (carsWithMakeAndModel.length > 1) {
       // Multiple cars match by make and model, try to narrow down by description
@@ -85,11 +84,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
         if (carsWithDescription.length === 1) {
           const car = carsWithDescription[0];
-          telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3 (description match)`, 'identification');
+          log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3 (description match)`);
           return { car, status: 'found' };
         }
       }
-      telegramLogger(`- Car not identified - multiple model type ${normalizedModel}s at stage 3`, 'identification');
+      log('telegram', `- Car not identified - multiple model type ${normalizedModel}s at stage 3`);
       return { car: null, status: 'multiple_found' };
     }
   } else if (normalizedModel) {
@@ -98,7 +97,7 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithModel.length === 1) {
       const car = carsWithModel[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3 (model match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3 (model match)`);
       return { car, status: 'found' };
     }
     if (carsWithModel.length > 1) {
@@ -114,11 +113,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
         if (carsWithDescription.length === 1) {
           const car = carsWithDescription[0];
-          telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3 (description match)`, 'identification');
+          log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3 (description match)`);
           return { car, status: 'found' };
         }
       }
-      telegramLogger(`- Car not identified - multiple model type ${normalizedModel}s at stage 3`, 'identification');
+      log('telegram', `- Car not identified - multiple model type ${normalizedModel}s at stage 3`);
       return { car: null, status: 'multiple_found' };
     }
   } else if (normalizedMake && normalizedBadge) {
@@ -130,12 +129,12 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithMakeAndBadge.length === 1) {
       const car = carsWithMakeAndBadge[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3.5 (make and badge match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3.5 (make and badge match)`);
       return { car, status: 'found' };
     }
     if (carsWithMakeAndBadge.length === 0) {
-      telegramLogger(`- Car not identified - no cars found with make ${normalizedMake} and badge ${normalizedBadge} at stage 3.5`, 'identification');
-      return { car: null, status: 'not_found' };
+      log('telegram', `- Car not identified - no cars found with make ${normalizedMake} and badge ${normalizedBadge} at stage 3.5`);
+      return { car, status: 'not_found' };
     } else {
       if (normalizedDescription.length > 0) {
         const descriptionConditions = normalizedDescription.map(keyword => ({
@@ -150,11 +149,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
         if (carsWithDescription.length === 1) {
           const car = carsWithDescription[0];
-          telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3.5 (description match)`, 'identification');
+          log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 3.5 (description match)`);
           return { car, status: 'found' };
         }
       }
-      telegramLogger(`- Car not identified - multiple cars with make ${normalizedMake} and badge ${normalizedBadge} at stage 3.5`, 'identification');
+      log('telegram', `- Car not identified - multiple cars with make ${normalizedMake} and badge ${normalizedBadge} at stage 3.5`);
       return { car: null, status: 'multiple_found' };
     }
   }
@@ -170,7 +169,7 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithMakeModelBadge.length === 1) {
       const car = carsWithMakeModelBadge[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 4 (make, model, and badge match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 4 (make, model, and badge match)`);
       return { car, status: 'found' };
     }
     if (carsWithMakeModelBadge.length > 1) {
@@ -188,11 +187,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
         if (carsWithDescription.length === 1) {
           const car = carsWithDescription[0];
-          telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 4 (description match)`, 'identification');
+          log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 4 (description match)`);
           return { car, status: 'found' };
         }
       }
-      telegramLogger(`- Car not identified - multiple cars with make ${normalizedMake}, model ${normalizedModel}, badge ${normalizedBadge} at stage 4`, 'identification');
+      log('telegram', `- Car not identified - multiple cars with make ${normalizedMake}, model ${normalizedModel}, badge ${normalizedBadge} at stage 4`);
       return { car: null, status: 'multiple_found' };
     }
   }
@@ -223,16 +222,16 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithDescription.length === 1) {
       const car = carsWithDescription[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 5 (base + description match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 5 (base + description match)`);
       return { car, status: 'found' };
     }
     if (carsWithDescription.length > 1) {
-      telegramLogger(`- Car not identified - multiple cars with specified base and description at stage 5`, 'identification');
+      log('telegram', `- Car not identified - multiple cars with specified base and description at stage 5`);
       return { car: null, status: 'multiple_found' };
     }
     const hasBlankDescription = carsMatchingBase.every(car => !car.description || normalizeString(car.description) === '');
     if (!hasBlankDescription) {
-      telegramLogger(`- Car not identified - no cars found with specified base and description at stage 5`, 'identification');
+      log('telegram', `- Car not identified - no cars found with specified base and description at stage 5`);
       return { car: null, status: 'not_found' };
     }
   }
@@ -252,11 +251,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithLocation.length === 1) {
       const car = carsWithLocation[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (full conditions match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (full conditions match)`);
       return { car, status: 'found' };
     }
     if (carsWithLocation.length > 1) {
-      telegramLogger(`- Car not identified - multiple cars with specified conditions at stage 6`, 'identification');
+      log('telegram', `- Car not identified - multiple cars with specified conditions at stage 6`);
       return { car: null, status: 'multiple_found' };
     }
 
@@ -266,11 +265,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
       if (carsWithLocation.length === 1) {
         const car = carsWithLocation[0];
-        telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without description match)`, 'identification');
+        log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without description match)`);
         return { car, status: 'found' };
       }
       if (carsWithLocation.length > 1) {
-        telegramLogger(`- Car not identified - multiple cars without description at stage 6`, 'identification');
+        log('telegram', `- Car not identified - multiple cars without description at stage 6`);
         return { car: null, status: 'multiple_found' };
       }
     }
@@ -287,11 +286,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
       if (carsWithLocation.length === 1) {
         const car = carsWithLocation[0];
-        telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without badge match)`, 'identification');
+        log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without badge match)`);
         return { car, status: 'found' };
       }
       if (carsWithLocation.length > 1) {
-        telegramLogger(`- Car not identified - multiple cars without badge at stage 6`, 'identification');
+        log('telegram', `- Car not identified - multiple cars without badge at stage 6`);
         return { car: null, status: 'multiple_found' };
       }
 
@@ -301,11 +300,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
         if (carsWithLocation.length === 1) {
           const car = carsWithLocation[0];
-          telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without description and badge match)`, 'identification');
+          log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without description and badge match)`);
           return { car, status: 'found' };
         }
         if (carsWithLocation.length > 1) {
-          telegramLogger(`- Car not identified - multiple cars without description and badge at stage 6`, 'identification');
+          log('telegram', `- Car not identified - multiple cars without description and badge at stage 6`);
           return { car: null, status: 'multiple_found' };
         }
       }
@@ -323,11 +322,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
       if (carsWithLocation.length === 1) {
         const car = carsWithLocation[0];
-        telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without model match)`, 'identification');
+        log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without model match)`);
         return { car, status: 'found' };
       }
       if (carsWithLocation.length > 1) {
-        telegramLogger(`- Car not identified - multiple cars without model at stage 6`, 'identification');
+        log('telegram', `- Car not identified - multiple cars without model at stage 6`);
         return { car: null, status: 'multiple_found' };
       }
 
@@ -337,11 +336,11 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
         if (carsWithLocation.length === 1) {
           const car = carsWithLocation[0];
-          telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without description and model match)`, 'identification');
+          log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (without description and model match)`);
           return { car, status: 'found' };
         }
         if (carsWithLocation.length > 1) {
-          telegramLogger(`- Car not identified - multiple cars without description and model at stage 6`, 'identification');
+          log('telegram', `- Car not identified - multiple cars without description and model at stage 6`);
           return { car: null, status: 'multiple_found' };
         }
       }
@@ -352,16 +351,16 @@ const identifyUniqueCar = async (make, model, badge, rego, description, location
 
     if (carsWithLocation.length === 1) {
       const car = carsWithLocation[0];
-      telegramLogger(`- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (minimal conditions match)`, 'identification');
+      log('telegram', `- ${car.make} ${car.model} ${car.badge || ''} ${car.rego} ${car.description || ''} Location = ${car.location} identified at stage 6 (minimal conditions match)`);
       return { car, status: 'found' };
     }
     if (carsWithLocation.length > 1) {
-      telegramLogger(`- Car not identified - multiple cars with minimal conditions at stage 6`, 'identification');
+      log('telegram', `- Car not identified - multiple cars with minimal conditions at stage 6`);
       return { car: null, status: 'multiple_found' };
     }
   }
 
-  telegramLogger(`- Car not identified - no unique car found after all stages`, 'identification');
+  log('telegram', `- Car not identified - no unique car found after all stages`);
   return { car: null, status: 'not_found' };
 };
 
