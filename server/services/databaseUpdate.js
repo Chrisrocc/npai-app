@@ -55,7 +55,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const model = data[1] || '';
       const badge = data[2] || '';
       const description = data[3] || '';
-      const rego = data[4] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       const currentLocation = data[5] || '';
       const readyStatus = data[6] || '';
       const notes = data[7] || '';
@@ -65,6 +65,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
         throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
       }
 
       const result = await identifyUniqueCar(make, model, badge, rego, description, currentLocation, entry.fromPhoto);
@@ -124,10 +129,13 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           log('telegram', `Updated car status to ${updateData.status} at ${updateData.location}`);
         }
       } catch (e) {
-        log('error', `Error updating car: ${e.message}`);
+        log('error', `Error updating car: ${e.message} for rego ${rego}`);
+        if (e.name === 'ValidationError') {
+          log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+        }
       }
     } catch (e) {
-      log('error', `Error processing Ready entry: ${e.message}`);
+      log('error', `Error processing Ready entry: ${e.message} for rego ${data[4] || 'unknown'}`);
       if (e.name === 'ValidationError') {
         log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
@@ -142,7 +150,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const model = data[1] || '';
       const badge = data[2] || '';
       const description = data[3] || '';
-      const rego = data[4] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       const currentLocation = data[5] || '';
       const nextLocation = data[6] || '';
       const notes = data[7] || '';
@@ -152,6 +160,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
         throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
       }
 
       const result = await identifyUniqueCar(make, model, badge, rego, description, currentLocation, entry.fromPhoto);
@@ -294,11 +307,14 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           await taskEntry.save();
           log('telegram', `Created drop off task`);
         } catch (e) {
-          log('error', `Error updating car for Drop Off: ${e.message}`);
+          log('error', `Error updating car for Drop Off: ${e.message} for rego ${rego}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
         }
       }
     } catch (e) {
-      log('error', `Error processing Drop Off entry: ${e.message}`);
+      log('error', `Error processing Drop Off entry: ${e.message} for rego ${data[4] || 'unknown'}`);
       if (e.name === 'ValidationError') {
         log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
@@ -313,7 +329,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const model = data[1] || '';
       const badge = data[2] || '';
       const description = data[3] || '';
-      const rego = data[4] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       const customerName = data[5] || '';
       const day = data[6] || '';
       const time = data[7] || '';
@@ -325,6 +341,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
         throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
       }
 
       const result = await identifyUniqueCar(make, model, badge, rego, description, null, entry.fromPhoto);
@@ -411,10 +432,13 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         await appointment.save();
         log('telegram', carDetails.id ? `Added customer appointment for ${carDetails.make} ${carDetails.model} ${carDetails.rego}` : `Added customer appointment with car details`);
       } catch (e) {
-        log('error', carDetails.id ? `Error saving customer appointment: ${e.message}` : `Error saving customer appointment with car details: ${e.message}`);
+        log('error', carDetails.id ? `Error saving customer appointment: ${e.message} for rego ${rego}` : `Error saving customer appointment with car details: ${e.message}`);
+        if (e.name === 'ValidationError') {
+          log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+        }
       }
     } catch (e) {
-      log('error', `Error processing Customer Appointment entry: ${e.message}`);
+      log('error', `Error processing Customer Appointment entry: ${e.message} for rego ${data[4] || 'unknown'}`);
       if (e.name === 'ValidationError') {
         log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
@@ -429,7 +453,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const model = data[1] || '';
       const badge = data[2] || '';
       const description = data[3] || '';
-      const rego = data[4] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       const reconditionerName = data[5] || '';
       const day = data[6] || '';
       const time = data[7] || '';
@@ -440,6 +464,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
         throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
       }
 
       const result = await identifyUniqueCar(make, model, badge, rego, description, null, entry.fromPhoto);
@@ -514,10 +543,13 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         await appointment.save();
         log('telegram', `Added reconditioning appointment for ${make} ${model} ${rego || ''}`);
       } catch (e) {
-        log('error', `Error saving reconditioning appointment: ${e.message}`);
+        log('error', `Error saving reconditioning appointment: ${e.message} for rego ${rego}`);
+        if (e.name === 'ValidationError') {
+          log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+        }
       }
     } catch (e) {
-      log('error', `Error processing Reconditioning Appointment entry: ${e.message}`);
+      log('error', `Error processing Reconditioning Appointment entry: ${e.message} for rego ${data[4] || 'unknown'}`);
       if (e.name === 'ValidationError') {
         log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
@@ -532,7 +564,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const model = data[1] || '';
       const badge = data[2] || '';
       const description = data[3] || '';
-      const rego = data[4] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       const repairTask = data[5] || '';
       const notes = data[6] || '';
       const reconditionerInfo = entry.reconditioner || { category: 'other', reconditioner: 'Technician' };
@@ -543,6 +575,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
         throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
       }
 
       const result = await identifyUniqueCar(make, model, badge, rego, description, null, entry.fromPhoto);
@@ -598,22 +635,21 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         const updatedCar = await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true, runValidators: true });
 
         if (!updatedCar) {
-          log('error', `Failed to update car: Document not found`);
+          log('error', `Failed to update car: Document not found for rego ${rego}`);
           continue;
         }
 
         if (repairTask && updatedCar.checklist.includes(repairTask)) {
-          log('telegram', `Successfully updated car checklist with repair task: ${repairTask}`);
+          log('telegram', `Successfully updated car checklist with repair task: ${repairTask} for rego ${rego}`);
         } else if (repairTask) {
-          log('error', `Failed to update car checklist: Repair task "${repairTask}" not added`);
+          log('error', `Failed to update car checklist: Repair task "${repairTask}" not added for rego ${rego}`);
           if (process.env.DEBUG_MODE === 'true') {
             log('debug', `Updated checklist: ${JSON.stringify(updatedCar.checklist)}`);
           }
         } else {
-          log('telegram', `No repair task to add, checklist unchanged`);
+          log('telegram', `No repair task to add, checklist unchanged for rego ${rego}`);
         }
 
-        // Create reconditioner appointment
         const carItem = {
           car: carToUpdate._id,
           carDetails: {
@@ -628,22 +664,21 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
 
         const appointment = new ReconAppointment({
           reconditionerName: reconditionerInfo.reconditioner,
-          dayTime: 'Could be today', // Default since no specific time is provided
+          dayTime: 'Could be today',
           carItems: [carItem],
-          category: reconditionerInfo.category.replace(/['"]/g, '') // Strip quotes from category
+          category: reconditionerInfo.category.replace(/['"]/g, '')
         });
 
         await appointment.save();
         log('telegram', `Created reconditioning appointment for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego} with ${reconditionerInfo.reconditioner} (Category: ${reconditionerInfo.category})`);
-
       } catch (e) {
-        log('error', `Error updating car or creating reconditioning appointment for Car Repairs: ${e.message}`);
+        log('error', `Error updating car or creating reconditioning appointment for Car Repairs: ${e.message} for rego ${rego}`);
         if (e.name === 'ValidationError') {
           log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
         }
       }
     } catch (e) {
-      log('error', `Error processing Car Repairs entry: ${e.message}`);
+      log('error', `Error processing Car Repairs entry: ${e.message} for rego ${data[4] || 'unknown'}`);
       if (e.name === 'ValidationError') {
         log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
@@ -658,7 +693,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const model = data[1] || '';
       const badge = data[2] || '';
       const description = data[3] || '';
-      const rego = data[4] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       const oldLocation = data[5] || '';
       const newLocation = data[6] || '';
       const notes = data[7] || '';
@@ -668,6 +703,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
         throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
       }
 
       const result = await identifyUniqueCar(make, model, badge, rego, description, oldLocation, entry.fromPhoto);
@@ -786,7 +826,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           }
 
           await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
-          log('telegram', `Updated car, next locations: ${updateData.next.map(entry => entry.location).join(', ')}`);
+          log('telegram', `Updated car, next locations: ${updateData.next.map(entry => entry.location).join(', ')} for rego ${rego}`);
 
           const carItem = {
             car: carToUpdate._id,
@@ -803,13 +843,16 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
             carItems: [carItem]
           });
           await noteEntry.save();
-          log('telegram', `Created location update note`);
+          log('telegram', `Created location update note for rego ${rego}`);
         } catch (e) {
-          log('error', `Error updating car for Location Update: ${e.message}`);
+          log('error', `Error updating car for Location Update: ${e.message} for rego ${rego}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
         }
       }
     } catch (e) {
-      log('error', `Error processing Location Update entry: ${e.message}`);
+      log('error', `Error processing Location Update entry: ${e.message} for rego ${data[4] || 'unknown'}`);
       if (e.name === 'ValidationError') {
         log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
@@ -824,7 +867,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const model = data[1] || '';
       const badge = data[2] || '';
       const description = data[3] || '';
-      const rego = data[4] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       const task = data[5] || '';
 
       log('telegram', `Processing To Do: [${[make, model, badge, description, rego, task].map(item => item || '').join(', ')}]`);
@@ -832,6 +875,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
         throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
       }
 
       if (make) {
@@ -912,7 +960,10 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           await taskEntry.save();
           log('telegram', `Created to do task for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } catch (e) {
-          log('error', `Error processing To Do for car: ${e.message}`);
+          log('error', `Error processing To Do for car: ${e.message} for rego ${rego}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
         }
       } else {
         try {
@@ -928,7 +979,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         }
       }
     } catch (e) {
-      log('error', `Error processing To Do entry: ${e.message}`);
+      log('error', `Error processing To Do entry: ${e.message} for rego ${data[4] || 'unknown'}`);
       if (e.name === 'ValidationError') {
         log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }
@@ -943,7 +994,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const model = data[1] || '';
       const badge = data[2] || '';
       const description = data[3] || '';
-      const rego = data[4] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
       const notes = data[5] || '';
 
       log('telegram', `Processing Notes: [${[make, model, badge, description, rego, notes].map(item => item || '').join(', ')}]`);
@@ -951,6 +1002,11 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
       if (!cleanedMessage) {
         throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
       }
 
       if (make) {
@@ -1021,7 +1077,10 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
           await noteEntry.save();
           log('telegram', `Created note for ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
         } catch (e) {
-          log('error', `Error creating note for car: ${e.message}`);
+          log('error', `Error creating note for car: ${e.message} for rego ${rego}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
         }
       } else {
         try {
@@ -1036,7 +1095,7 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
         }
       }
     } catch (e) {
-      log('error', `Error processing Notes entry: ${e.message}`);
+      log('error', `Error processing Notes entry: ${e.message} for rego ${data[4] || 'unknown'}`);
       if (e.name === 'ValidationError') {
         log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
       }

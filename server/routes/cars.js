@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const AWS = require('aws-sdk');
-const { log } = require('../logger'); // Import logger.js
+const { log } = require('../logger');
 const { updateCarHistory, processPendingLocationUpdates } = require('../utils/helpers');
 
 AWS.config.update({
@@ -55,12 +55,12 @@ const uploadToS3 = async (filePath, fileName, mimetype) => {
     CacheControl: 'public, max-age=31536000',
   };
   try {
-    log('info', `Uploading to S3: ${key}`); // Will be filtered out
+    log('info', `Uploading to S3: ${key}`);
     const result = await s3.upload(params, {
       partSize: 5 * 1024 * 1024,
       queueSize: 4,
     }).promise();
-    log('info', `S3 upload successful: ${key}`); // Will be filtered out
+    log('info', `S3 upload successful: ${key}`);
     return `https://${bucketName}.s3.ap-southeast-2.amazonaws.com/${key}`;
   } catch (error) {
     log('error', `S3 upload error for ${key}: ${error.message}`);
@@ -77,7 +77,7 @@ const deleteFromS3 = async (url) => {
     const key = url.split(`${bucketName}.s3.ap-southeast-2.amazonaws.com/`)[1];
     if (!key) return;
     await s3.deleteObject({ Bucket: bucketName, Key: key }).promise();
-    log('info', `Deleted from S3: ${key}`); // Will be filtered out
+    log('info', `Deleted from S3: ${key}`);
   } catch (error) {
     log('error', `S3 delete error for ${url}: ${error.message}`);
   }
@@ -134,7 +134,7 @@ router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
   if (!make || !model || !rego) {
     return res.status(400).json({ message: 'Make, model, and rego are required' });
   }
-  const sanitizedRego = rego.replace(/[^a-zA-Z0-9]/g, '');
+  const sanitizedRego = rego.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Normalize here
   if (sanitizedRego.length < 1 || sanitizedRego.length > 6) {
     return res.status(400).json({ message: 'Rego must be 1-6 alphanumeric characters' });
   }
@@ -175,10 +175,14 @@ router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
 
   try {
     await car.save();
-    log('info', `Created new car: ${car.make} ${car.model}, Location: ${car.location}`); // Will be filtered out
+    log('info', `Created new car: ${car.make} ${car.model}, Location: ${car.location}`);
     res.status(201).json(car);
   } catch (error) {
-    if (error.code === 11000) {
+    if (error.name === 'ValidationError') {
+      log('error', `Validation error creating car: ${error.message}`);
+      return res.status(400).json({ message: error.message });
+    } else if (error.code === 11000) {
+      log('error', `Duplicate rego error: ${error.message}`);
       return res.status(400).json({ message: 'Car with this rego already exists' });
     }
     throw error;
@@ -187,7 +191,7 @@ router.post('/', upload.array('photos', 30), asyncHandler(async (req, res) => {
 
 router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => {
   const carId = req.params.id;
-  log('info', `PUT /api/cars/:id body: ${JSON.stringify(req.body)}, files: ${req.files ? req.files.length : 0}`); // Will be filtered out
+  log('info', `PUT /api/cars/:id body: ${JSON.stringify(req.body)}, files: ${req.files ? req.files.length : 0}`);
   const car = await Car.findById(carId);
   if (!car) return res.status(404).json({ message: 'Car not found' });
 
@@ -224,7 +228,7 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
   }
 
   if (updateData.rego) {
-    const sanitizedRego = updateData.rego.replace(/[^a-zA-Z0-9]/g, '');
+    const sanitizedRego = updateData.rego.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Normalize here
     if (sanitizedRego.length < 1 || sanitizedRego.length > 6) {
       return res.status(400).json({ message: 'Rego must be 1-6 alphanumeric characters' });
     }
@@ -252,7 +256,7 @@ router.put('/:id', upload.array('photos', 30), asyncHandler(async (req, res) => 
     { $set: finalUpdateData },
     { new: true, runValidators: true }
   );
-  log('info', `Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`); // Will be filtered out
+  log('info', `Updated car: ${updatedCar.make} ${updatedCar.model}, Location: ${updatedCar.location}`);
   res.json(updatedCar);
 }));
 

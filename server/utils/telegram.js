@@ -57,8 +57,8 @@ const downloadTelegramPhoto = async (fileId) => {
 };
 
 const extractRegoFromPhotoAnalysis = (photoAnalysis) => {
-  const regoMatch = photoAnalysis.match(/rego\s+([A-Za-z0-9-]+)/);
-  return regoMatch ? regoMatch[1].toLowerCase().replace(/[^a-z0-9]/g, '') : null;
+  const regoMatch = photoAnalysis.match(/rego\s+([A-Za-z0-9-\s]+)/i);
+  return regoMatch ? regoMatch[1].toUpperCase().replace(/[^A-Z0-9]/g, '') : null; // Normalize to uppercase, alphanumeric only
 };
 
 const analyzePhoto = async (photoPath) => {
@@ -113,6 +113,7 @@ const processBatch = async (batch, chatId, isPlan = false) => {
         const photoRego = extractRegoFromPhotoAnalysis(description);
         if (photoRego) {
           photoRegos.push(photoRego);
+          telegramLogger(`Extracted rego: ${photoRego} from photo`, 'telegram');
         }
         const photoLines = description.split('\n').filter(line => line.trim());
         list = photoLines.length > 0 ? photoLines.join(', ') : 'No description';
@@ -121,7 +122,6 @@ const processBatch = async (batch, chatId, isPlan = false) => {
           finalMessages.push({ text: messageText, isFromPhoto: true, category, list });
         });
         processedPhotoPaths.add(item.path);
-        // Check for a caption immediately following the photo
         if (i + 1 < batch.length && batch[i + 1].type === 'text' && batch[i + 1].isCaption) {
           category = 'Caption';
           const caption = batch[i + 1].content;
@@ -131,7 +131,7 @@ const processBatch = async (batch, chatId, isPlan = false) => {
             const messageText = `${sender}: ${line}`;
             finalMessages.push({ text: messageText, isFromPhoto: false, category, list });
           });
-          i++; // Skip the caption entry
+          i++;
         }
       } else if (item.type === 'text' && !item.isCaption) {
         if (item.content.startsWith('/')) {
@@ -178,7 +178,6 @@ const processBatch = async (batch, chatId, isPlan = false) => {
       }
       const result = JSON.parse(jsonMatch[0]);
 
-      // Log prompts
       if (result.prompt1) telegramLogger(`Prompt 1 output: ${result.prompt1}`, 'telegram');
       if (result.prompt2) telegramLogger(`Prompt 2 output: ${result.prompt2}`, 'telegram');
       if (result.prompt3) telegramLogger(`Prompt 3 output: ${result.prompt3}`, 'telegram');
@@ -186,7 +185,12 @@ const processBatch = async (batch, chatId, isPlan = false) => {
       result.photoRegos = photoRegos;
       result.isPlan = isPlan;
 
-      await updateDatabaseFromPipeline(result);
+      const updateResult = await updateDatabaseFromPipeline(result);
+      if (!updateResult.success) {
+        telegramLogger(`Database update failed: ${updateResult.error}`, 'error');
+      } else {
+        telegramLogger(`Database updated successfully for regos: ${photoRegos.join(', ')}`, 'telegram');
+      }
 
       setTimeout(() => {
         batch.forEach(item => {
