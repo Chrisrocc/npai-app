@@ -1165,6 +1165,102 @@ const updateDatabaseFromPipeline = async (pipelineOutput) => {
       }
     }
   }
+
+  // Process Sold
+  for (const entry of categories.Sold) {
+    try {
+      const data = entry.data || [];
+      const make = data[0] || '';
+      const model = data[1] || '';
+      const badge = data[2] || '';
+      const description = data[3] || '';
+      const rego = data[4] ? data[4].toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+      const soldStatus = data[5] || '';
+
+      log('telegram', `Processing Sold: [${[make, model, badge, description, rego, soldStatus].map(item => item || '').join(', ')}]`);
+
+      const cleanedMessage = entry.message.replace(/^-+\s*/, '').trim();
+      if (!cleanedMessage) {
+        throw new Error('Message is empty after cleaning');
+      }
+
+      if (rego && !/^[A-Z0-9]{1,6}$/.test(rego)) {
+        log('error', `Invalid rego format: ${data[4]} normalized to ${rego}, must be 1-6 uppercase alphanumeric`);
+        continue;
+      }
+
+      if (soldStatus !== 'Sold') {
+        log('telegram', `Skipping Sold entry as status is not 'Sold': ${soldStatus}`);
+        continue;
+      }
+
+      const result = await identifyUniqueCar(make, model, badge, rego, description, null, entry.fromPhoto);
+
+      let carToUpdate;
+      if (result.status === 'found') {
+        carToUpdate = result.car;
+        log('telegram', `Car found: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
+      } else if (rego) {
+        log('telegram', `Car with rego ${rego} not found, attempting to create new car`);
+        const newCar = new Car({
+          make,
+          model,
+          badge,
+          description,
+          rego,
+          location: '',
+          notes: cleanedMessage || '',
+          next: [],
+          checklist: [],
+          year: null,
+          history: [],
+          photos: [],
+          stage: 'Sold'
+        });
+        try {
+          await newCar.save();
+          carToUpdate = newCar;
+          log('telegram', `Created new sold car: ${newCar.make} ${newCar.model} ${newCar.rego}`);
+        } catch (e) {
+          log('error', `Failed to create new car with rego ${rego}: ${e.message}`);
+          if (e.name === 'ValidationError') {
+            log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+          }
+          continue;
+        }
+      } else {
+        const manualEntry = new ManualVerification({
+          message: cleanedMessage,
+          category: 'Sold',
+          data: [make, model, badge, description, rego, soldStatus]
+        });
+        await manualEntry.save();
+        log('telegram', `Sent to manual verification`);
+        continue;
+      }
+
+      try {
+        const updateData = {
+          stage: 'Sold',
+          description: description || carToUpdate.description,
+          notes: cleanedMessage ? (carToUpdate.notes ? `${carToUpdate.notes}; ${cleanedMessage}` : cleanedMessage) : carToUpdate.notes,
+        };
+
+        await Car.findByIdAndUpdate(carToUpdate._id, updateData, { new: true });
+        log('telegram', `Marked car as sold: ${carToUpdate.make} ${carToUpdate.model} ${carToUpdate.rego}`);
+      } catch (e) {
+        log('error', `Error updating car to sold: ${e.message} for rego ${rego}`);
+        if (e.name === 'ValidationError') {
+          log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+        }
+      }
+    } catch (e) {
+      log('error', `Error processing Sold entry: ${e.message} for rego ${data[4] || 'unknown'}`);
+      if (e.name === 'ValidationError') {
+        log('error', `Validation error details: ${JSON.stringify(e.errors)}`);
+      }
+    }
+  }
 };
 
 module.exports = { updateDatabaseFromPipeline };

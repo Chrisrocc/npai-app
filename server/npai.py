@@ -313,6 +313,7 @@ You are provided with sub-messages from a car yard group chat, each prefixed wit
 - To Do: Actionable tasks such as orders or follow-ups. 
 - Notes: Things that aren't actionable but staff should remember. Eg "<car> is clean" or "<part> is upstairs" 
 - Car Repairs: Not recoditioning appointments but jobs that need to be done. "The holden colorado needs a front bumper" or "The toyota landcruiser prado is leaking oil". 
+- Sold: If a car(s) is sold 
 
 Name of our mobile reconditioners, if these names appear, it likely means it’s a reconditioning appointment:
 - Rick | Interior Repair - Minor | Mobile
@@ -729,6 +730,36 @@ Output
 """
     return analyze_with_grok(prompt)
 
+def prompt_sold(sub_message):
+    """Prompt for Sold category"""
+    prompt = f"""
+For each line create a list. Lists will then be used to update our sold cars list.
+Index 1 - Make (ford, holden, toyota)
+Index 2 - Model (civic, Landcruiser Prado, Megane)
+Index 3 - Badge (GLX, RS, GTI)
+Index 4 - Description (Blue, Bullbar, Canopy - include all descriptive features like 'with bullbar' here)
+Index 5 - Registration (1HU4SH - must match a pattern like 'rego ABC123', do not include descriptive features here)
+Index 6 - Sold (if mentioned, else blank)
+
+
+Output Format 
+- Message : List
+
+Example:
+- Christian: Sold the Blue Kia Optima rego 1AB2CD with bullbar to John for $15000. Includes trade in.
+Output:
+- Christian: Sold the Blue Kia Optima rego 1AB2CD with bullbar to John for $15000. Includes trade in. : [Kia, Optima, , Blue with bullbar, 1AB2CD, Sold]
+
+Another Example:
+- James: Navara D22 white, sold at unique
+Output:
+- James: Navara D22 white, sold at unique : [Nissan, Navara, D22, White, , Sold]
+
+
+{sub_message}
+"""
+    return analyze_with_grok(prompt)
+
 # Orchestration
 def run_pipeline(original_message: str, media_url: str = None) -> dict:
     """Process the incoming message through prompts and return structured JSON."""
@@ -774,7 +805,8 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
         "Car Repairs": [],
         "Location Update": [],
         "To Do": [],
-        "Notes": []
+        "Notes": [],
+        "Sold": []
     }
 
     if output_prompt3.strip():
@@ -843,6 +875,10 @@ def run_pipeline(original_message: str, media_url: str = None) -> dict:
                             if os.getenv('DEBUG_MODE') == 'true':
                                 print(f"Calling prompt_notes with: {sub_message}", file=sys.stderr)
                             result = prompt_notes(sub_message)
+                        elif category == "Sold":
+                            if os.getenv('DEBUG_MODE') == 'true':
+                                print(f"Calling prompt_sold with: {sub_message}", file=sys.stderr)
+                            result = prompt_sold(sub_message)
                         else:
                             if os.getenv('DEBUG_MODE') == 'true':
                                 print(f"Unknown category: '{category}'", file=sys.stderr)
@@ -914,7 +950,7 @@ def parse_category_output(output: str, is_from_photo: bool = False) -> list:
                         expected_length = 7
                     elif "To Do" in message or "Notes" in message:
                         expected_length = 6
-                    elif "Ready" in message or "Drop Off" in message or "Location Update" in message:
+                    elif "Ready" in message or "Drop Off" in message or "Location Update" in message or "Sold" in message:
                         expected_length = 8
                     
                     # Pad or truncate the list to the expected length
@@ -951,22 +987,3 @@ def parse_category_output(output: str, is_from_photo: bool = False) -> list:
                     print(f"Error parsing category output: {line} - {str(e)}", file=sys.stderr)
                 continue
     return results
-
-# Main Entry Point
-def main():
-    if len(sys.argv) < 2:
-        print(json.dumps({"error": "No input provided. Usage: python npai.py <message> [media_url]"}))
-        sys.exit(1)
-
-    if sys.argv[1] == "--photo-only" and len(sys.argv) == 3:
-        description = analyze_photo(sys.argv[2])
-        print(json.dumps({"photo_analysis": description}))
-        sys.exit(0)
-
-    incoming_message = sys.argv[1]
-    media_url = sys.argv[2] if len(sys.argv) > 2 else None
-    result = run_pipeline(incoming_message, media_url)
-    print(json.dumps(result, indent=2))
-
-if __name__ == "__main__":
-    main()
